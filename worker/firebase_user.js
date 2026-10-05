@@ -65,6 +65,22 @@ export function uidFromIdToken(token) {
   return uid;
 }
 
+/// Whether the caller has verified their email address.
+///
+/// Read from the token's own claim, so only call this after identifyCaller()
+/// has had Firestore verify the token's signature with the caller's own token.
+/// Without that, the claim could be a forgery.
+export function emailVerifiedFromIdToken(token) {
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(base64UrlToBytes(parts[1])));
+    return payload?.email_verified === true;
+  } catch {
+    return false;
+  }
+}
+
 /// The caller's bearer token, or a 401.
 ///
 /// Returned as well as used because callers pass it straight back to Firestore:

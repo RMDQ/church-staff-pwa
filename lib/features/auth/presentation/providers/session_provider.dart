@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import '../../domain/entities/user.dart';
+import '../../domain/signup_request.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/utils/error_messages.dart';
 
@@ -132,6 +133,16 @@ class SessionProvider extends ChangeNotifier {
         notifyListeners();
         return false;
       }
+    } on SignupPendingException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } on SignupIncompleteException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e, st) {
       log('登入失敗', error: e, stackTrace: st);
       _error = '登入失敗:${mapErrorToUserMessage(e)}';

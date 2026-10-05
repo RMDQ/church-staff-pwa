@@ -12,6 +12,7 @@ class ChurchConfig {
     required this.services,
     required this.features,
     required this.devotional,
+    required this.checkin,
     required this.icons,
   });
 
@@ -31,6 +32,9 @@ class ChurchConfig {
   final List<ServiceDefinition> services;
   final ChurchFeatures features;
   final DevotionalConfig devotional;
+
+  /// 打卡规则：时间窗口、准时线、允许距离与教堂位置。
+  final CheckinConfig checkin;
   final Map<String, String> icons;
 
   ServiceDefinition? service(String id) {
@@ -50,6 +54,7 @@ class ChurchConfig {
       'features',
       'devotional',
       'icons',
+      'checkin',
     ]);
     if (json['schemaVersion'] != 1) {
       throw const FormatException('不支援的教會設定版本');
@@ -97,6 +102,7 @@ class ChurchConfig {
       devotional: DevotionalConfig.fromJson(
         _object(json['devotional'], 'devotional'),
       ),
+      checkin: CheckinConfig.fromJson(_object(json['checkin'], 'checkin')),
       icons: Map.unmodifiable(icons),
     );
   }
@@ -110,6 +116,7 @@ class ChurchConfig {
     services: List.unmodifiable(services),
     features: features,
     devotional: devotional,
+    checkin: checkin,
     icons: icons,
   );
 
@@ -144,6 +151,7 @@ class ChurchConfig {
     'services': services.map((s) => s.toJson()).toList(),
     'features': features.toJson(),
     'devotional': devotional.toJson(),
+    'checkin': checkin.toJson(),
     'icons': icons,
   };
 }
@@ -215,6 +223,80 @@ class ServiceDefinition {
     'weekday': weekday,
     'enabled': enabled,
   };
+}
+
+/// 打卡的设定。服务器据此判断时间、距离与准时，App 只用来显示。
+class CheckinConfig {
+  const CheckinConfig({
+    required this.serviceId,
+    required this.start,
+    required this.end,
+    required this.onTimeBefore,
+    required this.allowedMeters,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  final String serviceId;
+
+  /// HH:mm，教会时区。
+  final String start;
+  final String end;
+  final String onTimeBefore;
+  final int allowedMeters;
+  final double latitude;
+  final double longitude;
+
+  factory CheckinConfig.fromJson(Map<String, dynamic> json) {
+    _checkKeys(json, const [
+      'serviceId',
+      'start',
+      'end',
+      'onTimeBefore',
+      'allowedMeters',
+      'latitude',
+      'longitude',
+    ]);
+    final allowed = json['allowedMeters'];
+    final latitude = json['latitude'];
+    final longitude = json['longitude'];
+    if (allowed is! int || allowed < 10 || allowed > 500) {
+      throw const FormatException('checkin.allowedMeters 必须是 10 至 500 的整数');
+    }
+    if (latitude is! num || latitude < -90 || latitude > 90) {
+      throw const FormatException('checkin.latitude 必须在 -90 至 90 之间');
+    }
+    if (longitude is! num || longitude < -180 || longitude > 180) {
+      throw const FormatException('checkin.longitude 必须在 -180 至 180 之间');
+    }
+    return CheckinConfig(
+      serviceId: _text(json, 'serviceId'),
+      start: _clock(json, 'start'),
+      end: _clock(json, 'end'),
+      onTimeBefore: _clock(json, 'onTimeBefore'),
+      allowedMeters: allowed,
+      latitude: latitude.toDouble(),
+      longitude: longitude.toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'serviceId': serviceId,
+    'start': start,
+    'end': end,
+    'onTimeBefore': onTimeBefore,
+    'allowedMeters': allowedMeters,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
+}
+
+String _clock(Map<String, dynamic> json, String field) {
+  final value = _text(json, field, max: 5);
+  if (!RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(value)) {
+    throw FormatException('checkin.$field 必须是 HH:mm 格式');
+  }
+  return value;
 }
 
 class ChurchFeatures {

@@ -1,5 +1,6 @@
 // Generated from config/church.example.json. Keep the public defaults in sync.
 const defaultChurchConfigJson = r'''
+
 {
   "schemaVersion": 1,
   "appName": "教會同工助手",
@@ -48,6 +49,15 @@ const defaultChurchConfigJson = r'''
     "icon512": "icons/Icon-512.png",
     "maskable192": "icons/Icon-maskable-192.png",
     "maskable512": "icons/Icon-maskable-512.png"
+  },
+  "checkin": {
+    "serviceId": "sundayService",
+    "start": "13:00",
+    "end": "15:30",
+    "onTimeBefore": "13:30",
+    "allowedMeters": 100,
+    "latitude": 0,
+    "longitude": 0
   }
 }
 ''';

@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/signup_request.dart';
 import '../cached_user_storage.dart';
 
 class FirebaseAuthRepository implements AuthRepository {
@@ -29,9 +30,24 @@ class FirebaseAuthRepository implements AuthRepository {
       password: password,
     );
     if (credential.user == null) return null;
-    final user = await _fetchUserFromFirestore(credential.user!.uid);
-    if (user != null) await _cachedUserStorage.write(user);
+    final uid = credential.user!.uid;
+    final user = await _fetchUserFromFirestore(uid);
+    if (user == null) {
+      // 登入成功但没有正式成员资料：可能是待审的注册申请。
+      // 这种情况要告诉使用者「等待确认」，而不是「密码错误」。
+      await _auth.signOut();
+      if (await _hasPendingSignup(uid)) {
+        throw const SignupPendingException();
+      }
+      throw const SignupIncompleteException();
+    }
+    await _cachedUserStorage.write(user);
     return user;
+  }
+
+  Future<bool> _hasPendingSignup(String uid) async {
+    final doc = await _firestore.collection('signup_requests').doc(uid).get();
+    return doc.exists;
   }
 
   @override
