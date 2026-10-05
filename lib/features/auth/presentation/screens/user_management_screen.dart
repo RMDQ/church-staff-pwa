@@ -6,6 +6,7 @@ import '../../../../core/widgets/text_warmup.dart';
 import '../providers/session_provider.dart';
 import '../providers/user_admin_provider.dart';
 import '../providers/group_settings_provider.dart';
+import 'signup_review_screen.dart';
 import 'user_editor_screen.dart';
 
 class UserManagementScreen extends StatefulWidget {
@@ -141,7 +142,20 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('帳號管理')),
+      appBar: AppBar(
+        title: const Text('帳號管理'),
+        actions: [
+          IconButton(
+            tooltip: '待审核的注册',
+            icon: const Icon(Icons.how_to_reg_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const SignupReviewScreen(),
+              ),
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openEditor(),
         child: const Icon(Icons.add),

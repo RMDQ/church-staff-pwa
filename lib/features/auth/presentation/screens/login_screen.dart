@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/config/church_config.dart';
 import '../providers/session_provider.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -151,6 +152,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         )
                                       : const Text('登入'),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.center,
+                                child: TextButton(
+                                  onPressed: session.isLoading
+                                      ? null
+                                      : () => Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) =>
+                                                const RegisterScreen(),
+                                          ),
+                                        ),
+                                  child: const Text('还没有账号？注册'),
                                 ),
                               ),
                               if (session.error != null) ...[
