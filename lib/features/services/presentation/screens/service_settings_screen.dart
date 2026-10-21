@@ -11,10 +11,10 @@ const _weekdayNames = ['一', '二', '三', '四', '五', '六', '日'];
 
 String weekdayLabel(int weekday) => '星期${_weekdayNames[weekday - 1]}';
 
-/// 管理員設定每週固定的聚會：新增、改名、改星期、調順序、停用。
+/// 管理员设定每周固定的聚会：新增、改名、改星期、调顺序、停用。
 ///
-/// 不能刪除，只能停用：服事表、同工的牧區、服事項目樣板都用聚會 ID 對應，
-/// 刪掉 ID 就對不回去了。
+/// 不能删除，只能停用：服事表、同工的牧区、服事项目样板都用聚会 ID 对应，
+/// 删掉 ID 就对不回去了。
 class ServiceSettingsScreen extends StatefulWidget {
   const ServiceSettingsScreen({super.key});
 
@@ -41,7 +41,7 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
       ).any((i) => _services[i] != _original[i]);
 
   static String _newId() {
-    // 字母開頭、只有英數：符合部署設定與 rules 對聚會 ID 的要求。
+    // 字母开头、只有英数：符合部署设定与 rules 对聚会 ID 的要求。
     final random = Random().nextInt(1 << 20).toRadixString(36);
     return 'svc${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}$random';
   }
@@ -82,7 +82,7 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
-      // 網頁版存好會整頁重新載入，換成新的分頁；其他平台直接回上一頁。
+      // 网页版存好会整页重新载入，换成新的分页；其他平台直接回上一页。
       await context.read<ServiceCatalogProvider>().save(_services);
       if (!mounted) return;
       messenger.showSnackBar(const SnackBar(content: Text('已保存聚会设置')));
@@ -281,7 +281,7 @@ class _ServiceDialogState extends State<_ServiceDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.initial == null ? '新增聚会' : '修改聚会'),
-      // 預設寬度會把「例如「主日」「禱告會」」這種說明截斷。
+      // 预设宽度会把「例如「主日」「祷告会」」这种说明截断。
       content: SizedBox(
         width: 360,
         child: Form(

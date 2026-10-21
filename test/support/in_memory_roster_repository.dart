@@ -6,11 +6,11 @@ import 'package:church_staff_pwa/features/roster/domain/entities/service_roster.
 import 'package:church_staff_pwa/features/roster/domain/repositories/roster_repository.dart';
 import 'package:church_staff_pwa/features/roster/domain/staff_order.dart';
 
-/// 測試共用的 [RosterRepository]：資料放在記憶體裡，讀寫照實做。
+/// 测试共用的 [RosterRepository]：资料放在记忆体里，读写照实做。
 ///
-/// 以前每個測試檔各寫一份私有 fake，九份各自決定「寫入要不要真的存」「失敗
-/// 怎麼丟」—— 同一個 provider 行為在不同檔案裡測的其實是不同的假設。要故意
-/// 失敗、暫停或計數的，設下面對應的欄位；用不到的測試什麼都不必設。
+/// 以前每个测试档各写一份私有 fake，九份各自决定「写入要不要真的存」「失败
+/// 怎么丢」—— 同一个 provider 行为在不同档案里测的其实是不同的假设。要故意
+/// 失败、暂停或计数的，设下面对应的栏位；用不到的测试什么都不必设。
 class InMemoryRosterRepository implements RosterRepository {
   InMemoryRosterRepository({
     List<ServiceRoster> rosters = const [],
@@ -24,10 +24,10 @@ class InMemoryRosterRepository implements RosterRepository {
        eventOptions = Map.of(eventOptions),
        staffOrders = Map.of(staffOrders);
 
-  /// 伺服器上的服事表。寫入會改到這裡。
+  /// 伺服器上的服事表。写入会改到这里。
   List<ServiceRoster> rosters;
 
-  /// 本地快取（IndexedDB）裡的服事表。預設是空的，也就是 cache miss。
+  /// 本地快取（IndexedDB）里的服事表。预设是空的，也就是 cache miss。
   List<ServiceRoster> cachedRosters;
 
   Map<ServiceType, List<String>> templates;
@@ -36,29 +36,29 @@ class InMemoryRosterRepository implements RosterRepository {
 
   // ── 故意出事 ──────────────────────────────────────────────────────────
 
-  /// 讀伺服器／讀快取時丟這個。
+  /// 读伺服器／读快取时丢这个。
   Object? serverError;
   Object? cacheError;
 
-  /// 設了就等它完成才回，讓測試控制讀取落地的時機。
+  /// 设了就等它完成才回，让测试控制读取落地的时机。
   Completer<void>? serverPause;
   Completer<void>? cachePause;
 
-  /// 寫這幾張服事表時失敗（單筆與 batch 都算）。
+  /// 写这几张服事表时失败（单笔与 batch 都算）。
   Set<String> failRosterIds = {};
 
-  /// batch 整批失敗。
+  /// batch 整批失败。
   bool failAtomicWrites = false;
 
-  /// 寫樣板／活動清單時丟這個。
+  /// 写样板／活动清单时丢这个。
   Object? failTemplateWrite;
   Object? failEventOptionWrite;
   Object? failStaffOrderWrite;
 
-  /// 讀同工排序時丟這個（例如 rules 還沒部署）。
+  /// 读同工排序时丢这个（例如 rules 还没部署）。
   Object? failStaffOrderRead;
 
-  // ── 紀錄 ──────────────────────────────────────────────────────────────
+  // ── 纪录 ──────────────────────────────────────────────────────────────
 
   int fetchRostersCallCount = 0;
   int fetchTemplatesCallCount = 0;
@@ -67,7 +67,7 @@ class InMemoryRosterRepository implements RosterRepository {
   int ensureCallCount = 0;
   List<ServiceType> ensureTypes = const [];
 
-  /// 單筆 [updateRoster] 的次數。交換不該用到這條路。
+  /// 单笔 [updateRoster] 的次数。交换不该用到这条路。
   int singleWriteCount = 0;
 
   /// 每次 [updateRostersAtomically] 收到的批次。
@@ -158,7 +158,7 @@ class InMemoryRosterRepository implements RosterRepository {
     return Map.of(staffOrders);
   }
 
-  /// 照 Firestore 的 merge 寫入做：只動 [changes] 提到的服事項目。
+  /// 照 Firestore 的 merge 写入做：只动 [changes] 提到的服事项目。
   @override
   Future<void> updateStaffRankings(
     ServiceType type,
@@ -181,7 +181,7 @@ class InMemoryRosterRepository implements RosterRepository {
   }
 }
 
-/// 三個崇拜都有、但都是空的樣板或活動清單 —— 「載入過，只是還沒設定」。
+/// 三个崇拜都有、但都是空的样板或活动清单 —— 「载入过，只是还没设定」。
 Map<ServiceType, List<T>> emptyForEveryType<T>() => {
   for (final type in ServiceType.values) type: <T>[],
 };

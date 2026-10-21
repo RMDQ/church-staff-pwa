@@ -142,7 +142,7 @@ class _EventFormSheetState extends State<_EventFormSheet> {
       if (!mounted) return;
       setState(() {
         _submitting = false;
-        _error = error is CalendarWriteException ? error.message : '儲存失敗，請稍後再試';
+        _error = error is CalendarWriteException ? error.message : '储存失败，请稍后再试';
       });
     }
   }
@@ -182,7 +182,7 @@ class _EventFormSheetState extends State<_EventFormSheet> {
                 enabled: !_submitting,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
-                  labelText: '活動名稱',
+                  labelText: '活动名称',
                   border: OutlineInputBorder(),
                 ),
                 onChanged: (_) {
@@ -202,7 +202,7 @@ class _EventFormSheetState extends State<_EventFormSheet> {
                       }),
               ),
               _FieldRow(
-                label: '開始',
+                label: '开始',
                 children: [
                   Expanded(
                     child: _PickerButton(
@@ -227,7 +227,7 @@ class _EventFormSheetState extends State<_EventFormSheet> {
               ),
               const SizedBox(height: 8),
               _FieldRow(
-                label: '結束',
+                label: '结束',
                 children: [
                   Expanded(
                     child: _PickerButton(
@@ -256,7 +256,7 @@ class _EventFormSheetState extends State<_EventFormSheet> {
                 enabled: !_submitting,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
-                  labelText: '地點',
+                  labelText: '地点',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -266,7 +266,7 @@ class _EventFormSheetState extends State<_EventFormSheet> {
                 enabled: !_submitting,
                 maxLines: 3,
                 decoration: const InputDecoration(
-                  labelText: '說明',
+                  labelText: '说明',
                   border: OutlineInputBorder(),
                   alignLabelWithHint: true,
                 ),
@@ -297,7 +297,7 @@ class _EventFormSheetState extends State<_EventFormSheet> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('儲存'),
+                        : const Text('储存'),
                   ),
                 ],
               ),
@@ -361,8 +361,8 @@ Future<bool> confirmDeleteEvent(BuildContext context, String title) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('刪除活動'),
-      content: Text('確定要刪除「$title」嗎？行事曆上會直接消失。'),
+      title: const Text('删除活动'),
+      content: Text('确定要删除「$title」吗？行事历上会直接消失。'),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -373,7 +373,7 @@ Future<bool> confirmDeleteEvent(BuildContext context, String title) async {
           style: FilledButton.styleFrom(
             backgroundColor: Theme.of(dialogContext).colorScheme.error,
           ),
-          child: const Text('刪除'),
+          child: const Text('删除'),
         ),
       ],
     ),

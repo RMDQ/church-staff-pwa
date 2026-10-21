@@ -29,7 +29,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // Deliberately in 2099 so a failed cleanup cannot land in anyone's real week.
 const PROBE_DATE = '2099-12-31';
-const PROBE_TITLE = '（測試）行事曆寫入檢查，可以直接刪掉';
+const PROBE_TITLE = '（测试）行事历写入检查，可以直接删掉';
 
 function die(message) {
   console.error(`✗ ${message}`);
@@ -43,7 +43,7 @@ function serviceAccountJson() {
   } catch {
     die(
       `找不到 ${path.relative(ROOT, file)}。\n` +
-        '  先建立 service account 金鑰，或把既有的那份放到這個位置。',
+        '  先建立 service account 金钥，或把既有的那份放到这个位置。',
     );
   }
 }
@@ -63,10 +63,10 @@ function calendarId() {
     }).trim();
   } catch {
     die(
-      '找不到 GOOGLE_CALENDAR_ID。三選一：\n' +
+      '找不到 GOOGLE_CALENDAR_ID。三选一：\n' +
         '  export GOOGLE_CALENDAR_ID=...\n' +
         '  echo ... > .local/calendar-id\n' +
-        '  gh auth login（讓這支自己去讀 repo variable）',
+        '  gh auth login（让这支自己去读 repo variable）',
     );
   }
 }
@@ -97,17 +97,17 @@ async function main() {
         title: PROBE_TITLE,
         allDay: true,
         start: PROBE_DATE,
-        description: '由 scripts/verify-calendar-writer.mjs 建立，應該會自動刪除。',
+        description: '由 scripts/verify-calendar-writer.mjs 建立，应该会自动删除。',
       }),
     });
     created = await response.json();
   } catch (error) {
-    console.error(`✗ 寫入失敗：${error.message}`);
+    console.error(`✗ 写入失败：${error.message}`);
     if (error.status === 502) {
       console.error();
-      console.error('  最常見的原因是日曆還沒分享給 service account。');
-      console.error('  Google 日曆 → 該日曆設定 → 與特定使用者或群組共用 →');
-      console.error(`  加入 ${account}，權限選「變更活動」。`);
+      console.error('  最常见的原因是日历还没分享给 service account。');
+      console.error('  Google 日历 → 该日历设定 → 与特定使用者或群组共用 →');
+      console.error(`  加入 ${account}，权限选「变更活动」。`);
     }
     process.exit(1);
   }
@@ -118,28 +118,28 @@ async function main() {
     const response = await callCalendar(env, { method: 'GET', eventId: created.id });
     const readBack = await response.json();
     if (readBack.summary !== PROBE_TITLE) {
-      die(`讀回來的標題對不上：${readBack.summary}`);
+      die(`读回来的标题对不上：${readBack.summary}`);
     }
     // end.date is exclusive, so a single-day event on the 31st ends on the 1st.
     if (readBack.start?.date !== PROBE_DATE) {
-      die(`日期對不上：送出 ${PROBE_DATE}，讀回 ${readBack.start?.date}`);
+      die(`日期对不上：送出 ${PROBE_DATE}，读回 ${readBack.start?.date}`);
     }
-    console.log(`✓ 讀回確認  ${readBack.start.date} → ${readBack.end.date}（結束日不含當天，正確）`);
+    console.log(`✓ 读回确认  ${readBack.start.date} → ${readBack.end.date}（结束日不含当天，正确）`);
   } catch (error) {
-    console.error(`✗ 讀回失敗：${error.message}`);
+    console.error(`✗ 读回失败：${error.message}`);
   }
 
   try {
     await callCalendar(env, { method: 'DELETE', eventId: created.id });
-    console.log('✓ 刪除成功');
+    console.log('✓ 删除成功');
   } catch (error) {
-    console.error(`✗ 刪除失敗：${error.message}`);
-    console.error(`  請手動刪掉日曆上的「${PROBE_TITLE}」（${PROBE_DATE}）`);
+    console.error(`✗ 删除失败：${error.message}`);
+    console.error(`  请手动删掉日历上的「${PROBE_TITLE}」（${PROBE_DATE}）`);
     process.exit(1);
   }
 
   console.log();
-  console.log('全部通過 —— 新增、讀取、刪除都打得到真正的 Google Calendar。');
+  console.log('全部通过 —— 新增、读取、删除都打得到真正的 Google Calendar。');
 }
 
 await main();

@@ -1,205 +1,205 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hans">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>教會安裝精靈</title>
+  <title>教会安装精灵</title>
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
   <main>
     <header>
-      <p class="eyebrow">各教會獨立持有帳號與資料</p>
-      <h1>建立你們的同工助手</h1>
-      <p class="intro">連接帳號、填寫教會資料，確認後由精靈準備登入、同工名單與服事表。</p>
-      <p id="demo-banner" class="notice" hidden>離線示範：帳號與部署結果皆為模擬，不會連接或建立任何雲端資源。</p>
-      <p class="muted">首次安裝限定全新專案。行事曆、照片辨識、通知與每日靈糧暫不啟用；不自動綁定付費帳單。</p>
+      <p class="eyebrow">各教会独立持有帐号与资料</p>
+      <h1>建立你们的同工助手</h1>
+      <p class="intro">连接帐号、填写教会资料，确认后由精灵准备登入、同工名单与服事表。</p>
+      <p id="demo-banner" class="notice" hidden>离线示范：帐号与部署结果皆为模拟，不会连接或建立任何云端资源。</p>
+      <p class="muted">首次安装限定全新专案。行事历、照片辨识、通知与每日灵粮暂不启用；不自动绑定付费帐单。</p>
     </header>
 
     <div id="fatal" class="error" role="alert" hidden></div>
-    <div id="status" class="status" role="status" aria-live="polite">正在連接私人安裝工作階段…</div>
+    <div id="status" class="status" role="status" aria-live="polite">正在连接私人安装工作阶段…</div>
     <div id="error-box" class="error" role="alert" hidden>
       <p id="error-message"></p>
-      <a id="error-action" target="_blank" rel="noopener noreferrer" hidden>開啟官方設定頁</a>
+      <a id="error-action" target="_blank" rel="noopener noreferrer" hidden>开启官方设定页</a>
     </div>
 
     <section aria-labelledby="accounts-heading">
-      <div class="section-heading"><span class="number">1</span><h2 id="accounts-heading">連接你的帳號</h2></div>
-      <p>所有建立與部署動作都在你自己的 Cloud Shell 執行。Google 與 Cloudflare 密碼只在各自的官方頁面輸入。</p>
+      <div class="section-heading"><span class="number">1</span><h2 id="accounts-heading">连接你的帐号</h2></div>
+      <p>所有建立与部署动作都在你自己的 Cloud Shell 执行。Google 与 Cloudflare 密码只在各自的官方页面输入。</p>
       <div class="account-grid">
         <article>
           <h3>Google / Firebase</h3>
-          <p id="google-identity" class="muted">尚未連接</p>
-          <button id="connect-google" type="button">連接 Google</button>
-          <p class="hint">按下後切到 Cloud Shell 分頁，在「Authorize Cloud Shell」按 Authorize。沒有出現就再按一次「連接 Google」。</p>
-          <p id="google-switch" class="hint" hidden>不是這次要用的 Google 帳號？請先別填表：關掉 Cloud Shell，在 Google 右上角頭像切換成正確帳號，再重新開啟安裝教學連結。</p>
+          <p id="google-identity" class="muted">尚未连接</p>
+          <button id="connect-google" type="button">连接 Google</button>
+          <p class="hint">按下后切到 Cloud Shell 分页，在「Authorize Cloud Shell」按 Authorize。没有出现就再按一次「连接 Google」。</p>
+          <p id="google-switch" class="hint" hidden>不是这次要用的 Google 帐号？请先别填表：关掉 Cloud Shell，在 Google 右上角头像切换成正确帐号，再重新开启安装教学连结。</p>
         </article>
         <article>
           <h3>Cloudflare</h3>
-          <p id="cloudflare-identity" class="muted">尚未連接</p>
-          <button id="connect-cloudflare" type="button">連接 Cloudflare</button>
-          <p class="hint">開啟官方授權頁，輸入精靈顯示的代碼並授權。無須建立或貼上 API token。</p>
+          <p id="cloudflare-identity" class="muted">尚未连接</p>
+          <button id="connect-cloudflare" type="button">连接 Cloudflare</button>
+          <p class="hint">开启官方授权页，输入精灵显示的代码并授权。无须建立或贴上 API token。</p>
         </article>
       </div>
       <div id="device" class="notice" hidden>
-        <p>在 Cloudflare 官方頁面輸入這組代碼（頁面說的「terminal」指的就是這裡）：</p>
+        <p>在 Cloudflare 官方页面输入这组代码（页面说的「terminal」指的就是这里）：</p>
         <p><strong id="device-code" class="device-code"></strong></p>
-        <a id="device-link" class="button" target="_blank" rel="noopener noreferrer">開啟官方授權頁</a>
+        <a id="device-link" class="button" target="_blank" rel="noopener noreferrer">开启官方授权页</a>
         <p id="device-expiry" class="hint" hidden></p>
-        <p class="hint">只核准你剛才啟動的登入。精靈會在完成授權後自動接續。</p>
+        <p class="hint">只核准你刚才启动的登入。精灵会在完成授权后自动接续。</p>
       </div>
       <details id="resume-panel">
-        <summary>接續之前中斷的安裝</summary>
-        <p class="hint">請使用原本的 Google 與 Cloudflare 帳號。接續不會刪除已建立的資源。</p>
-        <label for="resume-existing">本機安裝紀錄</label>
-        <select id="resume-existing"><option value="">請選擇紀錄，或在下方貼上識別碼</option></select>
-        <label for="resume-id">安裝識別碼</label>
+        <summary>接续之前中断的安装</summary>
+        <p class="hint">请使用原本的 Google 与 Cloudflare 帐号。接续不会删除已建立的资源。</p>
+        <label for="resume-existing">本机安装纪录</label>
+        <select id="resume-existing"><option value="">请选择纪录，或在下方贴上识别码</option></select>
+        <label for="resume-id">安装识别码</label>
         <input id="resume-id" autocomplete="off" spellcheck="false" placeholder="xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx">
-        <button id="resume" type="button">載入安裝紀錄</button>
+        <button id="resume" type="button">载入安装纪录</button>
       </details>
     </section>
 
     <section id="update-section" class="compact">
       <details id="update-panel">
-      <summary><strong>已經裝過了？更新到新版本</strong>（第一次安裝請跳過，直接填下面的教會資料）</summary>
-      <p>把之前用這個精靈裝的網站，更新到最新版本。<strong>資料、帳號和服事表都不會變</strong>，只會換新網站程式和資料存取規則；也可以順便換教會 Logo、設定自訂網址。</p>
+      <summary><strong>已经装过了？更新到新版本</strong>（第一次安装请跳过，直接填下面的教会资料）</summary>
+      <p>把之前用这个精灵装的网站，更新到最新版本。<strong>资料、帐号和服事表都不会变</strong>，只会换新网站程式和资料存取规则；也可以顺便换教会 Logo、设定自订网址。</p>
       <p id="release-line" class="hint" hidden></p>
-      <button id="find-installs" type="button">尋找已安裝的網站</button>
+      <button id="find-installs" type="button">寻找已安装的网站</button>
       <div id="installs" class="installs"></div>
       <div id="update-confirm" hidden>
         <dl id="update-summary"></dl>
         <details id="update-options" class="options">
-          <summary>換教會 Logo、設定自訂網址（選填）</summary>
-          <h3>教會 Logo</h3>
+          <summary>换教会 Logo、设定自订网址（选填）</summary>
+          <h3>教会 Logo</h3>
           <p id="icon-source" class="hint"></p>
           <div class="logo-row">
-            <label>選一張圖片（PNG 或 JPG，正方形最好）<input id="logo-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
+            <label>选一张图片（PNG 或 JPG，正方形最好）<input id="logo-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
             <label>底色<input id="logo-background" type="color" value="#ffffff"></label>
           </div>
           <div id="logo-preview" class="logo-preview" hidden>
-            <figure><canvas id="logo-preview-icon" width="96" height="96"></canvas><figcaption>一般圖示</figcaption></figure>
-            <figure><canvas id="logo-preview-mask" width="96" height="96" class="round"></canvas><figcaption>Android 圓形</figcaption></figure>
+            <figure><canvas id="logo-preview-icon" width="96" height="96"></canvas><figcaption>一般图示</figcaption></figure>
+            <figure><canvas id="logo-preview-mask" width="96" height="96" class="round"></canvas><figcaption>Android 圆形</figcaption></figure>
           </div>
-          <button id="logo-reset" type="button" class="link-button">改回預設圖示</button>
-          <p class="hint">手機上已經加到主畫面的圖示不會自動換；想換的話，刪掉桌面圖示再重新加一次。</p>
-          <h3>自訂網址</h3>
-          <label>你們的網址<input id="custom-domain" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例如：staff.hope-church.org"></label>
-          <p class="hint">需要教會自己有網域，而且有人能改它的 DNS 設定。只能用子網域（例如 staff.hope-church.org），不能只填 hope-church.org。沒有的話留空，繼續用原本的 .pages.dev 網址。</p>
+          <button id="logo-reset" type="button" class="link-button">改回预设图示</button>
+          <p class="hint">手机上已经加到主画面的图示不会自动换；想换的话，删掉桌面图示再重新加一次。</p>
+          <h3>自订网址</h3>
+          <label>你们的网址<input id="custom-domain" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例如：staff.hope-church.org"></label>
+          <p class="hint">需要教会自己有网域，而且有人能改它的 DNS 设定。只能用子网域（例如 staff.hope-church.org），不能只填 hope-church.org。没有的话留空，继续用原本的 .pages.dev 网址。</p>
         </details>
-        <label class="check"><input id="confirm-update" type="checkbox"><span id="confirm-update-label">確認要更新這個網站。</span></label>
-        <div class="actions"><button id="apply-update" type="button" class="primary">開始更新</button><button id="cancel-update" type="button" class="secondary" hidden>停止更新</button></div>
-        <p class="hint">建置新版網站大約要 10–20 分鐘，這段時間舊版網站照常可以用。中途停止或失敗都不會影響舊版，重新按「開始更新」即可。</p>
+        <label class="check"><input id="confirm-update" type="checkbox"><span id="confirm-update-label">确认要更新这个网站。</span></label>
+        <div class="actions"><button id="apply-update" type="button" class="primary">开始更新</button><button id="cancel-update" type="button" class="secondary" hidden>停止更新</button></div>
+        <p class="hint">建置新版网站大约要 10–20 分钟，这段时间旧版网站照常可以用。中途停止或失败都不会影响旧版，重新按「开始更新」即可。</p>
         <ol id="update-steps" class="steps"></ol>
       </div>
       <div id="update-done" class="notice" hidden>
         <p id="update-done-message"></p>
         <div id="domain-instructions" hidden>
-          <p><strong>還差一步：設定自訂網址的 DNS</strong></p>
-          <p>請到管理 <code id="dns-zone"></code> 網域的地方（網域註冊商，或 Cloudflare 的 DNS 頁面），新增一筆記錄：</p>
-          <dl class="handoff"><dt>類型</dt><dd>CNAME</dd><dt>名稱</dt><dd><code id="dns-name"></code>（有些地方要填完整的 <code id="dns-full"></code>）</dd><dt>目標／內容</dt><dd><code id="dns-target"></code></dd></dl>
-          <p class="hint">加好之後通常幾分鐘到幾小時生效，生效前請繼續用原本的網址。想確認有沒有生效，之後重新跑一次更新就會顯示狀態。</p>
+          <p><strong>还差一步：设定自订网址的 DNS</strong></p>
+          <p>请到管理 <code id="dns-zone"></code> 网域的地方（网域注册商，或 Cloudflare 的 DNS 页面），新增一笔记录：</p>
+          <dl class="handoff"><dt>类型</dt><dd>CNAME</dd><dt>名称</dt><dd><code id="dns-name"></code>（有些地方要填完整的 <code id="dns-full"></code>）</dd><dt>目标／内容</dt><dd><code id="dns-target"></code></dd></dl>
+          <p class="hint">加好之后通常几分钟到几小时生效，生效前请继续用原本的网址。想确认有没有生效，之后重新跑一次更新就会显示状态。</p>
         </div>
-        <a id="update-website" class="button primary" target="_blank" rel="noopener noreferrer">開啟網站</a>
+        <a id="update-website" class="button primary" target="_blank" rel="noopener noreferrer">开启网站</a>
       </div>
       </details>
     </section>
 
     <section id="settings-section" aria-labelledby="settings-heading">
-      <div class="section-heading"><span class="number">2</span><h2 id="settings-heading">填寫教會資料</h2></div>
+      <div class="section-heading"><span class="number">2</span><h2 id="settings-heading">填写教会资料</h2></div>
       <form id="settings-form">
         <fieldset id="settings-fields">
           <div class="form-grid">
-            <label>教會／App 名稱<input name="appName" required maxlength="80" placeholder="例如：範例教會同工助手"></label>
-            <label>桌面圖示簡稱<input name="shortName" required maxlength="20" placeholder="例如：同工助手"></label>
-            <label>教會時區<input name="timeZone" required value="Asia/Taipei" list="timezones" maxlength="100"></label>
-            <label>資料庫地區<select name="region" id="region" required></select></label>
+            <label>教会／App 名称<input name="appName" required maxlength="80" placeholder="例如：范例教会同工助手"></label>
+            <label>桌面图示简称<input name="shortName" required maxlength="20" placeholder="例如：同工助手"></label>
+            <label>教会时区<input name="timeZone" required value="Asia/Taipei" list="timezones" maxlength="100"></label>
+            <label>资料库地区<select name="region" id="region" required></select></label>
           </div>
           <datalist id="timezones"><option value="Asia/Taipei"><option value="Asia/Hong_Kong"><option value="Asia/Tokyo"><option value="Asia/Singapore"><option value="Australia/Sydney"><option value="America/Los_Angeles"><option value="America/New_York"><option value="Europe/London"><option value="UTC"></datalist>
-          <p class="hint">時區決定排表日期；資料庫地區決定資料儲存位置，建立後不能直接搬動。兩者不同。</p>
-          <h3>教會 Logo（選填）</h3>
-          <p class="hint">會用在網站和手機桌面的圖示。不選就用預設圖示。</p>
+          <p class="hint">时区决定排表日期；资料库地区决定资料储存位置，建立后不能直接搬动。两者不同。</p>
+          <h3>教会 Logo（选填）</h3>
+          <p class="hint">会用在网站和手机桌面的图示。不选就用预设图示。</p>
           <div class="logo-row">
-            <label>選一張圖片（PNG 或 JPG，正方形最好）<input id="install-logo-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
+            <label>选一张图片（PNG 或 JPG，正方形最好）<input id="install-logo-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
             <label>底色<input id="install-logo-background" type="color" value="#ffffff"></label>
           </div>
           <div id="install-logo-preview" class="logo-preview" hidden>
-            <figure><canvas id="install-logo-preview-icon" width="96" height="96"></canvas><figcaption>一般圖示</figcaption></figure>
-            <figure><canvas id="install-logo-preview-mask" width="96" height="96" class="round"></canvas><figcaption>Android 圓形</figcaption></figure>
+            <figure><canvas id="install-logo-preview-icon" width="96" height="96"></canvas><figcaption>一般图示</figcaption></figure>
+            <figure><canvas id="install-logo-preview-mask" width="96" height="96" class="round"></canvas><figcaption>Android 圆形</figcaption></figure>
           </div>
-          <button id="install-logo-reset" type="button" class="link-button" hidden>不用 Logo，改回預設圖示</button>
-          <label>網站名稱<input name="siteName" id="site-name" required minlength="3" maxlength="40" pattern="[a-z][a-z0-9\-]*[a-z0-9]" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例如：hope-church-staff"></label>
-          <p id="site-preview" class="hint">網址會是 <strong>你填的名稱.pages.dev</strong>，同工會用這個網址登入。只能用英文小寫、數字和連字號（-），建立後不能更改。</p>
-          <h3>每週聚會</h3>
-          <p class="hint">先填目前有的就好。裝好之後，管理員可以在 App 的「我的」→「聚會設定」新增、改名、改星期或停用。</p>
+          <button id="install-logo-reset" type="button" class="link-button" hidden>不用 Logo，改回预设图示</button>
+          <label>网站名称<input name="siteName" id="site-name" required minlength="3" maxlength="40" pattern="[a-z][a-z0-9\-]*[a-z0-9]" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例如：hope-church-staff"></label>
+          <p id="site-preview" class="hint">网址会是 <strong>你填的名称.pages.dev</strong>，同工会用这个网址登入。只能用英文小写、数字和连字号（-），建立后不能更改。</p>
+          <h3>每周聚会</h3>
+          <p class="hint">先填目前有的就好。装好之后，管理员可以在 App 的「我的」→「聚会设定」新增、改名、改星期或停用。</p>
           <div id="services"></div>
-          <button id="add-service" type="button" class="secondary">新增一種聚會</button>
-          <h3>首位管理員</h3>
+          <button id="add-service" type="button" class="secondary">新增一种聚会</button>
+          <h3>首位管理员</h3>
           <div class="form-grid">
-            <label>顯示姓名<input name="adminName" required maxlength="100" autocomplete="name"></label>
-            <label>收取設定密碼信的 email<input name="adminEmail" type="email" required maxlength="254" autocomplete="email"></label>
+            <label>显示姓名<input name="adminName" required maxlength="100" autocomplete="name"></label>
+            <label>收取设定密码信的 email<input name="adminEmail" type="email" required maxlength="254" autocomplete="email"></label>
           </div>
-          <p class="hint">不在這裡設定或保存管理員密碼。安裝後使用 Firebase 官方信件設定密碼，再以 email 登入 App。</p>
-          <label>部署到哪個 Cloudflare 帳號？<select id="cloudflare-account" name="cloudflareAccountId" required><option value="">請先連接 Cloudflare</option></select></label>
-          <button id="plan" type="submit" class="primary">檢查並預覽安裝</button>
+          <p class="hint">不在这里设定或保存管理员密码。安装后使用 Firebase 官方信件设定密码，再以 email 登入 App。</p>
+          <label>部署到哪个 Cloudflare 帐号？<select id="cloudflare-account" name="cloudflareAccountId" required><option value="">请先连接 Cloudflare</option></select></label>
+          <button id="plan" type="submit" class="primary">检查并预览安装</button>
         </fieldset>
       </form>
     </section>
 
     <section id="confirmation" aria-labelledby="confirmation-heading" hidden>
-      <div class="section-heading"><span class="number">3</span><h2 id="confirmation-heading">確認這次安裝</h2></div>
+      <div class="section-heading"><span class="number">3</span><h2 id="confirmation-heading">确认这次安装</h2></div>
       <dl id="summary"></dl>
-      <p class="notice">確認後會在你的帳號建立雲端資源。帳號與網站名稱已先檢查；Google 的專案額度、條款與組織政策沒有事先查詢的方式，會在最前面建立專案、啟用 Firebase 時確認；不通過就停下，不會繼續建立資料庫、網站或管理員。精靈不開通付費方案。這個 Google 帳號若從沒用過 Firebase，中途會請你到 Firebase 官網同意條款（每個帳號只做一次，約 1 分鐘）。</p>
-      <label class="check"><input id="confirm-region" type="checkbox"><span>已核對帳號、新專案與資料地區，了解資料庫地區建立後不能直接更改。</span></label>
-      <label class="check"><input id="confirm-email" type="checkbox"><span id="email-confirm-label">確認指定管理員 email，並同意建立此帳號及寄送設定密碼信。</span></label>
-      <p id="logo-stale" class="notice" hidden>Logo 已經改過了，請再按一次上方的「檢查並預覽安裝」，確認後才能開始安裝。</p>
-      <div class="actions"><button id="apply" type="button" class="primary">確認並開始安裝</button><button id="cancel" type="button" class="secondary" hidden>停止目前步驟</button></div>
-      <p class="hint">停止不會刪除已建立的專案或資料。再次接續前，精靈會核對實際狀態。</p>
+      <p class="notice">确认后会在你的帐号建立云端资源。帐号与网站名称已先检查；Google 的专案额度、条款与组织政策没有事先查询的方式，会在最前面建立专案、启用 Firebase 时确认；不通过就停下，不会继续建立资料库、网站或管理员。精灵不开通付费方案。这个 Google 帐号若从没用过 Firebase，中途会请你到 Firebase 官网同意条款（每个帐号只做一次，约 1 分钟）。</p>
+      <label class="check"><input id="confirm-region" type="checkbox"><span>已核对帐号、新专案与资料地区，了解资料库地区建立后不能直接更改。</span></label>
+      <label class="check"><input id="confirm-email" type="checkbox"><span id="email-confirm-label">确认指定管理员 email，并同意建立此帐号及寄送设定密码信。</span></label>
+      <p id="logo-stale" class="notice" hidden>Logo 已经改过了，请再按一次上方的「检查并预览安装」，确认后才能开始安装。</p>
+      <div class="actions"><button id="apply" type="button" class="primary">确认并开始安装</button><button id="cancel" type="button" class="secondary" hidden>停止目前步骤</button></div>
+      <p class="hint">停止不会删除已建立的专案或资料。再次接续前，精灵会核对实际状态。</p>
     </section>
 
     <section id="progress-section" aria-labelledby="progress-heading" hidden>
-      <div class="section-heading"><span class="number">4</span><h2 id="progress-heading">安裝進度</h2></div>
-      <p>首次下載工具與建置可能需要一段時間。請保留 Cloud Shell 分頁；不需重新按建立專案。</p>
+      <div class="section-heading"><span class="number">4</span><h2 id="progress-heading">安装进度</h2></div>
+      <p>首次下载工具与建置可能需要一段时间。请保留 Cloud Shell 分页；不需重新按建立专案。</p>
       <ol id="steps" class="steps"></ol>
-      <p class="hint">安裝識別碼：<code id="run-id"></code> <button id="copy-id" class="link-button" type="button">複製</button></p>
-      <p class="hint">進度存在你自己的 Cloud Shell 私有目錄，不在此瀏覽器的 localStorage。</p>
+      <p class="hint">安装识别码：<code id="run-id"></code> <button id="copy-id" class="link-button" type="button">复制</button></p>
+      <p class="hint">进度存在你自己的 Cloud Shell 私有目录，不在此浏览器的 localStorage。</p>
     </section>
 
     <section id="complete" aria-labelledby="complete-heading" hidden>
-      <h2 id="complete-heading">網站已發布，接著完成登入驗收</h2>
-      <a id="website" class="button primary" target="_blank" rel="noopener noreferrer">開啟你們的同工助手</a>
-      <p>照順序完成下列 6 項，全部做到才算安裝成功：</p>
+      <h2 id="complete-heading">网站已发布，接著完成登入验收</h2>
+      <a id="website" class="button primary" target="_blank" rel="noopener noreferrer">开启你们的同工助手</a>
+      <p>照顺序完成下列 6 项，全部做到才算安装成功：</p>
       <ol class="checklist">
-        <li><label class="check"><input type="checkbox"><span>到指定管理員信箱找設定密碼的信：寄件者顯示你們的教會名稱，信箱位址是 <code id="mail-sender">noreply@….firebaseapp.com</code>，主旨裡會有一串 church- 開頭的專案代號，這是正常的。<strong>這封信多半會在垃圾郵件</strong>，找到後可標成「不是垃圾郵件」。</span></label></li>
-        <li><label class="check"><input type="checkbox"><span>用信件內的官方連結設定密碼。</span></label></li>
-        <li><label class="check"><input type="checkbox"><span>開啟網站，用管理員 email 與新密碼登入。</span></label></li>
-        <li><label class="check"><input type="checkbox"><span>到下方「服事表」→ 右上角鉛筆 → 右上角三個圖示中間的清單圖示「服事項目設定」，新增一個服事項目（例如「招待」），按右上角 ✓ 儲存。</span></label></li>
-        <li><label class="check"><input type="checkbox"><span>到「我的」→「帳號管理」按 ＋ 新增一位同工：設定牧區，並在該牧區的「參與服事」勾選剛才的服事項目，按 ✓ 儲存。</span></label></li>
-        <li><label class="check"><input type="checkbox"><span>回「服事表」→ 鉛筆 → 在某個日期按「新增服事項目」，勾選這位同工後按「新增」。按右上角「完成」、重新整理後仍看得到，就完成了。</span></label></li>
+        <li><label class="check"><input type="checkbox"><span>到指定管理员信箱找设定密码的信：寄件者显示你们的教会名称，信箱位址是 <code id="mail-sender">noreply@….firebaseapp.com</code>，主旨里会有一串 church- 开头的专案代号，这是正常的。<strong>这封信多半会在垃圾邮件</strong>，找到后可标成「不是垃圾邮件」。</span></label></li>
+        <li><label class="check"><input type="checkbox"><span>用信件内的官方连结设定密码。</span></label></li>
+        <li><label class="check"><input type="checkbox"><span>开启网站，用管理员 email 与新密码登入。</span></label></li>
+        <li><label class="check"><input type="checkbox"><span>到下方「服事表」→ 右上角铅笔 → 右上角三个图示中间的清单图示「服事项目设定」，新增一个服事项目（例如「招待」），按右上角 ✓ 储存。</span></label></li>
+        <li><label class="check"><input type="checkbox"><span>到「我的」→「帐号管理」按 ＋ 新增一位同工：设定牧区，并在该牧区的「参与服事」勾选刚才的服事项目，按 ✓ 储存。</span></label></li>
+        <li><label class="check"><input type="checkbox"><span>回「服事表」→ 铅笔 → 在某个日期按「新增服事项目」，勾选这位同工后按「新增」。按右上角「完成」、重新整理后仍看得到，就完成了。</span></label></li>
       </ol>
-      <p class="hint">資料規則可能需要幾分鐘才完全生效；剛裝好就登入失敗，請等 5 分鐘再試。寄信步驟成功只代表平台接受寄送請求，不保證送達。若沒有收到，在網站登入頁按「忘記密碼？」，輸入管理員 email 再寄一次。</p>
+      <p class="hint">资料规则可能需要几分钟才完全生效；刚装好就登入失败，请等 5 分钟再试。寄信步骤成功只代表平台接受寄送请求，不保证送达。若没有收到，在网站登入页按「忘记密码？」，输入管理员 email 再寄一次。</p>
 
-      <h3>分享給同工</h3>
-      <p>驗收完成後，把下面這段貼到同工的 LINE 群組。連結後面的 <code>?openExternalBrowser=1</code> 會讓 LINE 改用手機的瀏覽器開啟，這樣才能加到主畫面。</p>
+      <h3>分享给同工</h3>
+      <p>验收完成后，把下面这段贴到同工的 LINE 群组。连结后面的 <code>?openExternalBrowser=1</code> 会让 LINE 改用手机的浏览器开启，这样才能加到主画面。</p>
       <textarea id="share-message" class="share" rows="7" readonly></textarea>
-      <button id="copy-share" type="button" class="secondary">複製這段訊息</button>
+      <button id="copy-share" type="button" class="secondary">复制这段讯息</button>
 
       <h3>交接卡</h3>
-      <p>這個網站掛在下面這些帳號底下。<strong>請截圖或複製，存到教會的共用資料夾</strong>；以後要更新、除錯或交接給別人，都需要這些資料。</p>
+      <p>这个网站挂在下面这些帐号底下。<strong>请截图或复制，存到教会的共用资料夹</strong>；以后要更新、除错或交接给别人，都需要这些资料。</p>
       <dl id="handoff" class="handoff"></dl>
-      <button id="copy-handoff" type="button" class="secondary">複製交接資料</button>
+      <button id="copy-handoff" type="button" class="secondary">复制交接资料</button>
       <details id="cleanup">
-        <summary>這只是測試安裝？如何刪除</summary>
-        <p>只刪除下列這次建立的兩個項目，不要刪其他專案。刪除要在官方網站由你本人操作。</p>
+        <summary>这只是测试安装？如何删除</summary>
+        <p>只删除下列这次建立的两个项目，不要删其他专案。删除要在官方网站由你本人操作。</p>
         <ol>
-          <li>Cloudflare 網站 <code id="cleanup-cloudflare-id"></code>：<a id="cleanup-cloudflare" target="_blank" rel="noopener noreferrer">開啟網站專案頁</a>，按上方「Settings」，再按右側「General」，在最下方按紅字「Delete」並輸入網站名稱確認。<strong>立即永久刪除</strong>，網站會馬上消失。</li>
-          <li>Google 專案 <code id="cleanup-google-id"></code>：<a id="cleanup-google" target="_blank" rel="noopener noreferrer">開啟專案設定頁</a>，按上方「Shut down」（關閉），輸入專案 ID 後按「Shut down anyway」。Google 會保留約 <strong>30 天</strong>才永久刪除，期間可還原。</li>
+          <li>Cloudflare 网站 <code id="cleanup-cloudflare-id"></code>：<a id="cleanup-cloudflare" target="_blank" rel="noopener noreferrer">开启网站专案页</a>，按上方「Settings」，再按右侧「General」，在最下方按红字「Delete」并输入网站名称确认。<strong>立即永久删除</strong>，网站会马上消失。</li>
+          <li>Google 专案 <code id="cleanup-google-id"></code>：<a id="cleanup-google" target="_blank" rel="noopener noreferrer">开启专案设定页</a>，按上方「Shut down」（关闭），输入专案 ID 后按「Shut down anyway」。Google 会保留约 <strong>30 天</strong>才永久删除，期间可还原。</li>
         </ol>
-        <p class="hint">順序：先刪 Cloudflare 網站，再關閉 Google 專案。正式使用的站請勿刪除。</p>
+        <p class="hint">顺序：先删 Cloudflare 网站，再关闭 Google 专案。正式使用的站请勿删除。</p>
       </details>
     </section>
-    <footer>這是私人安裝工具，不是教會網站的一部分。勿分享帶有工作階段識別資訊的啟動連結。</footer>
+    <footer>这是私人安装工具，不是教会网站的一部分。勿分享带有工作阶段识别资讯的启动连结。</footer>
   </main>
 </body>
 </html>

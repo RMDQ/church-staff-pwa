@@ -9,9 +9,9 @@ let displayedPlan;
 let accountsKey;
 let regionsReady = false;
 const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
-const stateLabels = { pending: '尚未開始', running: '處理中', complete: '已完成', failed: '需要處理', paused: '已停止', waiting: '待本人操作', skipped: '已是最新，略過' };
+const stateLabels = { pending: '尚未开始', running: '处理中', complete: '已完成', failed: '需要处理', paused: '已停止', waiting: '待本人操作', skipped: '已是最新，略过' };
 // Long steps say so up front; the elapsed time shows the wizard is still alive.
-const slowSteps = { 'google-project': '可能需要數分鐘', firebase: '可能需要數分鐘', build: '可能需要十幾分鐘', publish: '可能需要幾分鐘' };
+const slowSteps = { 'google-project': '可能需要数分钟', firebase: '可能需要数分钟', build: '可能需要十几分钟', publish: '可能需要几分钟' };
 let installsKey;
 let updateKey;
 const runningSince = new Map();
@@ -48,7 +48,7 @@ function showError(error) {
     const url = new URL(error.action.url);
     if (url.protocol === 'https:' && ['console.firebase.google.com', 'console.cloud.google.com', 'dash.cloudflare.com'].includes(url.hostname)) {
       $('error-action').href = url.href;
-      $('error-action').textContent = error.action.title ?? '開啟官方設定頁';
+      $('error-action').textContent = error.action.title ?? '开启官方设定页';
       $('error-action').hidden = false;
     }
   }
@@ -63,7 +63,7 @@ function addService({ label = '', name = '', weekday = 7 } = {}) {
   if ($('services').children.length >= 20) return;
   const row = document.createElement('div');
   row.className = 'service-row';
-  for (const [key, title, value, max] of [['label', '簡稱', label, 20], ['name', '完整名稱', name, 80]]) {
+  for (const [key, title, value, max] of [['label', '简称', label, 20], ['name', '完整名称', name, 80]]) {
     const field = document.createElement('label');
     field.textContent = title;
     const input = document.createElement('input');
@@ -75,7 +75,7 @@ function addService({ label = '', name = '', weekday = 7 } = {}) {
     row.append(field);
   }
   const dayLabel = document.createElement('label');
-  dayLabel.textContent = '每週星期';
+  dayLabel.textContent = '每周星期';
   const days = document.createElement('select');
   days.dataset.field = 'weekday';
   weekdays.forEach((day, index) => days.add(new Option(`星期${day}`, String(index + 1))));
@@ -86,10 +86,10 @@ function addService({ label = '', name = '', weekday = 7 } = {}) {
   remove.type = 'button';
   remove.className = 'secondary';
   remove.textContent = '移除';
-  remove.setAttribute('aria-label', '移除此種聚會');
+  remove.setAttribute('aria-label', '移除此种聚会');
   remove.addEventListener('click', () => {
     if ($('services').children.length > 1) row.remove();
-    else showError({ message: '至少保留一種聚會' });
+    else showError({ message: '至少保留一种聚会' });
   });
   row.append(remove);
   $('services').append(row);
@@ -109,7 +109,7 @@ function updateSitePreview() {
   const value = field.value.toLowerCase();
   if (field.value !== value) field.value = value;
   const preview = $('site-preview').querySelector('strong');
-  preview.textContent = `${value || '你填的名稱'}.pages.dev`;
+  preview.textContent = `${value || '你填的名称'}.pages.dev`;
 }
 
 function renderSteps(list, steps) {
@@ -121,7 +121,7 @@ function renderSteps(list, steps) {
     label.textContent = step.label;
     const status = document.createElement('span');
     status.className = 'step-state';
-    status.textContent = stateLabels[step.status] ?? '需要核對';
+    status.textContent = stateLabels[step.status] ?? '需要核对';
     if (step.status === 'running') {
       if (!runningSince.has(`update:${step.id}`)) runningSince.set(`update:${step.id}`, Date.now());
       status.textContent += ` · ${elapsed(runningSince.get(`update:${step.id}`))}${slowSteps[step.id] ? `（${slowSteps[step.id]}）` : ''}`;
@@ -143,7 +143,7 @@ const LOGO_PICKERS = {
 };
 const logoBitmaps = { install: undefined, update: undefined };
 const logoElement = (kind, part) => $(`${LOGO_PICKERS[kind].prefix}-${part}`);
-// A first-install logo changed after 檢查並預覽安裝: the shown plan no longer matches.
+// A first-install logo changed after 检查并预览安装: the shown plan no longer matches.
 let installLogoChanged = false;
 
 function drawIcon(canvas, bitmap, size, scale, background) {
@@ -203,9 +203,9 @@ async function pickLogo(kind) {
   const file = logoElement(kind, 'file').files[0];
   if (!file) return false;
   try {
-    if (file.size > 20 * 1024 * 1024) throw new Error('圖片太大了，請換一張 20 MB 以下的圖片');
+    if (file.size > 20 * 1024 * 1024) throw new Error('图片太大了，请换一张 20 MB 以下的图片');
     try { logoBitmaps[kind] = await createImageBitmap(file); }
-    catch { throw new Error('讀不到這張圖片，請換一張 PNG 或 JPG'); }
+    catch { throw new Error('读不到这张图片，请换一张 PNG 或 JPG'); }
   } catch (error) {
     clearLogo(kind);
     throw error;
@@ -230,7 +230,7 @@ function renderUpdate(state) {
   $('find-installs').disabled = state.busy || !state.identity.googleEmail || !state.identity.accounts.length || update?.status === 'running';
   $('release-line').hidden = !state.release;
   if (state.release) {
-    $('release-line').textContent = `這次會更新到 ${state.release.version}${state.release.notes?.length ? `：${state.release.notes.join('；')}` : ''}`;
+    $('release-line').textContent = `这次会更新到 ${state.release.version}${state.release.notes?.length ? `：${state.release.notes.join('；')}` : ''}`;
   }
   const nextInstallsKey = JSON.stringify([state.installs, update?.pagesProject, update?.cloudflareAccountId]);
   if (installsKey !== nextInstallsKey) {
@@ -239,7 +239,7 @@ function renderUpdate(state) {
     if (state.installs && !state.installs.length) {
       const empty = document.createElement('p');
       empty.className = 'hint';
-      empty.textContent = '這組 Google／Cloudflare 帳號底下找不到安裝精靈裝過的網站。請確認連接的是當初安裝用的帳號（可以對照交接卡）。';
+      empty.textContent = '这组 Google／Cloudflare 帐号底下找不到安装精灵装过的网站。请确认连接的是当初安装用的帐号（可以对照交接卡）。';
       $('installs').append(empty);
     }
     for (const install of state.installs ?? []) {
@@ -258,7 +258,7 @@ function renderUpdate(state) {
       const meta = document.createElement('span');
       meta.className = 'meta';
       meta.textContent = [install.website, install.currentRelease ? `目前版本 ${install.currentRelease}` : null,
-        install.readable ? null : '舊版精靈裝的，讀不到教會設定，無法自動更新'].filter(Boolean).join(' · ');
+        install.readable ? null : '旧版精灵装的，读不到教会设定，无法自动更新'].filter(Boolean).join(' · ');
       text.append(name, document.createElement('br'), meta);
       option.append(radio, text);
       $('installs').append(option);
@@ -270,21 +270,21 @@ function renderUpdate(state) {
     if (updateKey !== key) {
       updateKey = key;
       $('update-summary').replaceChildren();
-      summaryRow('教會名稱', update.appName, $('update-summary'));
-      summaryRow('網站', update.website, $('update-summary'));
-      summaryRow('版本', `${update.currentRelease ?? '較早的版本'} → ${update.release ?? '最新版'}`, $('update-summary'));
-      summaryRow('會變更', '網站程式、資料存取規則', $('update-summary'));
-      summaryRow('不會變更', '同工帳號、服事表、所有資料', $('update-summary'));
-      $('confirm-update-label').textContent = `確認要更新 ${update.website}。`;
+      summaryRow('教会名称', update.appName, $('update-summary'));
+      summaryRow('网站', update.website, $('update-summary'));
+      summaryRow('版本', `${update.currentRelease ?? '较早的版本'} → ${update.release ?? '最新版'}`, $('update-summary'));
+      summaryRow('会变更', '网站程式、资料存取规则', $('update-summary'));
+      summaryRow('不会变更', '同工帐号、服事表、所有资料', $('update-summary'));
+      $('confirm-update-label').textContent = `确认要更新 ${update.website}。`;
       $('confirm-update').checked = false;
     }
     renderSteps($('update-steps'), update.steps);
     $('update-steps').hidden = update.status === 'ready';
     $('apply-update').hidden = update.status === 'complete';
-    $('apply-update').textContent = update.status === 'paused' ? '重新開始更新' : '開始更新';
+    $('apply-update').textContent = update.status === 'paused' ? '重新开始更新' : '开始更新';
     $('apply-update').disabled = state.busy || !$('confirm-update').checked;
     $('cancel-update').hidden = !(state.busy && update.status === 'running');
-    $('icon-source').textContent = { new: '這次更新會換成下面的新 Logo。', live: '目前沿用網站現在的圖示。要換的話，選一張教會的 Logo 圖片。', neutral: '目前是預設圖示。要換成教會 Logo 的話，選一張圖片。' }[update.iconSource] ?? '';
+    $('icon-source').textContent = { new: '这次更新会换成下面的新 Logo。', live: '目前沿用网站现在的图示。要换的话，选一张教会的 Logo 图片。', neutral: '目前是预设图示。要换成教会 Logo 的话，选一张图片。' }[update.iconSource] ?? '';
     $('logo-reset').hidden = update.iconSource === 'neutral';
     if (update.iconSource !== 'new') $('logo-preview').hidden = true;
     for (const id of ['logo-file', 'logo-background', 'logo-reset', 'custom-domain']) $(id).disabled = state.busy || update.status === 'running';
@@ -293,9 +293,9 @@ function renderUpdate(state) {
   $('update-done').hidden = update?.status !== 'complete';
   if (update?.status === 'complete') {
     $('update-done-message').textContent = [update.unchanged
-      ? `${update.website} 的網站程式已經是最新版本，不需要重新發布。`
-      : '已更新完成。同工下次打開 App（或重新整理）就會換到新版；手機上已加到桌面的 App，關掉重開一次即可。',
-    update.domain?.status === 'active' ? `自訂網址 https://${update.customDomain}/ 已經生效，可以改用這個網址分享給同工。` : ''].filter(Boolean).join(' ');
+      ? `${update.website} 的网站程式已经是最新版本，不需要重新发布。`
+      : '已更新完成。同工下次打开 App（或重新整理）就会换到新版；手机上已加到桌面的 App，关掉重开一次即可。',
+    update.domain?.status === 'active' ? `自订网址 https://${update.customDomain}/ 已经生效，可以改用这个网址分享给同工。` : ''].filter(Boolean).join(' ');
     $('update-website').href = update.website;
   }
   const dns = update?.status === 'complete' && update.domain && update.domain.status !== 'active' ? update.domain.cname : null;
@@ -312,11 +312,11 @@ function render(state) {
   current = state;
   $('demo-banner').hidden = !state.demo;
   if (state.busy) busySince ??= Date.now(); else busySince = undefined;
-  const message = state.message || '先連接 Google 與 Cloudflare 帳號';
-  $('status').textContent = busySince ? `${message}（已經過 ${elapsed(busySince)}）` : message;
-  $('google-identity').textContent = state.identity.googleEmail ? `已連接：${state.identity.googleEmail}` : '尚未連接';
+  const message = state.message || '先连接 Google 与 Cloudflare 帐号';
+  $('status').textContent = busySince ? `${message}（已经过 ${elapsed(busySince)}）` : message;
+  $('google-identity').textContent = state.identity.googleEmail ? `已连接：${state.identity.googleEmail}` : '尚未连接';
   $('google-switch').hidden = !state.identity.googleEmail || Boolean(state.plan);
-  $('cloudflare-identity').textContent = state.identity.cloudflareEmail ? `已連接：${state.identity.cloudflareEmail}` : '尚未連接';
+  $('cloudflare-identity').textContent = state.identity.cloudflareEmail ? `已连接：${state.identity.cloudflareEmail}` : '尚未连接';
   $('connect-google').disabled = state.busy;
   $('connect-cloudflare').disabled = state.busy;
   $('resume').disabled = state.busy;
@@ -330,8 +330,8 @@ function render(state) {
     $('device-expiry').hidden = left === undefined;
     if (left !== undefined) {
       $('device-expiry').textContent = left > 0
-        ? `請在 ${Math.floor(left / 60)} 分 ${String(left % 60).padStart(2, '0')} 秒內按 Authorize。逾時請重新按「連接 Cloudflare」取得新代碼。`
-        : '這組代碼已過期。請按「連接 Cloudflare」取得新代碼，不要再授權舊代碼。';
+        ? `请在 ${Math.floor(left / 60)} 分 ${String(left % 60).padStart(2, '0')} 秒内按 Authorize。逾时请重新按「连接 Cloudflare」取得新代码。`
+        : '这组代码已过期。请按「连接 Cloudflare」取得新代码，不要再授权旧代码。';
     }
   }
   if (!regionsReady) {
@@ -341,7 +341,7 @@ function render(state) {
   const nextAccountsKey = JSON.stringify(state.identity.accounts);
   if (accountsKey !== nextAccountsKey) {
     const selected = $('cloudflare-account').value;
-    $('cloudflare-account').replaceChildren(new Option('請選擇帳號', ''));
+    $('cloudflare-account').replaceChildren(new Option('请选择帐号', ''));
     for (const account of state.identity.accounts) $('cloudflare-account').add(new Option(account.name || account.id, account.id));
     if (state.identity.accounts.some((account) => account.id === selected)) $('cloudflare-account').value = selected;
     else if (state.identity.accounts.length === 1) $('cloudflare-account').value = state.identity.accounts[0].id;
@@ -354,17 +354,17 @@ function render(state) {
     const plan = state.plan;
     if (displayedPlan !== plan.digest) {
       $('summary').replaceChildren();
-      summaryRow('教會名稱', plan.churchConfig.appName);
-      summaryRow('Google 帳號', plan.googleEmail);
-      summaryRow('新專案名稱', plan.projectId);
-      summaryRow('Cloudflare 帳號', state.identity.accounts.find((account) => account.id === plan.cloudflareAccountId)?.name || plan.cloudflareAccountId);
-      summaryRow('網站', `${plan.pagesProject}.pages.dev（名稱被其他人用過的話，Cloudflare 會在後面加幾個字，實際網址以完成頁為準）`);
-      summaryRow('資料儲存地區', `${state.regions.find(([id]) => id === plan.region)?.[1] || ''} · ${plan.region}`);
-      summaryRow('教會 Logo', plan.icons ? '自訂 Logo' : '預設圖示');
-      summaryRow('教會時區', plan.churchConfig.timeZone);
-      summaryRow('每週聚會', plan.churchConfig.services.map((service) => `${service.name}（週${weekdays[service.weekday - 1]}）`).join('、'));
-      summaryRow('指定管理員', `${plan.admin.name} · ${plan.admin.email}`);
-      $('email-confirm-label').textContent = `確認 ${plan.admin.email} 是指定管理員，同意建立此帳號及寄送設定密碼信。`;
+      summaryRow('教会名称', plan.churchConfig.appName);
+      summaryRow('Google 帐号', plan.googleEmail);
+      summaryRow('新专案名称', plan.projectId);
+      summaryRow('Cloudflare 帐号', state.identity.accounts.find((account) => account.id === plan.cloudflareAccountId)?.name || plan.cloudflareAccountId);
+      summaryRow('网站', `${plan.pagesProject}.pages.dev（名称被其他人用过的话，Cloudflare 会在后面加几个字，实际网址以完成页为准）`);
+      summaryRow('资料储存地区', `${state.regions.find(([id]) => id === plan.region)?.[1] || ''} · ${plan.region}`);
+      summaryRow('教会 Logo', plan.icons ? '自订 Logo' : '预设图示');
+      summaryRow('教会时区', plan.churchConfig.timeZone);
+      summaryRow('每周聚会', plan.churchConfig.services.map((service) => `${service.name}（周${weekdays[service.weekday - 1]}）`).join('、'));
+      summaryRow('指定管理员', `${plan.admin.name} · ${plan.admin.email}`);
+      $('email-confirm-label').textContent = `确认 ${plan.admin.email} 是指定管理员，同意建立此帐号及寄送设定密码信。`;
       $('confirm-region').checked = false;
       $('confirm-email').checked = false;
       displayedPlan = plan.digest;
@@ -380,7 +380,7 @@ function render(state) {
       const status = document.createElement('span');
       status.className = 'step-state';
       status.textContent = step.status === 'waiting' && laterCodes.has(state.error?.code)
-        ? '稍後接續' : stateLabels[step.status] ?? '需要核對';
+        ? '稍后接续' : stateLabels[step.status] ?? '需要核对';
       if (step.status === 'running') {
         if (!runningSince.has(step.id)) runningSince.set(step.id, Date.now());
         status.textContent += ` · ${elapsed(runningSince.get(step.id))}${slowSteps[step.id] ? `（${slowSteps[step.id]}）` : ''}`;
@@ -389,8 +389,8 @@ function render(state) {
       $('steps').append(item);
     }
     $('apply').textContent = state.status === 'paused'
-      ? laterCodes.has(state.error?.code) ? '稍後接續安裝' : '核對後接續安裝'
-      : '確認並開始安裝';
+      ? laterCodes.has(state.error?.code) ? '稍后接续安装' : '核对后接续安装'
+      : '确认并开始安装';
     $('apply').hidden = state.status === 'complete';
     $('cancel').hidden = !state.busy;
   }
@@ -421,15 +421,15 @@ function handoffRows(state) {
   const plan = state.plan;
   const account = state.identity.accounts.find((item) => item.id === plan.cloudflareAccountId);
   return [
-    ['網站網址', state.website ?? `https://${plan.pagesProject}.pages.dev/`],
-    ['教會名稱', plan.churchConfig.appName],
-    ['首位管理員', `${plan.admin.name} · ${plan.admin.email}`],
-    ['Google 帳號', plan.googleEmail],
-    ['Google 專案 ID', plan.projectId],
-    ['Cloudflare 帳號', [account?.name, state.identity.cloudflareEmail].filter(Boolean).join(' · ') || plan.cloudflareAccountId],
-    ['Cloudflare 網站名稱', plan.pagesProject],
-    ['安裝識別碼', plan.runId],
-    ['安裝日期', new Date().toLocaleDateString('zh-TW')],
+    ['网站网址', state.website ?? `https://${plan.pagesProject}.pages.dev/`],
+    ['教会名称', plan.churchConfig.appName],
+    ['首位管理员', `${plan.admin.name} · ${plan.admin.email}`],
+    ['Google 帐号', plan.googleEmail],
+    ['Google 专案 ID', plan.projectId],
+    ['Cloudflare 帐号', [account?.name, state.identity.cloudflareEmail].filter(Boolean).join(' · ') || plan.cloudflareAccountId],
+    ['Cloudflare 网站名称', plan.pagesProject],
+    ['安装识别码', plan.runId],
+    ['安装日期', new Date().toLocaleDateString('zh-TW')],
   ];
 }
 
@@ -437,12 +437,12 @@ function shareMessage(state) {
   const url = new URL(state.website ?? `https://${state.plan.pagesProject}.pages.dev/`);
   url.searchParams.set('openExternalBrowser', '1');
   return [
-    `「${state.plan.churchConfig.appName}」上線了！`,
-    `登入網址：${url.href}`,
-    '帳號是管理員幫你建立的 Email。忘記密碼的話，在登入頁按「忘記密碼？」。',
-    '第一次打開後，請加到手機主畫面，之後就像 App 一樣點開：',
-    '・iPhone：用 Safari 開啟，按下方工具列的「分享」→「加入主畫面」（下方只有網址列的話，先按網址列右邊的「⋯」→「分享」）',
-    '・Android：用 Chrome 開啟，按右上角「⋮」→「安裝應用程式」或「加到主畫面」',
+    `「${state.plan.churchConfig.appName}」上线了！`,
+    `登入网址：${url.href}`,
+    '帐号是管理员帮你建立的 Email。忘记密码的话，在登入页按「忘记密码？」。',
+    '第一次打开后，请加到手机主画面，之后就像 App 一样点开：',
+    '・iPhone：用 Safari 开启，按下方工具列的「分享」→「加入主画面」（下方只有网址列的话，先按网址列右边的「⋯」→「分享」）',
+    '・Android：用 Chrome 开启，按右上角「⋮」→「安装应用程式」或「加到主画面」',
   ].join('\n');
 }
 
@@ -459,7 +459,7 @@ function renderHandoff(state) {
 async function copyText(text, button) {
   await navigator.clipboard.writeText(text);
   const original = button.textContent;
-  button.textContent = '已複製';
+  button.textContent = '已复制';
   setTimeout(() => { button.textContent = original; }, 2_000);
 }
 
@@ -484,13 +484,13 @@ async function refresh() {
       $('fatal').hidden = false;
       $('fatal').textContent = error.message;
       document.querySelectorAll('button').forEach((button) => { button.disabled = true; });
-    } else showError({ message: '與 Cloud Shell 的連線暫時中斷。請保持分頁開啟；恢復連線後會重新讀取進度，不會另建專案。' });
+    } else showError({ message: '与 Cloud Shell 的连线暂时中断。请保持分页开启；恢复连线后会重新读取进度，不会另建专案。' });
   } finally { fetching = false; }
 }
 
 async function loadRuns() {
   const runs = await request('/api/runs');
-  $('resume-existing').replaceChildren(new Option('請選擇紀錄，或在下方貼上識別碼', ''));
+  $('resume-existing').replaceChildren(new Option('请选择纪录，或在下方贴上识别码', ''));
   for (const run of runs) $('resume-existing').add(new Option(`${run.appName} · ${run.projectId}`, run.runId));
 }
 
@@ -546,7 +546,7 @@ $('logo-reset').addEventListener('click', () => perform(async () => {
   clearLogo('update');
   await request('/api/update/icons', { reset: true });
 }));
-// A first install's logo is only drawn here; it is sent with 檢查並預覽安裝.
+// A first install's logo is only drawn here; it is sent with 检查并预览安装.
 $('install-logo-file').addEventListener('change', () => perform(async () => {
   try { await pickLogo('install'); } finally { markInstallLogoChanged(); }
 }));
@@ -556,7 +556,7 @@ $('resume-existing').addEventListener('change', () => { $('resume-id').value = $
 $('resume').addEventListener('click', () => perform(() => request('/api/resume', { runId: $('resume-id').value.trim() })));
 $('copy-id').addEventListener('click', () => perform(async () => {
   await navigator.clipboard.writeText(current.plan.runId);
-  $('copy-id').textContent = '已複製';
+  $('copy-id').textContent = '已复制';
 }));
 
 // The link token is kept in this tab's sessionStorage until the server has
@@ -615,10 +615,10 @@ async function start() {
     // The first open of a Web Preview goes through Google's sign-in check,
     // which returns to "/" and drops the link's code. The second open works.
     $('fatal').textContent = error.status === 401 && !token && !stored.get(TOKEN_KEY)
-      ? '還差一步：Google 剛才先確認了你的帳號，所以這次沒有帶到私人連結的代碼。請回到 Cloud Shell 分頁，再點一次終端機裡同一個連結，第二次就會直接開啟。這個分頁可以關掉。'
+      ? '还差一步：Google 刚才先确认了你的帐号，所以这次没有带到私人连结的代码。请回到 Cloud Shell 分页，再点一次终端机里同一个连结，第二次就会直接开启。这个分页可以关掉。'
       : error.status === 401 && !token
-        ? '瀏覽器沒有保留精靈的登入資訊。請用同一個瀏覽器、不要用無痕視窗，回到 Cloud Shell 分頁再點一次連結。已建立的安裝紀錄不會刪除。'
-        : error.message || '無法開啟私人精靈，請重新執行啟動命令';
+        ? '浏览器没有保留精灵的登入资讯。请用同一个浏览器、不要用无痕视窗，回到 Cloud Shell 分页再点一次连结。已建立的安装纪录不会删除。'
+        : error.message || '无法开启私人精灵，请重新执行启动命令';
     document.querySelectorAll('button').forEach((button) => { button.disabled = true; });
   }
 }

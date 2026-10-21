@@ -54,10 +54,10 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
     super.dispose();
   }
 
-  /// 編輯權限，一項一項給。
+  /// 编辑权限，一项一项给。
   ///
-  /// 管理員本來就隱含全部，所以那個情況下勾選框顯示為已勾且不可動 —— 讓它可勾
-  /// 只會讓人以為「取消勾選就能收回」，但實際上 role 才是決定權。
+  /// 管理员本来就隐含全部，所以那个情况下勾选框显示为已勾且不可动 —— 让它可勾
+  /// 只会让人以为「取消勾选就能收回」，但实际上 role 才是决定权。
   Widget _buildGroupSection() {
     final isAdmin = _selectedRole == UserRole.admin;
     return Column(
@@ -72,8 +72,8 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-        // 沒開行事曆的教會不列「行事曆編輯」：勾了也沒有地方用。已經有的
-        // 權限照樣顯示，才看得到、拿得掉。
+        // 没开行事历的教会不列「行事历编辑」：勾了也没有地方用。已经有的
+        // 权限照样显示，才看得到、拿得掉。
         for (final group in UserGroup.values)
           if (group != UserGroup.calendarEditors ||
               ChurchConfig.current.features.calendar ||
@@ -102,7 +102,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
 
   void _addZone() {
     final usedTypes = _zones.map((zone) => zone.serviceType).toSet();
-    // 停用的聚會不再給新的牧區；已經有的照樣顯示，才改得了、拿得掉。
+    // 停用的聚会不再给新的牧区；已经有的照样显示，才改得了、拿得掉。
     final availableTypes = ServiceType.active
         .where((type) => !usedTypes.contains(type))
         .toList();
@@ -135,7 +135,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
     });
   }
 
-  /// 沒填代稱就用姓名，跟安裝精靈建立首位管理員時一樣。
+  /// 没填代称就用姓名，跟安装精灵建立首位管理员时一样。
   String get _username {
     final value = _usernameController.text.trim();
     return value.isEmpty ? _nameController.text.trim() : value;
@@ -187,7 +187,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
           Navigator.pop(context);
         }
       } catch (e, st) {
-        log('儲存使用者資料失敗', error: e, stackTrace: st);
+        log('储存使用者资料失败', error: e, stackTrace: st);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -205,7 +205,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 管理員不能改自己的角色：唯一的管理員把自己降級就沒人能管了。
+    // 管理员不能改自己的角色：唯一的管理员把自己降级就没人能管了。
     final isSelf =
         widget.user != null &&
         widget.user!.id == context.watch<SessionProvider>().currentUser?.id;
@@ -270,8 +270,8 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _usernameController,
-                      // 只是顯示在個人頁的 @代稱；登入一律用 Email。以前叫「顯示帳號
-                      // (ID)」而且有 Email 就必填，同工看不懂要填什麼。
+                      // 只是显示在个人页的 @代称；登入一律用 Email。以前叫「显示帐号
+                      // (ID)」而且有 Email 就必填，同工看不懂要填什么。
                       decoration: const InputDecoration(
                         labelText: '账号代称（选填）',
                         border: OutlineInputBorder(),

@@ -64,12 +64,12 @@ scripts/node_modules/
 # Firebase CLI cache
 .firebase/
 
-# 本機專用：教會的真實同工名單、綽號對照、產生出來的 prompt。
-# repo 是公開的，這些個資一律不進版控。
+# 本机专用：教会的真实同工名单、绰号对照、产生出来的 prompt。
+# repo 是公开的，这些个资一律不进版控。
 .local/
 
-# 部署流程在 build 前生出來的（CI 與 Dockerfile 都會寫），內容是當次 build 的
-# SHA / 時間戳，不該被任何人的本機執行結果蓋進版控。
+# 部署流程在 build 前生出来的（CI 与 Dockerfile 都会写），内容是当次 build 的
+# SHA / 时间戳，不该被任何人的本机执行结果盖进版控。
 /web/version.json
 
 # Private deployment artwork staged locally before Flutter builds
@@ -78,12 +78,12 @@ scripts/node_modules/
 # Firestore rules tests (Node)
 firestore-tests/node_modules/
 
-# Pages Functions tests（目前沒有相依套件，先擋著）
+# Pages Functions tests（目前没有相依套件，先挡著）
 functions-tests/node_modules/
 
-# wrangler 的本機快取，裡面有 account id
+# wrangler 的本机快取，里面有 account id
 .wrangler/
 
 # AI Agent Context
-# AGENTS.md 是給協作者/agent 看的專案規範，要進版控，故不列入忽略。
+# AGENTS.md 是给协作者/agent 看的专案规范，要进版控，故不列入忽略。
 GEMINI.md

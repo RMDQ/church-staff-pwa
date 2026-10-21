@@ -1,11 +1,11 @@
-// 安裝精靈「建立首位管理員」步驟，對 Firestore + Auth emulator 實跑。
+// 安装精灵「建立首位管理员」步骤，对 Firestore + Auth emulator 实跑。
 //
 //   cd firestore-tests && npm test
 //
-// Auth 帳號建立、查詢，以及 Firestore 的 create-only commit 都打真的 emulator；
-// emulator 沒有的管理 API（Resource Manager、Auth 設定、資料庫中繼資料）才用
-// 固定回應代替。規則用與安裝器相同的 renderRules 產生，驗證這份 profile 在規則
-// 眼中真的是 admin，而一般帳號不是。
+// Auth 帐号建立、查询，以及 Firestore 的 create-only commit 都打真的 emulator；
+// emulator 没有的管理 API（Resource Manager、Auth 设定、资料库中继资料）才用
+// 固定回应代替。规则用与安装器相同的 renderRules 产生，验证这份 profile 在规则
+// 眼中真的是 admin，而一般帐号不是。
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -25,9 +25,9 @@ const OPERATOR = 'operator@example.invalid';
 // Separate project so this file never touches rules.test.js data.
 const plan = {
   ...createInstallationPlan({
-    appName: '測試教會', shortName: '同工助手', siteName: 'test-church-staff', timeZone: 'Asia/Taipei', region: 'asia-east1',
-    services: [{ label: '主日', name: '主日崇拜', weekday: 7 }, { label: '週間', name: '週間聚會', weekday: 3 }],
-    adminName: '測試管理員', adminEmail: 'admin@example.invalid', cloudflareAccountId: '0'.repeat(32),
+    appName: '测试教会', shortName: '同工助手', siteName: 'test-church-staff', timeZone: 'Asia/Taipei', region: 'asia-east1',
+    services: [{ label: '主日', name: '主日崇拜', weekday: 7 }, { label: '周间', name: '周间聚会', weekday: 3 }],
+    adminName: '测试管理员', adminEmail: 'admin@example.invalid', cloudflareAccountId: '0'.repeat(32),
   }, { googleEmail: OPERATOR, accounts: [{ id: '0'.repeat(32) }] }, { runId: '5f6e7d8c-9b0a-4c1d-8e2f-3a4b5c6d7e8f', sourceRevision: 'emulator' }),
   activationEmailConfirmed: true,
 };
@@ -112,7 +112,7 @@ test('creates the Auth user and create-only admin profile that the generated rul
   assert.equal(profile.role, 'admin');
   assert.equal(profile.email, 'admin@example.invalid');
   // Sign-in uses the email; the username is only a label.
-  assert.equal(profile.username, '測試管理員');
+  assert.equal(profile.username, '测试管理员');
   assert.deepEqual(profile.zoneTypes, ['service1', 'service2']);
 
   // Resuming the same step recognises its own profile and writes nothing new.
@@ -125,7 +125,7 @@ test('creates the Auth user and create-only admin profile that the generated rul
   await assertSucceeds(setDoc(doc(admin, 'users', 'staff-1'), staff));
   await assertFails(setDoc(doc(member, 'users', 'someone-else'), { ...staff, id: 'someone-else', role: 'admin' }));
   // Once other people's data exists, resuming refuses rather than touching it.
-  await assert.rejects(google.execute('admin', step), /其他使用者資料/);
+  await assert.rejects(google.execute('admin', step), /其他使用者资料/);
 
 });
 
@@ -137,16 +137,16 @@ test('refuses to adopt a project that already has another Auth account', async (
   });
   assert.equal(created.status, 200);
   const google = createGoogleInstaller({ fetchImpl, command, delay: async () => {} });
-  await assert.rejects(google.execute('admin', context()), /其他 Firebase Auth 帳號/);
+  await assert.rejects(google.execute('admin', context()), /其他 Firebase Auth 帐号/);
   assert.equal((await readProfile()).exists(), false);
 });
 
 test('never overwrites a profile that appeared outside this installation', async () => {
   await resetEmulators();
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
-    await setDoc(doc(ctx.firestore(), 'users', adminUid), { id: adminUid, name: '別人', email: 'other@example.invalid', username: '別人', role: 'member', zones: [] });
+    await setDoc(doc(ctx.firestore(), 'users', adminUid), { id: adminUid, name: '别人', email: 'other@example.invalid', username: '别人', role: 'member', zones: [] });
   });
   const google = createGoogleInstaller({ fetchImpl, command, delay: async () => {} });
-  await assert.rejects(google.execute('admin', context()), /其他使用者資料|不覆寫/);
+  await assert.rejects(google.execute('admin', context()), /其他使用者资料|不覆写/);
   assert.equal((await readProfile()).data().role, 'member');
 });

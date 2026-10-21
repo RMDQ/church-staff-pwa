@@ -29,20 +29,20 @@ const settle = async (manager) => { while (manager.snapshot().busy) await new Pr
 
 test('update finds the installed site, rebuilds it from its own config and publishes it', async (t) => {
   const { manager, calls } = await fixture(t);
-  await assert.rejects(manager.findInstalls(), /請先連接/);
+  await assert.rejects(manager.findInstalls(), /请先连接/);
   await manager.connectGoogle();
   await manager.connectCloudflare();
   await manager.findInstalls();
   const [site] = manager.snapshot().installs;
-  assert.deepEqual(site, { accountId: '0123456789abcdef0123456789abcdef', accountName: '離線示範帳號', pagesProject: 'grace-church-staff',
-    website: 'https://grace-church-staff.pages.dev/', appName: '恩典教會同工助手', readable: true, currentRelease: '2026.9.1' });
+  assert.deepEqual(site, { accountId: '0123456789abcdef0123456789abcdef', accountName: '离线示范帐号', pagesProject: 'grace-church-staff',
+    website: 'https://grace-church-staff.pages.dev/', appName: '恩典教会同工助手', readable: true, currentRelease: '2026.9.1' });
 
-  await assert.rejects(manager.planUpdate({ pagesProject: 'someone-else', accountId: site.accountId }), /尋找已安裝的網站/);
+  await assert.rejects(manager.planUpdate({ pagesProject: 'someone-else', accountId: site.accountId }), /寻找已安装的网站/);
   await manager.planUpdate({ pagesProject: site.pagesProject, accountId: site.accountId });
   assert.equal(manager.snapshot().update.status, 'ready');
   assert.equal(manager.snapshot().update.release, '2026.10.1');
 
-  await assert.rejects(manager.applyUpdate({ confirm: 'wrong' }), /勾選確認/);
+  await assert.rejects(manager.applyUpdate({ confirm: 'wrong' }), /勾选确认/);
   assert.deepEqual(calls, []);
   await manager.applyUpdate({ confirm: 'grace-church-staff' });
   const { update } = manager.snapshot();
@@ -50,7 +50,7 @@ test('update finds the installed site, rebuilds it from its own config and publi
   assert.deepEqual(update.steps.map((step) => step.id), UPDATE_STEPS.map((step) => step.id).filter((id) => id !== 'domain'));
   assert.ok(update.steps.every((step) => step.status === 'complete'));
   // The build gets the live build version (to skip identical rebuilds) and the site's own config.
-  assert.deepEqual(calls, ['inspect', ['build', 'installer-demo-old', '恩典教會同工助手'], 'rules', 'publish']);
+  assert.deepEqual(calls, ['inspect', ['build', 'installer-demo-old', '恩典教会同工助手'], 'rules', 'publish']);
   // An update is not an installation: nothing to resume, no install record.
   assert.deepEqual(await manager.listRuns(), []);
   assert.equal(manager.snapshot().plan, undefined);
@@ -63,7 +63,7 @@ test('a site whose config cannot be read is listed but cannot be updated', async
   await manager.findInstalls();
   const [site] = manager.snapshot().installs;
   assert.equal(site.readable, false);
-  await assert.rejects(manager.planUpdate({ pagesProject: site.pagesProject, accountId: site.accountId }), /讀不到教會設定/);
+  await assert.rejects(manager.planUpdate({ pagesProject: site.pagesProject, accountId: site.accountId }), /读不到教会设定/);
   assert.deepEqual(calls, []);
 });
 
@@ -115,8 +115,8 @@ async function planned(t, options) {
 test('a new logo is checked, then handed to the build as five PNGs of the right sizes', async (t) => {
   const { manager } = await planned(t);
   assert.equal(manager.snapshot().update.iconSource, 'neutral');
-  await assert.rejects(manager.setUpdateIcons({ icons: encodedIcons({ ...SIZES, 'icons/Icon-512.png': 256 }) }), /Logo 圖片轉換失敗/);
-  await assert.rejects(manager.setUpdateIcons({ icons: { ...encodedIcons(), 'favicon.png': 'not base64!' } }), /Logo 圖片轉換失敗/);
+  await assert.rejects(manager.setUpdateIcons({ icons: encodedIcons({ ...SIZES, 'icons/Icon-512.png': 256 }) }), /Logo 图片转换失败/);
+  await assert.rejects(manager.setUpdateIcons({ icons: { ...encodedIcons(), 'favicon.png': 'not base64!' } }), /Logo 图片转换失败/);
   await manager.setUpdateIcons({ icons: encodedIcons() });
   assert.equal(manager.snapshot().update.iconSource, 'new');
   await manager.setUpdateIcons({ reset: true });
@@ -151,7 +151,7 @@ test('the build gets the new logo, else the icons the site already serves', asyn
 test('a custom domain must be a subdomain, and adds the domain step with DNS instructions', async (t) => {
   const { manager, calls, site } = await planned(t);
   for (const bad of ['hope-church.org', 'grace.pages.dev', 'staff..hope.org', 'staff.hope-church.org/admin', '10.0.0.1']) {
-    await assert.rejects(manager.applyUpdate({ confirm: site.pagesProject, customDomain: bad }), /子網域/, bad);
+    await assert.rejects(manager.applyUpdate({ confirm: site.pagesProject, customDomain: bad }), /子网域/, bad);
   }
   assert.deepEqual(calls, []);
   await manager.applyUpdate({ confirm: site.pagesProject, customDomain: ' Staff.Hope-Church.org ' });

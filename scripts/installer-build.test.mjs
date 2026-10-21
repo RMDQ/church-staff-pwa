@@ -86,7 +86,7 @@ test('repeat of this run has stable build version and other runs cannot overwrit
   const second = await buildCoreDeployment(context, options);
   assert.equal(first.buildVersion, second.buildVersion);
   context.plan.runId = 'different-run-1234';
-  await assert.rejects(buildCoreDeployment(context, options), /禁止覆寫/);
+  await assert.rejects(buildCoreDeployment(context, options), /禁止覆写/);
 });
 
 test('incomplete Flutter output and missing Worker are rejected despite successful exit status', async (t) => {
@@ -111,7 +111,7 @@ test('core-only, Firebase project match and pinned tool versions fail before bui
   await assert.rejects(buildCoreDeployment(context, options), /核心功能/);
   context.plan.churchConfig.features.calendar = false;
   context.transient.firebaseConfig = { ...FIREBASE, FIREBASE_PROJECT_ID: 'not-this-run' };
-  await assert.rejects(buildCoreDeployment(context, options), /不屬於本次/);
+  await assert.rejects(buildCoreDeployment(context, options), /不属于本次/);
   assert.equal(calls.length, 0);
   context.transient.firebaseConfig = FIREBASE;
   // Google returns the Firebase JS SDK shape; build must accept it unchanged.
@@ -128,7 +128,7 @@ test('Cloud Shell launcher pins official tools, checks hashes and does not log i
   assert.match(script, /sha256sum --check --status/);
   assert.match(script, /sha512sum --check --status/);
   assert.match(script, /curl[^\n]*--progress-bar/);
-  assert.doesNotMatch(script, /已經過.*秒/);
+  assert.doesNotMatch(script, /已经过.*秒/);
   assert.match(script, /npm install[^\n]*--ignore-scripts/);
   assert.match(script, /INSTALLER_BUILD_ROOT="\$TOOLS\/builds"/);
   assert.match(script, /install-core\.mjs" --cloud-shell/);

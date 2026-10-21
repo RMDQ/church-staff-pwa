@@ -24,7 +24,7 @@ class FirebaseAuthRepository implements AuthRepository {
     // Don't catch — let FirebaseAuthException propagate so SessionProvider can
     // map it to a user-friendly message. Returning null here would erase the
     // distinction between "wrong password" and "network unreachable" and
-    // make every failure look like '帳號或密碼錯誤'.
+    // make every failure look like '帐号或密码错误'.
     final credential = await _auth.signInWithEmailAndPassword(
       email: email.trim(),
       password: password,
@@ -92,23 +92,23 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {
-    // signOut 先做：它才是真正終結 session 的那一步。反過來的話，本地快取
-    // 清除一失敗（例如儲存被瀏覽器封鎖）就會讓 signOut 根本不會執行，
-    // 而使用者已經看到自己回到登入畫面 —— 共用裝置上等於把帳號留給下一個人。
+    // signOut 先做：它才是真正终结 session 的那一步。反过来的话，本地快取
+    // 清除一失败（例如储存被浏览器封锁）就会让 signOut 根本不会执行，
+    // 而使用者已经看到自己回到登入画面 —— 共用装置上等于把帐号留给下一个人。
     await _auth.signOut();
 
-    // 本地快取清除屬於盡力而為：Auth session 已經沒了，就算這裡失敗，
-    // 下次啟動時的背景 profile 更新也會發現 session 失效並登出。
+    // 本地快取清除属于尽力而为：Auth session 已经没了，就算这里失败，
+    // 下次启动时的背景 profile 更新也会发现 session 失效并登出。
     try {
       await _cachedUserStorage.clear();
     } catch (e, st) {
-      log('清除本地使用者快取失敗（session 已登出）', error: e, stackTrace: st);
+      log('清除本地使用者快取失败（session 已登出）', error: e, stackTrace: st);
     }
   }
 
   @override
   Future<void> sendPasswordResetEmail(String email) async {
-    // 信件用 Firebase 內建範本；不設語言的話是英文，同工看到會以為是垃圾信。
+    // 信件用 Firebase 内建范本；不设语言的话是英文，同工看到会以为是垃圾信。
     await _auth.setLanguageCode('zh-TW');
     await _auth.sendPasswordResetEmail(email: email.trim());
   }
@@ -138,7 +138,7 @@ class FirebaseAuthRepository implements AuthRepository {
         app: secondaryApp,
       );
 
-      // 使用 User 物件中攜帶的完整 Email
+      // 使用 User 物件中携带的完整 Email
       final credential = await secondaryAuth.createUserWithEmailAndPassword(
         email: user.email.trim(),
         password: password,
@@ -150,7 +150,7 @@ class FirebaseAuthRepository implements AuthRepository {
       await _usersCollection.doc(uid).set(newUser.toJson());
     } catch (e) {
       log('Add User Error: $e');
-      throw Exception('無法新增使用者: $e');
+      throw Exception('无法新增使用者: $e');
     } finally {
       await secondaryApp?.delete();
     }
@@ -184,7 +184,7 @@ class FirebaseAuthRepository implements AuthRepository {
         return;
       } catch (e) {
         log('Update User Error: $e');
-        throw Exception('無法建立登入帳號: $e');
+        throw Exception('无法建立登入帐号: $e');
       } finally {
         await secondaryApp?.delete();
       }

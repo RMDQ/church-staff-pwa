@@ -170,7 +170,7 @@ export function churchConfig(env) {
     return config;
   } catch (error) {
     console.error('invalid church configuration', error.message);
-    throw new HttpError(500, '教會設定有誤，請聯絡管理員');
+    throw new HttpError(500, '教会设定有误，请联络管理员');
   }
 }
 
@@ -181,7 +181,7 @@ export function checkinConfig(env) {
 
 export function requireFeature(env, feature) {
   if (churchConfig(env).features[feature] !== true) {
-    throw new HttpError(403, '此教會尚未啟用這項功能');
+    throw new HttpError(403, '此教会尚未启用这项功能');
   }
 }
 

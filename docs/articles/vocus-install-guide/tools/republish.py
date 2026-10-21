@@ -42,7 +42,7 @@ print('body ok', n_img, 'images')
 time.sleep(5)
 def btn(label):
     return ev("(() => { const b=[...document.querySelectorAll('button')].filter(b=>b.innerText.trim()===%r); if(!b.length) return null; b[b.length-1].click(); return b.length; })()" % label)
-btn('調整發佈設定'); time.sleep(5)
+btn('调整发布设定'); time.sleep(5)
 btn('下一步'); time.sleep(3); ev("window.scrollTo(0,0)"); time.sleep(1)
 # Clear 上篇 with its own clear icon; vocus's layout moves, so no fixed coordinates.
 CLEAR="(() => { const i=document.getElementById('react-select-3-input')?.closest('.css-b62m3t-container')?.querySelector('.icon-error_fill'); if(!i) return null; i.scrollIntoView({block:'center'}); const b=i.getBoundingClientRect(); return [b.x+b.width/2,b.y+b.height/2]; })()"
@@ -53,5 +53,5 @@ assert not ev("document.body.innerText.includes('十架救恩')"), 'previous lin
 btn('下一步'); time.sleep(3)
 radios=dict(ev("(() => [...document.querySelectorAll('input[type=radio]')].map(r=>[r.value,r.checked]))()"))
 assert radios.get('free') and radios.get('public'), radios
-btn('確認發佈'); time.sleep(8)
-print('published', ev("document.body.innerText.includes('發佈成功')"))
+btn('确认发布'); time.sleep(8)
+print('published', ev("document.body.innerText.includes('发布成功')"))

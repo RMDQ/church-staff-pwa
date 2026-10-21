@@ -18,7 +18,7 @@ import 'group_settings_screen.dart' deferred as group_settings_screen;
 import '../../../services/presentation/screens/service_settings_screen.dart'
     deferred as service_settings_screen;
 
-/// 服事提醒的寄送端還不存在（見 build 裡的開關）。
+/// 服事提醒的寄送端还不存在（见 build 里的开关）。
 const _rosterReminderSenderExists = false;
 
 class ProfileScreen extends StatefulWidget {
@@ -29,7 +29,7 @@ class ProfileScreen extends StatefulWidget {
     this.releaseService = const ReleaseCheckService(),
   });
 
-  /// 這幾個注入點只是為了測試 —— 正式環境永遠是預設那個。
+  /// 这几个注入点只是为了测试 —— 正式环境永远是预设那个。
   final AppUpdateService updateService;
   final AppVersionService versionService;
   final ReleaseCheckService releaseService;
@@ -46,8 +46,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final Future<AppVersionInfo?> _versionInfoFuture = widget.versionService
       .fetchVersionInfo();
 
-  /// 精靈裝的網站、而且 GitHub 上有比較新的 release 時才有值。
-  /// 只給管理員看：一般同工看到「有新版本」也做不了什麼。
+  /// 精灵装的网站、而且 GitHub 上有比较新的 release 时才有值。
+  /// 只给管理员看：一般同工看到「有新版本」也做不了什么。
   late final Future<(ReleaseInfo, String)?> _newRelease = () async {
     final info = await _versionInfoFuture;
     if (info == null || !info.isInstallerSite) return null;
@@ -58,10 +58,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return (latest, info.release!);
   }();
 
-  /// 「檢查更新」。
+  /// 「检查更新」。
   ///
-  /// 找到新版的話 `web/app_update.js` 會把頁面重載，所以那條路徑上這裡什麼都
-  /// 不用收尾 —— 連 setState 都不必，widget 馬上就不在了。
+  /// 找到新版的话 `web/app_update.js` 会把页面重载，所以那条路径上这里什么都
+  /// 不用收尾 —— 连 setState 都不必，widget 马上就不在了。
   Future<void> _checkForUpdate() async {
     setState(() => _isCheckingUpdate = true);
     final messenger = ScaffoldMessenger.of(context);
@@ -76,10 +76,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } catch (error, st) {
-      log('檢查更新失敗', error: error, stackTrace: st);
+      log('检查更新失败', error: error, stackTrace: st);
       if (!mounted) return;
-      // 這個按鈕存在的理由就是使用者已經不相信畫面上的版本了，失敗要說出來，
-      // 不能讓它看起來像「檢查過了，沒事」。
+      // 这个按钮存在的理由就是使用者已经不相信画面上的版本了，失败要说出来，
+      // 不能让它看起来像「检查过了，没事」。
       messenger.showSnackBar(
         SnackBar(content: Text('检查更新失败：${mapErrorToUserMessage(error)}')),
       );
@@ -108,7 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       Navigator.push(context, MaterialPageRoute(builder: (_) => builder()));
     } catch (error, st) {
-      log('載入畫面失敗', error: error, stackTrace: st);
+      log('载入画面失败', error: error, stackTrace: st);
       if (context.mounted) {
         if (dialogShown) {
           Navigator.of(context, rootNavigator: true).pop();
@@ -190,7 +190,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ).showSnackBar(SnackBar(content: Text(reasonMessage)));
       }
     } catch (error, st) {
-      log('更新通知設定失敗', error: error, stackTrace: st);
+      log('更新通知设定失败', error: error, stackTrace: st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('更新通知设置失败：${mapErrorToUserMessage(error)}')),
@@ -237,12 +237,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
-                // 角色是身分，group 是編輯權限 —— 兩種不同的東西，所以用不同
-                // 的底色，而不是排成一串看起來同質的標籤。
+                // 角色是身分，group 是编辑权限 —— 两种不同的东西，所以用不同
+                // 的底色，而不是排成一串看起来同质的标签。
                 //
-                // 管理員不列 group：他隱含全部，逐項列出反而像是「被指定了這
-                // 幾項」，看起來比實際權限還小。Wrap 是為了窄螢幕會換行而不是
-                // 擠成一行溢出。
+                // 管理员不列 group：他隐含全部，逐项列出反而像是「被指定了这
+                // 几项」，看起来比实际权限还小。Wrap 是为了窄萤幕会换行而不是
+                // 挤成一行溢出。
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -318,8 +318,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const Divider(),
 
-          // 先藏起來：App 只會記下「要提醒」，還沒有任何東西真的在週一寄出。
-          // 留著開關會讓同工以為打開就會收到。有寄送端之後把這個常數改回 true。
+          // 先藏起来：App 只会记下「要提醒」，还没有任何东西真的在周一寄出。
+          // 留著开关会让同工以为打开就会收到。有寄送端之后把这个常数改回 true。
           if (_rosterReminderSenderExists &&
               ChurchConfig.current.features.pushNotifications)
             SwitchListTile(
@@ -358,8 +358,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               if (confirm != true) return;
               await session.logout();
-              // 登出失敗時 session 會被保留（避免假登出），所以錯誤要在這裡
-              // 講清楚，否則使用者以為登出成功、畫面卻沒有變化。
+              // 登出失败时 session 会被保留（避免假登出），所以错误要在这里
+              // 讲清楚，否则使用者以为登出成功、画面却没有变化。
               final logoutError = session.error;
               if (logoutError == null) return;
               session.clearError();
@@ -375,22 +375,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
               future: _versionInfoFuture,
               builder: (context, snapshot) {
                 final info = snapshot.data;
-                // 頁尾的版本資訊。刻意都用同一個灰色小字：這裡是註腳，不是
-                // 功能入口 —— 平常載入與切回前景都會自己檢查更新，按鈕只是給
-                // 「我看起來還是舊版」的人一個不必被叫去滑掉 App 的出口。
-                // 一顆正常的 TextButton（主色、按鈕級字級）會比它上面那行還
-                // 搶眼，看起來像有什麼事該做。
+                // 页尾的版本资讯。刻意都用同一个灰色小字：这里是注脚，不是
+                // 功能入口 —— 平常载入与切回前景都会自己检查更新，按钮只是给
+                // 「我看起来还是旧版」的人一个不必被叫去滑掉 App 的出口。
+                // 一颗正常的 TextButton（主色、按钮级字级）会比它上面那行还
+                // 抢眼，看起来像有什么事该做。
                 final captionStyle = Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600);
 
-                // 兩行，各自置中。擠在同一行時「檢查更新」會把整組推得偏
-                // 左，看起來像沒對齊。
+                // 两行，各自置中。挤在同一行时「检查更新」会把整组推得偏
+                // 左，看起来像没对齐。
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 這是「這台裝置正在跑的版本」，不是伺服器的 ——
-                    // version.json 跟著 bundle 一起進快取（見 AppVersionService）。
+                    // 这是「这台装置正在跑的版本」，不是伺服器的 ——
+                    // version.json 跟著 bundle 一起进快取（见 AppVersionService）。
                     if (info != null)
                       Text(
                         '更新于 ${_buildVersionDateText(info)}',
@@ -400,7 +400,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (widget.updateService.isSupported)
                       InkWell(
                         onTap: _isCheckingUpdate ? null : _checkForUpdate,
-                        // 字級小，靠 padding 把可點範圍撐到手指按得到。
+                        // 字级小，靠 padding 把可点范围撑到手指按得到。
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             vertical: 8,
@@ -409,7 +409,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Text(
                             _isCheckingUpdate ? '检查中…' : '检查更新',
                             textAlign: TextAlign.center,
-                            // 顏色跟上面那行一樣，只用底線表示按得下去。
+                            // 颜色跟上面那行一样，只用底线表示按得下去。
                             style: captionStyle?.copyWith(
                               decoration: _isCheckingUpdate
                                   ? null
@@ -429,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// 空字串直接取 [0] 會 RangeError（Firestore 上的 name 不保證非空）。
+  /// 空字串直接取 [0] 会 RangeError（Firestore 上的 name 不保证非空）。
   String _avatarLetter(String name) {
     final trimmed = name.trim();
     return trimmed.isEmpty ? '?' : trimmed[0];
@@ -442,7 +442,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-/// 「有新版本」。點下去開更新教學：更新要在 Cloud Shell 跑精靈，App 自己做不到。
+/// 「有新版本」。点下去开更新教学：更新要在 Cloud Shell 跑精灵，App 自己做不到。
 class _NewReleaseTile extends StatelessWidget {
   const _NewReleaseTile({required this.release, required this.current});
 

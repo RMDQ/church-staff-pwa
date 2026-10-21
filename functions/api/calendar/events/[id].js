@@ -14,7 +14,7 @@ import { handleWith, jsonResponse, readJsonBody } from '../../../../worker/http.
 function eventId(params) {
   const id = params?.id;
   if (typeof id !== 'string' || id.trim() === '') {
-    throw new HttpError(400, '找不到這個活動');
+    throw new HttpError(400, '找不到这个活动');
   }
   return id;
 }

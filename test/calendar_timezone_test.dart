@@ -26,7 +26,7 @@ void main() {
       () {
         final json = <String, dynamic>{
           'id': 'shared-time',
-          'title': '測試活動',
+          'title': '测试活动',
           'isAllDay': isAllDay,
           'startTime': isAllDay
               ? '2026-03-08T00:00:00.000Z'
@@ -63,7 +63,7 @@ void main() {
   test('shared parsing preserves each model\'s missing-end cache fallback', () {
     for (final isAllDay in [true, false]) {
       final json = <String, dynamic>{
-        'title': '舊快取',
+        'title': '旧快取',
         'isAllDay': isAllDay,
         'startTime': '2026-03-08T00:00:00.000Z',
       };
@@ -108,7 +108,7 @@ void main() {
   test('timed events render on the church date rather than their UTC date', () {
     final event = calendarEventFromGoogleItem({
       'id': 'late',
-      'summary': '晚間聚會',
+      'summary': '晚间聚会',
       'start': {'dateTime': '2026-03-02T02:00:00Z'},
       'end': {'dateTime': '2026-03-02T03:00:00Z'},
     })!;
@@ -130,7 +130,7 @@ void main() {
     () {
       final event = calendarEventFromGoogleItem({
         'id': 'all-day',
-        'summary': '春季營會',
+        'summary': '春季营会',
         'start': {'date': '2026-03-07'},
         'end': {'date': '2026-03-10'},
       })!;
@@ -151,7 +151,7 @@ void main() {
     () {
       final event = calendarEventFromGoogleItem({
         'id': 'spring',
-        'summary': '聚會',
+        'summary': '聚会',
         'start': {'dateTime': '2026-03-08T01:30:00-05:00'},
         'end': {'dateTime': '2026-03-08T03:30:00-04:00'},
       })!;
@@ -167,7 +167,7 @@ void main() {
         draft
             .copyWith(startTime: const TimeOfDay(hour: 2, minute: 30))
             .validate(),
-        contains('夏令時間'),
+        contains('夏令时间'),
       );
     },
   );
@@ -175,7 +175,7 @@ void main() {
   test('editing a repeated DST hour retains its existing occurrence', () {
     final event = calendarEventFromGoogleItem({
       'id': 'autumn',
-      'summary': '秋季聚會',
+      'summary': '秋季聚会',
       'start': {'dateTime': '2026-11-01T01:45:00-04:00'},
       'end': {'dateTime': '2026-11-01T01:15:00-05:00'},
     })!;
@@ -195,7 +195,7 @@ void main() {
   test('all-day validation compares dates, not browser-local instants', () {
     final draft = CalendarEventDraft.forDay(
       DateTime.utc(2026, 3, 8),
-    ).copyWith(title: '活動', allDay: true);
+    ).copyWith(title: '活动', allDay: true);
     // Material's date picker returns a device-local DateTime.
     final picked = DateTime(2026, 3, 8);
     expect(draft.copyWith(startDate: picked).validate(), isNull);
@@ -206,13 +206,13 @@ void main() {
     ChurchConfig.current = testChurchConfig(timeZone: 'Asia/Taipei');
     final allDay = calendarEventFromGoogleItem({
       'id': 'all-day',
-      'summary': '全日活動',
+      'summary': '全日活动',
       'start': {'date': '2026-03-08'},
       'end': {'date': '2026-03-09'},
     })!;
     final early = calendarEventFromGoogleItem({
       'id': 'early',
-      'summary': '清晨活動',
+      'summary': '清晨活动',
       'start': {'dateTime': '2026-03-08T06:00:00+08:00'},
       'end': {'dateTime': '2026-03-08T07:00:00+08:00'},
     })!;
@@ -232,7 +232,7 @@ void main() {
       now: DateTime.utc(2026, 3, 7),
       limit: 3,
     );
-    expect(recent.first.title, '全日活動');
+    expect(recent.first.title, '全日活动');
   });
 
   test('recent all-day events expire at church midnight, not UTC midnight', () {
@@ -240,7 +240,7 @@ void main() {
       startTime: DateTime.utc(2026, 3, 8),
       endTime: DateTime.utc(2026, 3, 9),
       isAllDay: true,
-      title: '當日活動',
+      title: '当日活动',
     );
     expect(
       activity.isCurrentOrUpcoming(DateTime.utc(2026, 3, 9, 3, 59)),

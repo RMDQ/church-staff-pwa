@@ -1,14 +1,14 @@
 // Backfill `zoneTypes` onto every users/{uid} document.
 //
 // Why the field exists: firestore.rules limits roster writes to the editor's
-// own 牧區, and `zones` is a list of maps — the rules language has no loops and
+// own 牧区, and `zones` is a list of maps — the rules language has no loops and
 // no map/filter, so it cannot read serviceType out of it. The app therefore
 // writes a flattened projection next to it (see User.zoneTypes), and the rules
 // read that. This script computes the same projection for documents written
 // before the field existed.
 //
 // Run it BEFORE deploying the new rules. Until a user document has the field,
-// `data.get('zoneTypes', [])` reads as "no 牧區" and every roster write by that
+// `data.get('zoneTypes', [])` reads as "no 牧区" and every roster write by that
 // person is denied — admin excepted, since admin is root.
 //
 // Usage:
@@ -75,13 +75,13 @@ function projectId() {
     // fall through to the error below
   }
   return die(
-    '找不到 project id。建立 .local/project-id，或設 GOOGLE_CLOUD_PROJECT，' +
+    '找不到 project id。建立 .local/project-id，或设 GOOGLE_CLOUD_PROJECT，' +
       '或先跑 gcloud config set project <id>。',
   );
 }
 
-// firebase-tools 的 OAuth client。這兩個值是公開的（安裝在每個人機器上的
-// CLI 裡就有），refresh token 才是秘密 —— 沒有它們光有 client id 什麼都換不到。
+// firebase-tools 的 OAuth client。这两个值是公开的（安装在每个人机器上的
+// CLI 里就有），refresh token 才是秘密 —— 没有它们光有 client id 什么都换不到。
 const FIREBASE_CLI_CLIENT_ID =
   '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com';
 const FIREBASE_CLI_CLIENT_SECRET = 'j9iVZfS8kkCEFUPaAeJV0sAi';
@@ -112,8 +112,8 @@ async function exchangeRefreshToken(refreshToken) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.access_token) {
     return die(
-      `refresh token 換不到 access token（${response.status}）：` +
-        `${body.error_description ?? body.error ?? '未知錯誤'}\n` +
+      `refresh token 换不到 access token（${response.status}）：` +
+        `${body.error_description ?? body.error ?? '未知错误'}\n` +
         '  重新登入：cd firestore-tests && npx firebase login --reauth',
     );
   }
@@ -127,40 +127,40 @@ function gcloudToken() {
       stdio: ['ignore', 'pipe', 'pipe'],
     }).trim();
   } catch (error) {
-    // gcloud 的訊息要原封不動印出來：「憑證過期要重新登入」跟「這個帳號沒權限」
-    // 是兩件事，吞掉之後只剩一句沒有指向性的提示。
+    // gcloud 的讯息要原封不动印出来：「凭证过期要重新登入」跟「这个帐号没权限」
+    // 是两件事，吞掉之后只剩一句没有指向性的提示。
     const detail = (error.stderr ?? '').toString().trim();
     return die(
-      '拿不到憑證。任一種都可以：\n' +
-        '  cd firestore-tests && npx firebase login   （部署規則本來就要登這個）\n' +
+      '拿不到凭证。任一种都可以：\n' +
+        '  cd firestore-tests && npx firebase login   （部署规则本来就要登这个）\n' +
         '  gcloud auth login\n' +
         `${detail}`,
     );
   }
 }
 
-// 憑證來源，由近到遠：CI 的 FIREBASE_TOKEN、本機的 firebase CLI 登入、gcloud。
-// 排在最前面的兩個都是部署規則本來就會用到的那份登入，不必為了這支腳本再登一次。
+// 凭证来源，由近到远：CI 的 FIREBASE_TOKEN、本机的 firebase CLI 登入、gcloud。
+// 排在最前面的两个都是部署规则本来就会用到的那份登入，不必为了这支脚本再登一次。
 async function accessToken() {
   if (process.env.FIREBASE_TOKEN) {
-    console.log('憑證來源：FIREBASE_TOKEN');
+    console.log('凭证来源：FIREBASE_TOKEN');
     return exchangeRefreshToken(process.env.FIREBASE_TOKEN);
   }
 
   const config = firebaseToolsConfig();
   const tokens = config?.tokens;
   if (tokens?.refresh_token) {
-    const who = config.user?.email ?? '（不明帳號）';
-    // 快取的 access token 還沒過期就直接用。留 60 秒緩衝，免得在請求途中過期。
+    const who = config.user?.email ?? '（不明帐号）';
+    // 快取的 access token 还没过期就直接用。留 60 秒缓冲，免得在请求途中过期。
     if (tokens.access_token && tokens.expires_at > Date.now() + 60_000) {
-      console.log(`憑證來源：firebase CLI（${who}）`);
+      console.log(`凭证来源：firebase CLI（${who}）`);
       return tokens.access_token;
     }
-    console.log(`憑證來源：firebase CLI（${who}，refresh 後）`);
+    console.log(`凭证来源：firebase CLI（${who}，refresh 后）`);
     return exchangeRefreshToken(tokens.refresh_token);
   }
 
-  console.log('憑證來源：gcloud');
+  console.log('凭证来源：gcloud');
   return gcloudToken();
 }
 
@@ -218,7 +218,7 @@ function currentZoneTypes(document) {
 }
 
 const users = await listUsers();
-if (users.length === 0) die('users collection 是空的 —— project id 對嗎？');
+if (users.length === 0) die('users collection 是空的 —— project id 对吗？');
 
 const pending = [];
 for (const document of users) {
@@ -232,16 +232,16 @@ for (const document of users) {
   pending.push({ id, name, wanted, current });
 }
 
-const noun = CHECK ? '和 zones 不一致' : '需要補 zoneTypes';
-console.log(`專案 ${PROJECT}：${users.length} 個帳號，${pending.length} 個${noun}。`);
+const noun = CHECK ? '和 zones 不一致' : '需要补 zoneTypes';
+console.log(`专案 ${PROJECT}：${users.length} 个帐号，${pending.length} 个${noun}。`);
 for (const { id, name, wanted, current } of pending) {
-  const before = current === null ? '（沒有欄位）' : `[${current.join(', ')}]`;
+  const before = current === null ? '（没有栏位）' : `[${current.join(', ')}]`;
   console.log(`  ${name} (${id}): ${before} → [${wanted.join(', ')}]`);
 }
 
-// 有服事表編輯權但一個牧區都沒有的人，補完之後會變成「什麼都改不動」。規則
-// 上這是對的（牧區決定改哪一本），但那是一個人的權限實質變了，要講出來而不是
-// 讓他下次進編輯模式才發現。
+// 有服事表编辑权但一个牧区都没有的人，补完之后会变成「什么都改不动」。规则
+// 上这是对的（牧区决定改哪一本），但那是一个人的权限实质变了，要讲出来而不是
+// 让他下次进编辑模式才发现。
 const strandedEditors = users.filter((document) => {
   const groups = (document.fields?.groups?.arrayValue?.values ?? []).map(
     (value) => value.stringValue,
@@ -254,33 +254,33 @@ const strandedEditors = users.filter((document) => {
   );
 });
 if (strandedEditors.length > 0) {
-  console.log('\n⚠ 這幾位有 roster-editors 但沒有任何牧區，補完後改不動任何服事表：');
+  console.log('\n⚠ 这几位有 roster-editors 但没有任何牧区，补完后改不动任何服事表：');
   for (const document of strandedEditors) {
     const id = document.name.split('/').pop();
     console.log(`  ${document.fields?.name?.stringValue ?? id} (${id})`);
   }
-  console.log('  要讓他們繼續編輯，先到後台把對應的牧區加上去。');
+  console.log('  要让他们继续编辑，先到后台把对应的牧区加上去。');
 }
 
 if (pending.length === 0) {
-  console.log(CHECK ? '✓ zoneTypes 與 zones 完全一致。' : '✓ 沒有要改的。');
+  console.log(CHECK ? '✓ zoneTypes 与 zones 完全一致。' : '✓ 没有要改的。');
   process.exit(0);
 }
 
 if (CHECK) {
-  // 非 0 退出，這樣掛進 CI 或排程才有意義 —— 印出來沒人看的檢查等於沒有檢查。
-  console.log('\n✗ 上面這些人的 zoneTypes 對不上 zones。用 --apply 修好。');
+  // 非 0 退出，这样挂进 CI 或排程才有意义 —— 印出来没人看的检查等于没有检查。
+  console.log('\n✗ 上面这些人的 zoneTypes 对不上 zones。用 --apply 修好。');
   process.exit(1);
 }
 
 if (!APPLY) {
-  console.log('\n這是 dry run，什麼都沒寫。確認上面的清單沒問題後加上 --apply。');
+  console.log('\n这是 dry run，什么都没写。确认上面的清单没问题后加上 --apply。');
   process.exit(0);
 }
 
 for (const { id, name, wanted } of pending) {
   const url = new URL(`${BASE}/users/${encodeURIComponent(id)}`);
-  // updateMask 只點名 zoneTypes：PATCH 沒有 mask 會把文件其他欄位清掉。
+  // updateMask 只点名 zoneTypes：PATCH 没有 mask 会把文件其他栏位清掉。
   url.searchParams.set('updateMask.fieldPaths', 'zoneTypes');
   await firestore(url.toString(), {
     method: 'PATCH',
@@ -295,4 +295,4 @@ for (const { id, name, wanted } of pending) {
   console.log(`✓ ${name} (${id})`);
 }
 
-console.log(`\n✓ 補完 ${pending.length} 個帳號。`);
+console.log(`\n✓ 补完 ${pending.length} 个帐号。`);

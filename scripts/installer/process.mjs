@@ -63,7 +63,7 @@ export function runCommand(executable, args, {
       killTimer.unref();
     };
     const abort = () => stop('操作已取消');
-    const timer = setTimeout(() => stop('工具執行逾時'), timeoutMs);
+    const timer = setTimeout(() => stop('工具执行逾时'), timeoutMs);
     timer.unref();
     signal?.addEventListener('abort', abort, { once: true });
     const finish = (error, exitCode) => {
@@ -79,15 +79,15 @@ export function runCommand(executable, args, {
     };
     const capture = (kind, callback) => (chunk) => {
       bytes += Buffer.byteLength(chunk);
-      if (bytes > maxOutputBytes) return stop('工具輸出超過安全上限');
+      if (bytes > maxOutputBytes) return stop('工具输出超过安全上限');
       const text = chunk.toString();
       if (kind === 'stdout') stdout += text;
       else stderr += text;
-      try { callback?.(text); } catch { stop('無法解析工具回應'); }
+      try { callback?.(text); } catch { stop('无法解析工具回应'); }
     };
     child.stdout.on('data', capture('stdout', onStdout));
     child.stderr.on('data', capture('stderr', onStderr));
-    child.on('error', () => finish(new Error('無法啟動必要工具')));
+    child.on('error', () => finish(new Error('无法启动必要工具')));
     child.on('close', (code) => finish(
       failure ?? (code === 0 || !rejectOnExit ? undefined : new Error('必要工具未成功完成')), code,
     ));

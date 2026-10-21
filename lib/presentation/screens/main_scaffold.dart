@@ -38,8 +38,8 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    // 服事表資料一到就把會顯示的字串預熱掉，讓字型與排版快取在使用者開始捲
-    // 之前就備妥。provider 有快取，資料沒變時 identity 不變，不會重複觸發。
+    // 服事表资料一到就把会显示的字串预热掉，让字型与排版快取在使用者开始卷
+    // 之前就备妥。provider 有快取，资料没变时 identity 不变，不会重复触发。
     final warmupStrings = context.select<RosterProvider, List<String>>(
       (provider) => provider.displayStrings,
     );

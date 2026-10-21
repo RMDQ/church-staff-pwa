@@ -48,14 +48,14 @@ Future<void> showEventDetailSheet(
               const SizedBox(height: 16),
               EventDetailRow(
                 icon: Icons.schedule,
-                label: '時間',
+                label: '时间',
                 value: formatEventDateTime(event),
               ),
               if (event.location != null && event.location!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 EventDetailRow(
                   icon: Icons.place_outlined,
-                  label: '地點',
+                  label: '地点',
                   value: event.location!,
                 ),
               ],
@@ -63,7 +63,7 @@ Future<void> showEventDetailSheet(
                   event.description!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  '說明',
+                  '说明',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -107,7 +107,7 @@ Future<void> showEventDetailSheet(
                             await onDelete(event);
                           },
                           icon: const Icon(Icons.delete_outline, size: 18),
-                          label: const Text('刪除'),
+                          label: const Text('删除'),
                           style: TextButton.styleFrom(
                             foregroundColor: colorScheme.error,
                           ),
@@ -119,7 +119,7 @@ Future<void> showEventDetailSheet(
                             await onDuplicate(event);
                           },
                           icon: const Icon(Icons.copy_all_outlined, size: 18),
-                          label: const Text('複製'),
+                          label: const Text('复制'),
                         ),
                       if (onEdit != null)
                         FilledButton.icon(
@@ -128,7 +128,7 @@ Future<void> showEventDetailSheet(
                             await onEdit(event);
                           },
                           icon: const Icon(Icons.edit_outlined, size: 18),
-                          label: const Text('編輯'),
+                          label: const Text('编辑'),
                         ),
                     ],
                   ),

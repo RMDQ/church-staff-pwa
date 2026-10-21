@@ -32,17 +32,17 @@ beforeEach(() => resetAccessTokenCache());
 // ---------------------------------------------------------------------------
 
 describe('buildGoogleEvent', () => {
-  const base = { title: '青年小組', allDay: true, start: '2026-08-20' };
+  const base = { title: '青年小组', allDay: true, start: '2026-08-20' };
 
   test('requires a title', () => {
     assert.throws(() => buildGoogleEvent({ ...base, title: '   ' }), {
       status: 400,
-      message: '請填寫標題',
+      message: '请填写标题',
     });
   });
 
   test('trims the title', () => {
-    assert.equal(buildGoogleEvent({ ...base, title: '  聚會 ' }).summary, '聚會');
+    assert.equal(buildGoogleEvent({ ...base, title: '  聚会 ' }).summary, '聚会');
   });
 
   test('rejects a title longer than the limit', () => {
@@ -88,7 +88,7 @@ describe('buildGoogleEvent', () => {
   test('rejects a date that matches the shape but does not exist', () => {
     assert.throws(() => buildGoogleEvent({ ...base, start: '2026-02-30' }), {
       status: 400,
-      message: '開始日期不是有效的日期',
+      message: '开始日期不是有效的日期',
     });
     assert.throws(() => buildGoogleEvent({ ...base, start: '2026-13-01' }), { status: 400 });
   });
@@ -100,13 +100,13 @@ describe('buildGoogleEvent', () => {
   test('rejects an end before the start', () => {
     assert.throws(() => buildGoogleEvent({ ...base, end: '2026-08-19' }), {
       status: 400,
-      message: '結束日期不能早於開始日期',
+      message: '结束日期不能早于开始日期',
     });
   });
 
   test('a timed event carries the Taipei time zone and normalised seconds', () => {
     const event = buildGoogleEvent({
-      title: '禱告會',
+      title: '祷告会',
       allDay: false,
       start: '2026-08-20T19:00',
       end: '2026-08-20T21:30',
@@ -139,7 +139,7 @@ describe('buildGoogleEvent', () => {
     const base = { title: 'Meeting', allDay: false, start: '2026-11-01T01:45:00-04:00', end: '2026-11-01T01:15:00-05:00' };
     const options = { timeZone: 'America/New_York' };
     assert.equal(buildGoogleEvent(base, options).end.dateTime, base.end);
-    assert.throws(() => buildGoogleEvent({ ...base, start: base.end, end: base.start }, options), { status: 400, message: '結束時間不能早於開始時間' });
+    assert.throws(() => buildGoogleEvent({ ...base, start: base.end, end: base.start }, options), { status: 400, message: '结束时间不能早于开始时间' });
   });
 
   test('a timed event without an end collapses to a zero-length event', () => {
@@ -154,7 +154,7 @@ describe('buildGoogleEvent', () => {
     );
     assert.throws(
       () => buildGoogleEvent({ title: 'x', allDay: false, start: '2026-08-20T12:61' }),
-      { status: 400, message: '開始時間不是有效的時間' },
+      { status: 400, message: '开始时间不是有效的时间' },
     );
   });
 
@@ -167,13 +167,13 @@ describe('buildGoogleEvent', () => {
           start: '2026-08-20T19:00',
           end: '2026-08-20T18:59',
         }),
-      { status: 400, message: '結束時間不能早於開始時間' },
+      { status: 400, message: '结束时间不能早于开始时间' },
     );
   });
 
   test('a timed event may span days', () => {
     const event = buildGoogleEvent({
-      title: '退修會',
+      title: '退修会',
       allDay: false,
       start: '2026-08-20T19:00',
       end: '2026-08-22T12:00',
@@ -301,7 +301,7 @@ describe('POST /api/calendar/events', () => {
     const fetchImpl = fakeFetch();
     const response = await withFetch(fetchImpl, () =>
       onRequestPost({
-        request: request('POST', { body: { title: '聚會', allDay: true, start: '2026-08-20' } }),
+        request: request('POST', { body: { title: '聚会', allDay: true, start: '2026-08-20' } }),
         env,
       }),
     );
@@ -316,7 +316,7 @@ describe('POST /api/calendar/events', () => {
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`,
     );
     assert.deepEqual(JSON.parse(call.body), {
-      summary: '聚會',
+      summary: '聚会',
       start: { date: '2026-08-20' },
       end: { date: '2026-08-21' },
     });
@@ -330,7 +330,7 @@ describe('POST /api/calendar/events', () => {
       onRequestPost({
         request: request('POST', {
           token: idToken(MEMBER_UID),
-          body: { title: '聚會', allDay: true, start: '2026-08-20' },
+          body: { title: '聚会', allDay: true, start: '2026-08-20' },
         }),
         env,
       }),
@@ -359,7 +359,7 @@ describe('POST /api/calendar/events', () => {
     );
 
     assert.equal(response.status, 400);
-    assert.deepEqual(await response.json(), { error: '請填寫標題' });
+    assert.deepEqual(await response.json(), { error: '请填写标题' });
     assert.equal(fetchImpl.calendarCalls().length, 0);
   });
 
@@ -386,7 +386,7 @@ describe('POST /api/calendar/events', () => {
         }),
       );
       assert.equal(response.status, 502);
-      assert.deepEqual(await response.json(), { error: '沒有權限寫入這本日曆，請聯絡管理員' });
+      assert.deepEqual(await response.json(), { error: '没有权限写入这本日历，请联络管理员' });
     } finally {
       restore();
     }
@@ -452,7 +452,7 @@ describe('PATCH and DELETE /api/calendar/events/:id', () => {
     );
 
     assert.equal(response.status, 404);
-    assert.deepEqual(await response.json(), { error: '這個活動已經不存在了' });
+    assert.deepEqual(await response.json(), { error: '这个活动已经不存在了' });
   });
 
   test('a missing id is rejected before anything reaches Google', async () => {
@@ -476,9 +476,9 @@ describe('PATCH and DELETE /api/calendar/events/:id', () => {
 const CREATED_TIMED = {
   id: 'evt-timed',
   status: 'confirmed',
-  summary: '小組聚會',
-  location: '教會 2F',
-  description: '記得帶聖經',
+  summary: '小组聚会',
+  location: '教会 2F',
+  description: '记得带圣经',
   htmlLink: 'https://calendar.google.com/event?eid=evt-timed',
   start: { dateTime: '2026-09-01T19:00:00+08:00', timeZone: 'Asia/Taipei' },
   end: { dateTime: '2026-09-01T21:00:00+08:00', timeZone: 'Asia/Taipei' },
@@ -487,7 +487,7 @@ const CREATED_TIMED = {
 const CREATED_ALL_DAY = {
   id: 'evt-all-day',
   status: 'confirmed',
-  summary: '教會大掃除',
+  summary: '教会大扫除',
   htmlLink: 'https://calendar.google.com/event?eid=evt-all-day',
   start: { date: '2026-09-05' },
   end: { date: '2026-09-06' },
@@ -497,9 +497,9 @@ function creating(event) {
   return fakeFetch({ calendar: () => Response.json(event, { status: 200 }) });
 }
 
-const CREATE_BODY = { title: '小組聚會', allDay: false, start: '2026-09-01T19:00' };
+const CREATE_BODY = { title: '小组聚会', allDay: false, start: '2026-09-01T19:00' };
 
-/// authorize() 回傳值裡通知用得到的部分，測 notifyPayload 時不必再跑一次權限檢查。
+/// authorize() 回传值里通知用得到的部分，测 notifyPayload 时不必再跑一次权限检查。
 const ADMIN_ACTOR = { uid: ADMIN_UID, name: ADMIN_NAME };
 
 describe('notifyPayload', () => {
@@ -509,19 +509,19 @@ describe('notifyPayload', () => {
       source: 'pwa',
       timeZone: 'Asia/Taipei',
       id: 'evt-timed',
-      title: '小組聚會',
+      title: '小组聚会',
       allDay: false,
       start: '2026-09-01T19:00:00+08:00',
       end: '2026-09-01T21:00:00+08:00',
-      location: '教會 2F',
-      description: '記得帶聖經',
+      location: '教会 2F',
+      description: '记得带圣经',
       link: 'https://calendar.google.com/event?eid=evt-timed',
       actorUid: ADMIN_UID,
       actorName: ADMIN_NAME,
     });
   });
 
-  // 名字是給群組看的，uid 是給事後追查用的 —— 少了任一個都補不回來。
+  // 名字是给群组看的，uid 是给事后追查用的 —— 少了任一个都补不回来。
   test('carries both the uid and the name of the editor', () => {
     const payload = notifyPayload('created', CREATED_TIMED, {
       uid: CALENDAR_EDITOR_UID,
@@ -531,7 +531,7 @@ describe('notifyPayload', () => {
     assert.equal(payload.actorName, CALENDAR_EDITOR_NAME);
   });
 
-  // 沒有名字時送 null 而不是省略，n8n 那端才看得到一致的形狀。
+  // 没有名字时送 null 而不是省略，n8n 那端才看得到一致的形状。
   test('sends a null name for an editor without one', () => {
     const payload = notifyPayload('created', CREATED_TIMED, { uid: ADMIN_UID, name: null });
     assert.equal(payload.actorUid, ADMIN_UID);
@@ -592,12 +592,12 @@ describe('POST /api/calendar/events — LINE notification', () => {
       source: 'pwa',
       timeZone: 'Asia/Taipei',
       id: 'evt-timed',
-      title: '小組聚會',
+      title: '小组聚会',
       allDay: false,
       start: '2026-09-01T19:00:00+08:00',
       end: '2026-09-01T21:00:00+08:00',
-      location: '教會 2F',
-      description: '記得帶聖經',
+      location: '教会 2F',
+      description: '记得带圣经',
       link: 'https://calendar.google.com/event?eid=evt-timed',
       actorUid: ADMIN_UID,
       actorName: ADMIN_NAME,
@@ -628,7 +628,7 @@ describe('POST /api/calendar/events — LINE notification', () => {
     );
 
     assert.equal(fetchImpl.notifyPayload().actorUid, CALENDAR_EDITOR_UID);
-    // 群組讀得懂的是名字，不是 uid。
+    // 群组读得懂的是名字，不是 uid。
     assert.equal(fetchImpl.notifyPayload().actorName, CALENDAR_EDITOR_NAME);
   });
 

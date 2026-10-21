@@ -36,7 +36,7 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
   }
 
   Future<void> _promptAddGroup(ServiceType type) async {
-    // controller 由 TextControllerScope 在對話框子樹卸載時 dispose。
+    // controller 由 TextControllerScope 在对话框子树卸载时 dispose。
     final controller = TextEditingController();
     final name = await _showGroupNameDialog(
       title: '新增小组',

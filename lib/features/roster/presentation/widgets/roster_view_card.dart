@@ -75,16 +75,16 @@ class RosterViewCard extends StatelessWidget {
               ),
           ],
         ),
-        // 收合狀態下 ExpansionTile 會把 body 從樹上移除，所以獨立成 widget
-        // 之後，看不到的服事列表就不會被 build。捲動時每張卡片只配置一個
-        // widget 物件，而不是十幾列 Row/Text。
+        // 收合状态下 ExpansionTile 会把 body 从树上移除，所以独立成 widget
+        // 之后，看不到的服事列表就不会被 build。卷动时每张卡片只配置一个
+        // widget 物件，而不是十几列 Row/Text。
         children: [_RosterViewCardBody(roster: roster)],
       ),
     );
   }
 }
 
-/// [RosterViewCard] 展開後的服事項目列表。
+/// [RosterViewCard] 展开后的服事项目列表。
 class _RosterViewCardBody extends StatelessWidget {
   const _RosterViewCardBody({required this.roster});
 
@@ -98,9 +98,9 @@ class _RosterViewCardBody extends StatelessWidget {
         children: roster.duties.map((duty) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            // dense：這裡沒有按鈕要撐觸控目標，列高就跟著文字走，一頁多看
-            // 得到幾天。切換模式時的位移是靠錨定日期修的（見 [ScrollAnchor]），
-            // 不必為此把檢視模式撐到跟編輯模式一樣高。
+            // dense：这里没有按钮要撑触控目标，列高就跟著文字走，一页多看
+            // 得到几天。切换模式时的位移是靠锚定日期修的（见 [ScrollAnchor]），
+            // 不必为此把检视模式撑到跟编辑模式一样高。
             child: DutyRow(role: duty.role, people: duty.people, dense: true),
           );
         }).toList(),

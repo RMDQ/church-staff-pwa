@@ -82,7 +82,7 @@ export const onRequestPost = ({ request, env }) =>
 export function rejectOversizedBody(request) {
   const length = Number(request.headers.get('content-length'));
   if (Number.isFinite(length) && length > MAX_BODY_BYTES) {
-    throw new HttpError(413, '照片太大了，請裁掉表格以外的部分再試');
+    throw new HttpError(413, '照片太大了，请裁掉表格以外的部分再试');
   }
 }
 
@@ -100,21 +100,21 @@ export function parseImportRequest(body) {
 
   const images = body?.images;
   if (!Array.isArray(images) || images.length === 0) {
-    throw new HttpError(400, '請先選一張服事表照片');
+    throw new HttpError(400, '请先选一张服事表照片');
   }
   if (images.length > MAX_IMAGES) {
-    throw new HttpError(400, `一次最多 ${MAX_IMAGES} 張照片`);
+    throw new HttpError(400, `一次最多 ${MAX_IMAGES} 张照片`);
   }
 
   const parsed = images.map((image, index) => {
-    const at = images.length === 1 ? '照片' : `第 ${index + 1} 張照片`;
+    const at = images.length === 1 ? '照片' : `第 ${index + 1} 张照片`;
     const mimeType = image?.mimeType;
     if (typeof mimeType !== 'string' || !IMAGE_TYPES.has(mimeType)) {
-      throw new HttpError(400, `${at}的格式不支援，請用 JPG 或 PNG`);
+      throw new HttpError(400, `${at}的格式不支援，请用 JPG 或 PNG`);
     }
     const data = image?.data;
     if (typeof data !== 'string' || data === '') {
-      throw new HttpError(400, `${at}讀不到內容，請重新選一次`);
+      throw new HttpError(400, `${at}读不到内容，请重新选一次`);
     }
     // base64 inflates by 4/3, so the decoded size can be checked without
     // decoding — which matters when the point of the check is not holding the
@@ -122,7 +122,7 @@ export function parseImportRequest(body) {
     if (Math.floor((data.length * 3) / 4) > MAX_IMAGE_BYTES) {
       throw new HttpError(
         413,
-        `${at}太大了（上限 ${MAX_IMAGE_BYTES / 1024 / 1024}MB），請先縮小再試`,
+        `${at}太大了（上限 ${MAX_IMAGE_BYTES / 1024 / 1024}MB），请先缩小再试`,
       );
     }
     return { mimeType, data };
@@ -147,7 +147,7 @@ async function loadTemplate(env, type, token) {
     // ran it before this service type existed. Nothing the caller can do about
     // it, so the detail goes to the log and they get told who to ask.
     console.error('no published import prompt', type);
-    throw new HttpError(500, '辨識設定還沒建立，請聯絡管理員');
+    throw new HttpError(500, '辨识设定还没建立，请联络管理员');
   }
   return prompt;
 }

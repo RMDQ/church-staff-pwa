@@ -17,7 +17,7 @@ class UserManagementScreen extends StatefulWidget {
 }
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
-  // itemBuilder 會跑很多次，常數配置一次就好。
+  // itemBuilder 会跑很多次，常数配置一次就好。
   static const _cardRadius = BorderRadius.all(Radius.circular(12));
   static const _cardMargin = EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
@@ -25,11 +25,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   String _nameFilter = '';
   List<_UserListItemData> _sortedUsers = const [];
 
-  // GroupSettingsProvider.templates 刻意回傳同一份 reference，
-  // 所以用 identical() 就能判斷要不要重排，不必逐項比對。
+  // GroupSettingsProvider.templates 刻意回传同一份 reference，
+  // 所以用 identical() 就能判断要不要重排，不必逐项比对。
   Map<ServiceType, List<String>>? _lastTemplates;
 
-  // 名單裡會顯示的所有不重複字串，資料換了才重算。給 TextWarmup 用。
+  // 名单里会显示的所有不重复字串，资料换了才重算。给 TextWarmup 用。
   List<String> _warmupStrings = const [];
 
   final ScrollController _scrollController = ScrollController();
@@ -39,9 +39,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   bool _isRefreshing = false;
   bool _hasLoaded = false;
 
-  // Refresh generation counter：刪除、關閉編輯 dialog、初次載入都會各自發一次
-  // 請求，先發的不保證先回。沒有這個 token，晚回的舊請求會把新資料
-  // （_sortedUsers / _warmupStrings）蓋回舊的，畫面與 _usersFuture 對不起來。
+  // Refresh generation counter：删除、关闭编辑 dialog、初次载入都会各自发一次
+  // 请求，先发的不保证先回。没有这个 token，晚回的旧请求会把新资料
+  // （_sortedUsers / _warmupStrings）盖回旧的，画面与 _usersFuture 对不起来。
   int _refreshToken = 0;
 
   @override
@@ -56,7 +56,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       _pendingRestore = true;
     }
     final token = ++_refreshToken;
-    // 管理畫面 pull-to-refresh / initial load 一律拉最新，避開 cache。
+    // 管理画面 pull-to-refresh / initial load 一律拉最新，避开 cache。
     final future = context.read<UserAdminProvider>().getUsers(
       forceRefresh: true,
     );
@@ -67,13 +67,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     future
         .then((users) {
           if (!mounted || token != _refreshToken) return;
-          // 資料回來才排序，用一次性的 context.read 取 templates。
+          // 资料回来才排序，用一次性的 context.read 取 templates。
           final templates = context.read<GroupSettingsProvider>().templates;
           setState(() {
             _lastUsers = users;
             _sortedUsers = _buildSortedUsers(users, templates);
-            // 預熱的是「列上真正會顯示的字串」：標題與副標。名單的人不見得
-            // 都出現在服事表裡，所以這裡要自己來一次。
+            // 预热的是「列上真正会显示的字串」：标题与副标。名单的人不见得
+            // 都出现在服事表里，所以这里要自己来一次。
             _warmupStrings = TextWarmup.uniqueStringsOf(
               _sortedUsers.expand((item) => [item.displayName, item.subtitle]),
             );
@@ -119,12 +119,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 自己那一行不給刪：唯一的管理員刪掉自己，網站就沒人能管了。
+    // 自己那一行不给删：唯一的管理员删掉自己，网站就没人能管了。
     final selfId = context.select<SessionProvider, String?>(
       (session) => session.currentUser?.id,
     );
-    // context.select 仍負責在 templates 變動時觸發 rebuild；
-    // 這裡用 reference 比較決定要不要重排。
+    // context.select 仍负责在 templates 变动时触发 rebuild；
+    // 这里用 reference 比较决定要不要重排。
     final groupTemplates = context
         .select<GroupSettingsProvider, Map<ServiceType, List<String>>>(
           (provider) => provider.templates,
@@ -325,13 +325,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 }
 
-/// 使用者列表的副標：`角色 | 牧區 | 可編輯：…`。
+/// 使用者列表的副标：`角色 | 牧区 | 可编辑：…`。
 ///
-/// 角色與牧區都是身分，排在一起；編輯權是另一回事，接在後面。副標只有一行，
-/// 超出的部分會從尾端被 ellipsis 切掉 —— 牧區標籤只有「主日／青崇／兒主」這種
-/// 兩個字的短名，所以就算三個牧區都有，權限通常還是看得到。
+/// 角色与牧区都是身分，排在一起；编辑权是另一回事，接在后面。副标只有一行，
+/// 超出的部分会从尾端被 ellipsis 切掉 —— 牧区标签只有「主日／青崇／儿主」这种
+/// 两个字的短名，所以就算三个牧区都有，权限通常还是看得到。
 ///
-/// 管理員本來就全有，role 標籤已經說完了，逐項列出反而像是被指定了那幾項。
+/// 管理员本来就全有，role 标签已经说完了，逐项列出反而像是被指定了那几项。
 String userListSubtitle(User user, String zoneText) {
   final groupText = user.isAdmin
       ? ''
@@ -396,7 +396,7 @@ List<_UserListItemData> _buildSortedUsers(
       }
     }
     final zoneText = user.zones.map((z) => z.serviceType.label).join(', ');
-    final displayName = user.username.isEmpty ? '${user.name}（無帳號）' : user.name;
+    final displayName = user.username.isEmpty ? '${user.name}（无帐号）' : user.name;
     final subtitle = userListSubtitle(user, zoneText);
     result.add(
       _UserListItemData(

@@ -20,20 +20,20 @@ const LOGO_BODY_LIMIT = 8 * 1024 * 1024;
 
 async function jsonBody(request, limit = 64 * 1024) {
   if (!/^application\/json(?:\s*;.*)?$/i.test(request.headers['content-type'] ?? '')) {
-    throw Object.assign(new Error('只接受 JSON 請求'), { httpStatus: 415 });
+    throw Object.assign(new Error('只接受 JSON 请求'), { httpStatus: 415 });
   }
   let bytes = 0;
   const chunks = [];
   for await (const chunk of request) {
     bytes += chunk.length;
-    if (bytes > limit) throw Object.assign(new Error('請求內容過大'), { httpStatus: 413 });
+    if (bytes > limit) throw Object.assign(new Error('请求内容过大'), { httpStatus: 413 });
     chunks.push(chunk);
   }
   try {
     const value = JSON.parse(Buffer.concat(chunks).toString('utf8'));
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error();
     return value;
-  } catch { throw Object.assign(new Error('JSON 格式不正確'), { httpStatus: 400 }); }
+  } catch { throw Object.assign(new Error('JSON 格式不正确'), { httpStatus: 400 }); }
 }
 
 export async function startInstallerServer({
@@ -88,10 +88,10 @@ export async function startInstallerServer({
       const hosts = new Set([expected.host, `127.0.0.1:${portNumber}`, `localhost:${portNumber}`]);
       if (!hosts.has(request.headers.host) ||
           (request.headers['x-forwarded-host'] && request.headers['x-forwarded-host'] !== expected.host)) {
-        return send(response, 403, { message: '主機驗證失敗' });
+        return send(response, 403, { message: '主机验证失败' });
       }
-      if (request.headers.origin && request.headers.origin !== origin) return send(response, 403, { message: '來源驗證失敗' });
-      if (!request.url?.startsWith('/') || request.url.startsWith('//')) return send(response, 400, { message: '請求路徑不正確' });
+      if (request.headers.origin && request.headers.origin !== origin) return send(response, 403, { message: '来源验证失败' });
+      if (!request.url?.startsWith('/') || request.url.startsWith('//')) return send(response, 400, { message: '请求路径不正确' });
       const url = new URL(request.url, origin);
       if (request.method === 'GET' && STATIC.has(url.pathname)) {
         const [file, type] = STATIC.get(url.pathname);
@@ -100,21 +100,21 @@ export async function startInstallerServer({
         return response.end(body);
       }
       if (request.method === 'GET' && url.pathname === '/favicon.ico') { response.writeHead(204, headers); return response.end(); }
-      if (!url.pathname.startsWith('/api/')) return send(response, 404, { message: '找不到頁面' });
+      if (!url.pathname.startsWith('/api/')) return send(response, 404, { message: '找不到页面' });
       // Only the API is checked for cross-site use. Static files are public
       // source, and the Cloud Shell preview reaches them through Google's
       // sign-in redirects and proxies, whose fetch metadata is not stable.
       // Framing is blocked by CSP and embedding by CORP.
       if (request.headers['sec-fetch-site'] && !['same-origin', 'none'].includes(request.headers['sec-fetch-site'])) {
-        return send(response, 403, { message: '不接受跨網站請求' });
+        return send(response, 403, { message: '不接受跨网站请求' });
       }
-      if (checkExpired()) return send(response, 401, { message: '安裝工作階段已到期。請重新啟動精靈，使用安裝識別碼接續。' });
-      if (request.headers['x-installer-request'] !== '1') return send(response, 403, { message: '請從安裝精靈操作' });
-      if (request.method !== 'GET' && request.headers.origin !== origin) return send(response, 403, { message: '來源驗證失敗' });
+      if (checkExpired()) return send(response, 401, { message: '安装工作阶段已到期。请重新启动精灵，使用安装识别码接续。' });
+      if (request.headers['x-installer-request'] !== '1') return send(response, 403, { message: '请从安装精灵操作' });
+      if (request.method !== 'GET' && request.headers.origin !== origin) return send(response, 403, { message: '来源验证失败' });
       if (url.pathname === '/api/session' && request.method === 'POST') {
         const input = await jsonBody(request);
         if (bootstrapUsed || bootstrapAttempts >= 3 || now() - bootAt > bootstrapTimeoutMs || !equal(input.token, bootstrapToken)) {
-          return send(response, 401, { message: '開啟連結已失效，請重新啟動精靈' });
+          return send(response, 401, { message: '开启连结已失效，请重新启动精灵' });
         }
         // The link stays valid until a request arrives with the cookie. A
         // Cloud Shell sign-in redirect can drop that cookie on first open;
@@ -131,20 +131,20 @@ export async function startInstallerServer({
       }
       const cookies = (request.headers.cookie ?? '').split(';').map((cookie) => cookie.trim());
       const cookie = cookies.find((entry) => entry.startsWith('installer_session='))?.slice('installer_session='.length);
-      if (!session || !equal(cookie, session.id)) return send(response, 401, { message: '請使用啟動工具顯示的私人連結開啟精靈' });
+      if (!session || !equal(cookie, session.id)) return send(response, 401, { message: '请使用启动工具显示的私人连结开启精灵' });
       bootstrapUsed = true;
       session.touchedAt = now();
       if (request.method === 'GET' && url.pathname === '/api/session') return send(response, 200, { csrf: session.csrf });
       if (request.method === 'GET' && url.pathname === '/api/state') return send(response, 200, manager.snapshot());
       if (request.method === 'GET' && url.pathname === '/api/runs') return send(response, 200, await manager.listRuns());
       if (request.method !== 'POST') return send(response, 405, { message: '不支援此操作' });
-      if (!equal(request.headers['x-installer-csrf'], session.csrf)) return send(response, 403, { message: '工作階段驗證失敗' });
+      if (!equal(request.headers['x-installer-csrf'], session.csrf)) return send(response, 403, { message: '工作阶段验证失败' });
       const input = await jsonBody(request, LOGO_ROUTES.has(url.pathname) ? LOGO_BODY_LIMIT : undefined);
       if (url.pathname === '/api/cancel') {
         manager.cancel();
         return send(response, 200, { accepted: true });
       }
-      if (manager.snapshot().busy) return send(response, 409, { message: '目前步驟尚未結束' });
+      if (manager.snapshot().busy) return send(response, 409, { message: '目前步骤尚未结束' });
       let task;
       if (url.pathname === '/api/connect/google') task = manager.connectGoogle();
       else if (url.pathname === '/api/connect/cloudflare') task = manager.connectCloudflare();

@@ -2,11 +2,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-/// 安裝精靈裝的網站不會跟著 GitHub 自動更新，要教會自己用精靈更新。這裡讀
-/// 上游 repo 的 release.json，讓管理員知道有新版本、以及更新了什麼。
+/// 安装精灵装的网站不会跟著 GitHub 自动更新，要教会自己用精灵更新。这里读
+/// 上游 repo 的 release.json，让管理员知道有新版本、以及更新了什么。
 ///
-/// 只有維護者改了 release.json 的版本號才算新版本 —— 只改文件或小修正的
-/// commit 不會去吵教會。
+/// 只有维护者改了 release.json 的版本号才算新版本 —— 只改文件或小修正的
+/// commit 不会去吵教会。
 const upstreamReleaseUrl =
     'https://raw.githubusercontent.com/hansli112/church-staff-pwa/main/release.json';
 
@@ -27,11 +27,11 @@ class ReleaseCheckService {
 
   final String url;
 
-  /// 測試注入；正式環境用 http 套件預設的 client。
+  /// 测试注入；正式环境用 http 套件预设的 client。
   final http.Client? client;
 
-  /// 讀不到（離線、GitHub 掛了、格式不對）就回 null：這是提醒，不是功能，
-  /// 失敗不該打擾管理員。
+  /// 读不到（离线、GitHub 挂了、格式不对）就回 null：这是提醒，不是功能，
+  /// 失败不该打扰管理员。
   Future<ReleaseInfo?> fetchLatest() async {
     try {
       final uri = Uri.parse(url);
@@ -58,9 +58,9 @@ class ReleaseCheckService {
   }
 }
 
-/// [latest] 比 [current] 新嗎？版本號是「年.月.序號」，逐段比數字 ——
-/// 字串比較會把 2026.10.1 排在 2026.9.1 前面。[current] 讀不到時不算有新版：
-/// 那是舊版精靈裝的，或根本不是精靈裝的網站。
+/// [latest] 比 [current] 新吗？版本号是「年.月.序号」，逐段比数字 ——
+/// 字串比较会把 2026.10.1 排在 2026.9.1 前面。[current] 读不到时不算有新版：
+/// 那是旧版精灵装的，或根本不是精灵装的网站。
 bool isNewerRelease(String latest, String? current) {
   final a = _parse(latest);
   final b = current == null ? null : _parse(current);

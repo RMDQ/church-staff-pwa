@@ -10,13 +10,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'support/signed_in_auth_repository.dart';
 
-/// 個人頁的「檢查更新」。
+/// 个人页的「检查更新」。
 ///
 /// 真正的交接（waiting / skipWaiting / controllerchange）在
-/// `web/app_update.js`，那邊有自己的一組測試（web-tests/app_update.test.js）。
-/// 這裡守的是接到 UI 上的那一段：按鈕在什麼情況出現、按下去之後使用者看到
-/// 什麼 —— 尤其是失敗時不能看起來像「檢查過了，沒事」，那正是這顆按鈕存在的
-/// 情境（使用者已經不相信畫面上的版本了）。
+/// `web/app_update.js`，那边有自己的一组测试（web-tests/app_update.test.js）。
+/// 这里守的是接到 UI 上的那一段：按钮在什么情况出现、按下去之后使用者看到
+/// 什么 —— 尤其是失败时不能看起来像「检查过了，没事」，那正是这颗按钮存在的
+/// 情境（使用者已经不相信画面上的版本了）。
 class _FakeUpdateService implements AppUpdateService {
   _FakeUpdateService({
     required this.result,
@@ -28,7 +28,7 @@ class _FakeUpdateService implements AppUpdateService {
   final AppUpdateResult result;
   final Object? error;
 
-  /// 給「檢查中」那個測試用：不完成的話，按鈕就停在等待狀態。
+  /// 给「检查中」那个测试用：不完成的话，按钮就停在等待状态。
   final Completer<void>? gate;
 
   @override
@@ -45,7 +45,7 @@ class _FakeUpdateService implements AppUpdateService {
   }
 }
 
-/// 正式環境是去抓 version.json；測試裡直接給一個時間，才有「更新於 …」那行
+/// 正式环境是去抓 version.json；测试里直接给一个时间，才有「更新于 …」那行
 /// 可以量位置。
 class _FakeVersionService implements AppVersionService {
   const _FakeVersionService();
@@ -57,7 +57,7 @@ class _FakeVersionService implements AppVersionService {
 
 const _user = User(
   id: 'u1',
-  name: '測試者',
+  name: '测试者',
   email: 'a@b.c',
   username: 'tester',
   role: UserRole.member,
@@ -83,7 +83,7 @@ Future<void> _pumpProfile(
 }
 
 void main() {
-  testWidgets('已是最新版本時說清楚', (tester) async {
+  testWidgets('已是最新版本时说清楚', (tester) async {
     final service = _FakeUpdateService(result: AppUpdateResult.latest);
     await _pumpProfile(tester, service);
 
@@ -94,9 +94,9 @@ void main() {
     expect(find.text('已经是最新版本'), findsOneWidget);
   });
 
-  testWidgets('找到新版時告訴使用者正在換', (tester) async {
-    // 換完頁面會自己重載，所以這句話只會出現一下下 —— 但沒有它，按下去到
-    // 重載之間畫面完全沒有反應。
+  testWidgets('找到新版时告诉使用者正在换', (tester) async {
+    // 换完页面会自己重载，所以这句话只会出现一下下 —— 但没有它，按下去到
+    // 重载之间画面完全没有反应。
     final service = _FakeUpdateService(result: AppUpdateResult.updating);
     await _pumpProfile(tester, service);
 
@@ -106,7 +106,7 @@ void main() {
     expect(find.text('找到新版本，正在更新…'), findsOneWidget);
   });
 
-  testWidgets('檢查失敗要說出來，不能靜靜地回「已是最新」', (tester) async {
+  testWidgets('检查失败要说出来，不能静静地回「已是最新」', (tester) async {
     final service = _FakeUpdateService(
       result: AppUpdateResult.latest,
       error: Exception('offline'),
@@ -120,7 +120,7 @@ void main() {
     expect(find.text('已经是最新版本'), findsNothing);
   });
 
-  testWidgets('檢查中不能重複按', (tester) async {
+  testWidgets('检查中不能重复按', (tester) async {
     final gate = Completer<void>();
     final service = _FakeUpdateService(
       result: AppUpdateResult.latest,
@@ -129,23 +129,23 @@ void main() {
     await _pumpProfile(tester, service);
 
     await tester.tap(find.text('检查更新'));
-    await tester.pump(); // 讓 setState 生效，但結果還沒回來
+    await tester.pump(); // 让 setState 生效，但结果还没回来
 
     expect(find.text('检查中…'), findsOneWidget);
     final button = tester.widget<InkWell>(
       find.ancestor(of: find.text('检查中…'), matching: find.byType(InkWell)),
     );
-    expect(button.onTap, isNull, reason: '按著不放也只會送出一次');
+    expect(button.onTap, isNull, reason: '按著不放也只会送出一次');
 
     gate.complete();
     await tester.pumpAndSettle();
     expect(service.calls, 1);
-    expect(find.text('检查更新'), findsOneWidget, reason: '結束後回到原本的字');
+    expect(find.text('检查更新'), findsOneWidget, reason: '结束后回到原本的字');
   });
 
-  testWidgets('是頁尾的註腳，不是一顆按鈕', (tester) async {
-    // 平常不必按（載入與切回前景都會自己檢查），所以它要跟旁邊的版本資訊
-    // 一樣是灰色小字 —— 一顆主色的 TextButton 會比它上面那行還搶眼。
+  testWidgets('是页尾的注脚，不是一颗按钮', (tester) async {
+    // 平常不必按（载入与切回前景都会自己检查），所以它要跟旁边的版本资讯
+    // 一样是灰色小字 —— 一颗主色的 TextButton 会比它上面那行还抢眼。
     final service = _FakeUpdateService(result: AppUpdateResult.latest);
     await _pumpProfile(tester, service);
 
@@ -158,7 +158,7 @@ void main() {
     expect(label.style?.color, Colors.grey.shade600);
   });
 
-  testWidgets('自己一行，跟版本資訊各自置中', (tester) async {
+  testWidgets('自己一行，跟版本资讯各自置中', (tester) async {
     final service = _FakeUpdateService(result: AppUpdateResult.latest);
     await _pumpProfile(tester, service);
 
@@ -168,10 +168,10 @@ void main() {
 
     expect(version.dx, moreOrLessEquals(screenCentre, epsilon: 1));
     expect(link.dx, moreOrLessEquals(screenCentre, epsilon: 1));
-    expect(link.dy, greaterThan(version.dy), reason: '在版本資訊的下一行');
+    expect(link.dy, greaterThan(version.dy), reason: '在版本资讯的下一行');
   });
 
-  testWidgets('不支援的環境（非 web）不顯示按鈕', (tester) async {
+  testWidgets('不支援的环境（非 web）不显示按钮', (tester) async {
     final service = _FakeUpdateService(
       result: AppUpdateResult.unsupported,
       isSupported: false,

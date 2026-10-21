@@ -11,12 +11,12 @@ InMemoryRosterRepository _repo() => InMemoryRosterRepository(
   eventOptions: emptyForEveryType(),
 );
 
-// ── Fake RosterRepository（記錄呼叫次數）──────────────────────────────────
+// ── Fake RosterRepository（记录呼叫次数）──────────────────────────────────
 
-// ── 輔助：等待 provider 的非同步 fetch 跑完 ──────────────────────────────────
+// ── 辅助：等待 provider 的非同步 fetch 跑完 ──────────────────────────────────
 
 Future<void> _drainAsync() async {
-  // 給 Future.wait + microtask 至少一個 event loop 完成
+  // 给 Future.wait + microtask 至少一个 event loop 完成
   await Future.delayed(Duration.zero);
 }
 
@@ -32,7 +32,7 @@ void main() {
       provider = RosterProvider(repo);
     });
 
-    test('初始呼叫 onSessionChanged(userId) → fetchInitialData 被觸發', () async {
+    test('初始呼叫 onSessionChanged(userId) → fetchInitialData 被触发', () async {
       provider.onSessionChanged('user-A');
       await _drainAsync();
 
@@ -41,12 +41,12 @@ void main() {
       expect(repo.fetchEventOptionsCallCount, greaterThanOrEqualTo(1));
     });
 
-    test('相同 userId 重複呼叫 onSessionChanged → fetch 不重複觸發', () async {
+    test('相同 userId 重复呼叫 onSessionChanged → fetch 不重复触发', () async {
       provider.onSessionChanged('user-A');
       await _drainAsync();
       repo.resetCounts();
 
-      // 同一個 userId 再呼叫一次
+      // 同一个 userId 再呼叫一次
       provider.onSessionChanged('user-A');
       await _drainAsync();
 
@@ -54,7 +54,7 @@ void main() {
       expect(repo.fetchTemplatesCallCount, 0);
     });
 
-    test('切換到不同 userId → 重新觸發 fetch', () async {
+    test('切换到不同 userId → 重新触发 fetch', () async {
       provider.onSessionChanged('user-A');
       await _drainAsync();
       repo.resetCounts();
@@ -65,8 +65,8 @@ void main() {
       expect(repo.fetchRostersCallCount, greaterThanOrEqualTo(1));
     });
 
-    test('切換帳號時舊的 rosters 先被同步清空，fetch 完成後回填 user-B 資料', () async {
-      // user-A 有一筆資料
+    test('切换帐号时旧的 rosters 先被同步清空，fetch 完成后回填 user-B 资料', () async {
+      // user-A 有一笔资料
       repo.rosters = [
         ServiceRoster(
           id: 'r1',
@@ -80,7 +80,7 @@ void main() {
       await _drainAsync();
       expect(provider.rosters, isNotEmpty);
 
-      // user-B 有不同的非空資料
+      // user-B 有不同的非空资料
       repo.rosters = [
         ServiceRoster(
           id: 'r2',
@@ -98,16 +98,16 @@ void main() {
         ),
       ];
 
-      // 切換帳號後【不 await】，同步確認 cache 已被清空
+      // 切换帐号后【不 await】，同步确认 cache 已被清空
       provider.onSessionChanged('user-B');
       expect(provider.rosters, isEmpty); // 同步清空，fetch 尚未完成
 
-      // 等待 fetch 完成後，應回填 user-B 的 2 筆資料
+      // 等待 fetch 完成后，应回填 user-B 的 2 笔资料
       await _drainAsync();
       expect(provider.rosters, hasLength(2));
     });
 
-    test('onSessionChanged(null)（登出）→ cache 清空、不觸發 fetch', () async {
+    test('onSessionChanged(null)（登出）→ cache 清空、不触发 fetch', () async {
       provider.onSessionChanged('user-A');
       await _drainAsync();
       repo.resetCounts();
@@ -120,7 +120,7 @@ void main() {
       expect(provider.templates, isEmpty);
     });
 
-    test('登出後 error 被清空', () async {
+    test('登出后 error 被清空', () async {
       provider.onSessionChanged('user-A');
       await _drainAsync();
 
@@ -129,7 +129,7 @@ void main() {
       expect(provider.error, isNull);
     });
 
-    test('登出後 isEditMode 被重置為 false', () async {
+    test('登出后 isEditMode 被重置为 false', () async {
       provider.onSessionChanged('user-A');
       await _drainAsync();
       provider.toggleEditMode();
@@ -140,7 +140,7 @@ void main() {
       expect(provider.isEditMode, false);
     });
 
-    test('切換帳號後 isEditMode 被重置為 false', () async {
+    test('切换帐号后 isEditMode 被重置为 false', () async {
       provider.onSessionChanged('user-A');
       await _drainAsync();
       provider.toggleEditMode();
@@ -152,7 +152,7 @@ void main() {
       expect(provider.isEditMode, false);
     });
 
-    test('onSessionChanged(null) 後再登入（新 userId）→ 再次觸發 fetch', () async {
+    test('onSessionChanged(null) 后再登入（新 userId）→ 再次触发 fetch', () async {
       provider.onSessionChanged('user-A');
       await _drainAsync();
 
@@ -163,7 +163,7 @@ void main() {
       provider.onSessionChanged('user-A');
       await _drainAsync();
 
-      // null -> user-A 視為 userId 改變，應重新 fetch
+      // null -> user-A 视为 userId 改变，应重新 fetch
       expect(repo.fetchRostersCallCount, greaterThanOrEqualTo(1));
     });
   });

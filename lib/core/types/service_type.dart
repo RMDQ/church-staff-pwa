@@ -1,11 +1,11 @@
 import '../config/church_config.dart';
 
-/// 穩定的聚會 ID。顯示名稱及排程來自部署設定，不用改 ID 就能改名。
-/// 未知 ID 原樣保留，不能把舊資料或未設定的聚會誤認為另一種聚會。
+/// 稳定的聚会 ID。显示名称及排程来自部署设定，不用改 ID 就能改名。
+/// 未知 ID 原样保留，不能把旧资料或未设定的聚会误认为另一种聚会。
 class ServiceType {
   const ServiceType(this.name);
 
-  // 既有文件的 ID 保持不變；新部署可以使用完全不同的聚會清單。
+  // 既有文件的 ID 保持不变；新部署可以使用完全不同的聚会清单。
   static const sundayService = ServiceType('sundayService');
   static const youth = ServiceType('youth');
   static const children = ServiceType('children');
@@ -16,8 +16,8 @@ class ServiceType {
     ChurchConfig.current.services.map((service) => ServiceType(service.id)),
   );
 
-  /// 還在舉行的聚會。停用的聚會保留 ID 與舊資料，只是不再出現在分頁上、
-  /// 也不再產生新的服事表。
+  /// 还在举行的聚会。停用的聚会保留 ID 与旧资料，只是不再出现在分页上、
+  /// 也不再产生新的服事表。
   static List<ServiceType> get active => List.unmodifiable(
     ChurchConfig.current.services
         .where((service) => service.enabled)
@@ -31,7 +31,7 @@ class ServiceType {
   String get serviceName => _definition?.name ?? name;
   bool get enabled => _definition?.enabled ?? false;
   int get weekday =>
-      _definition?.weekday ?? (throw StateError('聚會 $name 不在部署設定內，不能產生排程'));
+      _definition?.weekday ?? (throw StateError('聚会 $name 不在部署设定内，不能产生排程'));
   int get index =>
       ChurchConfig.current.services.indexWhere((s) => s.id == name);
 

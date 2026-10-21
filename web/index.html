@@ -18,7 +18,6 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="教会同工全方位助手">
 
   <!-- iOS meta tags & icons -->
@@ -54,9 +53,9 @@
       box-shadow: none !important;
     }
 
-    /* 對齊 Flutter MaterialApp 內 _AuthRestoringShell 的視覺：
-       headlineMedium 標題 + 32px gap + (spinner + 12px + titleMedium '載入中…') 並排。
-       overlay 移除時跟 Flutter shell 幾乎無感過渡。 */
+    /* 对齐 Flutter MaterialApp 内 _AuthRestoringShell 的视觉：
+       headlineMedium 标题 + 32px gap + (spinner + 12px + titleMedium '载入中…') 并排。
+       overlay 移除时跟 Flutter shell 几乎无感过渡。 */
     #app-loading {
       position: fixed;
       inset: 0;
@@ -109,10 +108,10 @@
 </head>
 <body>
   <div id="app-loading" role="status" aria-live="polite">
-    <div class="title">教會同工助手</div>
+    <div class="title">教会同工助手</div>
     <div class="status">
       <div class="spinner" aria-hidden="true"></div>
-      <div class="caption">載入中…</div>
+      <div class="caption">载入中…</div>
     </div>
   </div>
 
@@ -128,12 +127,12 @@
 
   </script>
   <!--
-    SW 註冊與換版交接在 app_update.js（刻意獨立成檔：那段程式碼決定裝置能不能
-    換到新版，被舊快取服務就再也救不回來，所以它自己要走 network-first）。
-    升級過程不動上面的「載入中」文字：每次 deploy 都會偵測到更新，訊息一直跳
-    反而吵；靜靜換完，controllerchange 時 reload 一次。
+    SW 注册与换版交接在 app_update.js（刻意独立成档：那段程式码决定装置能不能
+    换到新版，被旧快取服务就再也救不回来，所以它自己要走 network-first）。
+    升级过程不动上面的「载入中」文字：每次 deploy 都会侦测到更新，讯息一直跳
+    反而吵；静静换完，controllerchange 时 reload 一次。
   -->
-  <!-- 在 Flutter 之前：LINE 等 App 內建瀏覽器的說明、接住 beforeinstallprompt。 -->
+  <!-- 在 Flutter 之前：LINE 等 App 内建浏览器的说明、接住 beforeinstallprompt。 -->
   <script src="install_hint.js"></script>
   <script src="app_update.js"></script>
   <script src="flutter_bootstrap.js" async></script>

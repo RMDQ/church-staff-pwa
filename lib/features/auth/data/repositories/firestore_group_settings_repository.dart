@@ -40,7 +40,7 @@ class FirestoreGroupSettingsRepository implements GroupSettingsRepository {
       await _templatesDoc.set(data, SetOptions(merge: true));
     } catch (e) {
       log('Update Small Groups Error: $e');
-      throw Exception('更新小組設定失敗: $e');
+      throw Exception('更新小组设定失败: $e');
     }
   }
 }

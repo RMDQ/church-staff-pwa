@@ -2,20 +2,20 @@ import 'package:church_staff_pwa/core/types/service_type.dart';
 
 import '../../auth/domain/entities/user.dart';
 
-/// 服事表上代表「還沒排到人」的佔位字串。
+/// 服事表上代表「还没排到人」的占位字串。
 ///
-/// 它是佔位不是人，所以不能跟真名並存 —— 選人的 dialog、交換、匯入都照這個
-/// 規則處理。放在 domain 而不是某個 provider 上，是因為讀寫服事表的每一層都
-/// 要認得它。
+/// 它是占位不是人，所以不能跟真名并存 —— 选人的 dialog、交换、汇入都照这个
+/// 规则处理。放在 domain 而不是某个 provider 上，是因为读写服事表的每一层都
+/// 要认得它。
 const String placeholderPerson = '待定';
 
-/// 某一個崇拜的同工名單：回答「表上這個名字是誰」與「他能不能排這個服事」。
+/// 某一个崇拜的同工名单：回答「表上这个名字是谁」与「他能不能排这个服事」。
 ///
-/// 以前這兩個問題在匯入、選人、交換各算一次，各自決定要不要 trim、同名時
-/// 取哪個 uid。收在這裡之後規則只有一份。
+/// 以前这两个问题在汇入、选人、交换各算一次，各自决定要不要 trim、同名时
+/// 取哪个 uid。收在这里之后规则只有一份。
 class StaffDirectory {
-  /// 直接給名單。正式流程用 [StaffDirectory.fromUsers]；這個給測試跟
-  /// 已經有名單、沒有 [User] 物件的呼叫端。
+  /// 直接给名单。正式流程用 [StaffDirectory.fromUsers]；这个给测试跟
+  /// 已经有名单、没有 [User] 物件的呼叫端。
   StaffDirectory({
     required List<String> names,
     Map<String, String> idByName = const {},
@@ -25,11 +25,11 @@ class StaffDirectory {
        _idByName = Map.unmodifiable(idByName),
        _namesByRole = Map.unmodifiable(namesByRole);
 
-  /// [type] 這個崇拜的名單。名字都 trim 過，空白的名字不算。
+  /// [type] 这个崇拜的名单。名字都 trim 过，空白的名字不算。
   ///
-  /// 同名同姓的人**不帶 uid**：兩位都叫王大明時，挑哪一位都是猜，猜錯的話
-  /// 提醒發給另一個人，而且沒有任何跡象。不帶 uid 時首頁的「我的服事」會
-  /// 退回姓名比對，兩位都看得到 —— 多一個人看到，好過對的人看不到。
+  /// 同名同姓的人**不带 uid**：两位都叫王大明时，挑哪一位都是猜，猜错的话
+  /// 提醒发给另一个人，而且没有任何迹象。不带 uid 时首页的「我的服事」会
+  /// 退回姓名比对，两位都看得到 —— 多一个人看到，好过对的人看不到。
   factory StaffDirectory.fromUsers(List<User> users, ServiceType type) {
     final names = <String>[];
     final idByName = <String, String>{};
@@ -69,40 +69,40 @@ class StaffDirectory {
   final Map<String, String> _idByName;
   final Map<String, Set<String>> _namesByRole;
 
-  /// 名單上所有人（所有崇拜），順序照原本的名單。同名同姓的會出現兩次。
+  /// 名单上所有人（所有崇拜），顺序照原本的名单。同名同姓的会出现两次。
   List<String> get names => _names;
 
-  /// 名字 → uid。同名同姓的名字不在裡面（見 [StaffDirectory.fromUsers]）。
+  /// 名字 → uid。同名同姓的名字不在里面（见 [StaffDirectory.fromUsers]）。
   Map<String, String> get idByName => _idByName;
 
   bool contains(String name) => _nameSet.contains(name.trim());
 
   String? idOf(String name) => _idByName[name.trim()];
 
-  /// 這些名字裡查得到 uid 的那幾個。
+  /// 这些名字里查得到 uid 的那几个。
   Map<String, String> idsOf(Iterable<String> names) => {
     for (final name in names) name: ?idOf(name),
   };
 
-  /// 這個人在這個崇拜的服事設定裡有沒有 [role]。
+  /// 这个人在这个崇拜的服事设定里有没有 [role]。
   bool canServe(String name, String role) =>
       _namesByRole[role.trim()]?.contains(name.trim()) ?? false;
 
-  /// 服事設定裡有 [role] 的人，依名字排序。
+  /// 服事设定里有 [role] 的人，依名字排序。
   List<String> namesForRole(String role) =>
       (_namesByRole[role.trim()]?.toList() ?? <String>[])..sort();
 
-  /// 表上寫的 [raw] 是名單上的誰，排在 [role] 合不合他的設定。
+  /// 表上写的 [raw] 是名单上的谁，排在 [role] 合不合他的设定。
   ///
-  /// 三層：全名、名單上唯一一位的字尾（表上常省略姓氏）、差一個字的提示。
-  /// 前兩層會改寫成名單上的全名；第三層**不改**，只附上候選。
+  /// 三层：全名、名单上唯一一位的字尾（表上常省略姓氏）、差一个字的提示。
+  /// 前两层会改写成名单上的全名；第三层**不改**，只附上候选。
   NameMatchResult resolve(String raw, String role) {
     final name = raw.trim();
     if (name.isEmpty || name == placeholderPerson) {
       return const NameMatchResult.matched(placeholderPerson);
     }
     if (_nameSet.contains(name)) {
-      // 名單上有兩位以上叫這個名字：是誰由人決定，跟字尾對到兩位一樣處理。
+      // 名单上有两位以上叫这个名字：是谁由人决定，跟字尾对到两位一样处理。
       if (_isDuplicate(name)) return NameMatchResult.other(name);
       return canServe(name, role)
           ? NameMatchResult.matched(name)
@@ -120,9 +120,9 @@ class StaffDirectory {
     if (matches.length > 1) {
       return NameMatchResult.other(name);
     }
-    // 前兩層都是精確比對，錯一個字就是查無此人 —— 而中文名字的罕用字正是 OCR
-    // 最容易認錯的地方。這一層不改結果，只把名單裡差一個字的那幾位附上去，讓
-    // 管理者自己判斷是不是某位的別寫法。為什麼不自動接，見 [NameMatchResult]
+    // 前两层都是精确比对，错一个字就是查无此人 —— 而中文名字的罕用字正是 OCR
+    // 最容易认错的地方。这一层不改结果，只把名单里差一个字的那几位附上去，让
+    // 管理者自己判断是不是某位的别写法。为什么不自动接，见 [NameMatchResult]
     // 的 suggestions。
     return NameMatchResult.notInList(
       name,
@@ -137,16 +137,16 @@ class NameMatchResult {
   final NameMatchStatus status;
   final String name;
 
-  /// 名單裡跟這個名字只差一個字的那幾位 —— **只是提示，沒有套用**。
+  /// 名单里跟这个名字只差一个字的那几位 —— **只是提示，没有套用**。
   ///
-  /// 只會跟 [NameMatchStatus.notInList] 一起出現：名字照表上原文寫進服事表，
-  /// uid 一個都不帶，這幾個候選只是列給人看的。
+  /// 只会跟 [NameMatchStatus.notInList] 一起出现：名字照表上原文写进服事表，
+  /// uid 一个都不带，这几个候选只是列给人看的。
   ///
-  /// 不自動接回去是量過之後的決定：名單內部互相拼錯一個字時，唯一對到「別的
-  /// 真人」的情況是 0 次；會落進這一層的幾乎都是**還沒有帳號的人**（新同工、
-  /// 外來講員），而他們的名字常常跟某個真人只差一個字（「陳志豪」對上名單裡
-  /// 的「陳志明」）。自動接的話那個人的服事會被記到別人頭上、連上別人的 uid，
-  /// 提醒發給錯的人，而原本那個名字從表上消失。提示看得到就夠了。
+  /// 不自动接回去是量过之后的决定：名单内部互相拼错一个字时，唯一对到「别的
+  /// 真人」的情况是 0 次；会落进这一层的几乎都是**还没有帐号的人**（新同工、
+  /// 外来讲员），而他们的名字常常跟某个真人只差一个字（「陈志豪」对上名单里
+  /// 的「陈志明」）。自动接的话那个人的服事会被记到别人头上、连上别人的 uid，
+  /// 提醒发给错的人，而原本那个名字从表上消失。提示看得到就够了。
   final List<String> suggestions;
 
   const NameMatchResult(this.status, this.name, {this.suggestions = const []});
@@ -163,17 +163,17 @@ class NameMatchResult {
       suggestions = const [];
 }
 
-/// 少於這麼多個字就不給形近字提示。
+/// 少于这么多个字就不给形近字提示。
 ///
-/// 一個字的輸入會對上半本名單，那種提示沒有意義。兩個字的照樣比 —— 結果只是
-/// 提示不會套用，所以「小明」順便對上「劉美玉」的代價只是多一行字，而漏掉
-/// 「雅亭」對上「黃雅婷」才是真的可惜。
+/// 一个字的输入会对上半本名单，那种提示没有意义。两个字的照样比 —— 结果只是
+/// 提示不会套用，所以「小明」顺便对上「刘美玉」的代价只是多一行字，而漏掉
+/// 「雅亭」对上「黄雅婷」才是真的可惜。
 const int _minNearMatchRunes = 2;
 
-/// [a] 與 [b] 等長、而且逐位比對剛好只差一個字時回 true。
+/// [a] 与 [b] 等长、而且逐位比对刚好只差一个字时回 true。
 ///
-/// 位置對位置，不做插入／刪除 —— 形近字是替換，長度不變。改成編輯距離會
-/// 讓「王大明」對上「王大明峰」這種真的不同的名字。
+/// 位置对位置，不做插入／删除 —— 形近字是替换，长度不变。改成编辑距离会
+/// 让「王大明」对上「王大明峰」这种真的不同的名字。
 bool _differsByOneRune(List<int> a, List<int> b) {
   if (a.length != b.length) return false;
   var diff = 0;
@@ -185,17 +185,17 @@ bool _differsByOneRune(List<int> a, List<int> b) {
   return diff == 1;
 }
 
-/// 名單裡跟 [name] 只差一個字的全名。
+/// 名单里跟 [name] 只差一个字的全名。
 ///
-/// 規則刻意收得很緊，因為猜錯的代價是把服事排到另一個真人身上：
+/// 规则刻意收得很紧，因为猜错的代价是把服事排到另一个真人身上：
 ///
-/// - 只准差一個字，而且輸入至少要有 [_minNearMatchRunes] 個字。
-/// - 表上寫的常是去掉姓氏的簡稱，所以比的是名單那位的**同長度尾段**。
-/// - 回傳全部候選，讓呼叫端在「不唯一」時退回「不確定是哪一位」，不挑。
+/// - 只准差一个字，而且输入至少要有 [_minNearMatchRunes] 个字。
+/// - 表上写的常是去掉姓氏的简称，所以比的是名单那位的**同长度尾段**。
+/// - 回传全部候选，让呼叫端在「不唯一」时退回「不确定是哪一位」，不挑。
 ///
 /// 用 runes 而不是 String 的字元索引：罕用字有些落在 BMP 之外（例如 CJK
-/// 擴充 B 區），那些字在 Dart 的 String 裡是兩個 code unit，逐 code unit
-/// 比會把一個字算成兩個位置。而罕用字正是這一層要救的東西。
+/// 扩充 B 区），那些字在 Dart 的 String 里是两个 code unit，逐 code unit
+/// 比会把一个字算成两个位置。而罕用字正是这一层要救的东西。
 List<String> _nearMatches(String name, List<String> userNames) {
   final target = name.runes.toList();
   if (target.length < _minNearMatchRunes) return const [];

@@ -6,14 +6,14 @@ import { devotionalFetchSettings, fetchDailyVerse, parseDailyBibleHtml, validate
 const example = JSON.parse(readFileSync(new URL('../config/church.example.json', import.meta.url), 'utf8'));
 
 const options = { timeZone: 'Asia/Taipei', now: new Date('2026-09-24T16:30:00Z') };
-const data = { date: '2026-09-25', rawRange: '約翰福音 1:1-5' };
+const data = { date: '2026-09-25', rawRange: '约翰福音 1:1-5' };
 
 test('fetch settings come only from shared ChurchConfig, with safe defaults', () => {
   assert.deepEqual(devotionalFetchSettings(undefined), { enabled: false });
   assert.equal(devotionalFetchSettings(JSON.stringify(example)).enabled, false);
   const config = structuredClone(example);
   config.devotional = {
-    enabled: true, sourceName: '測試來源', dataUrl: 'https://example.invalid/daily-verse.json',
+    enabled: true, sourceName: '测试来源', dataUrl: 'https://example.invalid/daily-verse.json',
     linkUrl: 'https://example.invalid/daily', fetchUrl: '',
   };
   assert.equal(devotionalFetchSettings(JSON.stringify(config)).enabled, false);
@@ -31,7 +31,7 @@ test('fetch settings come only from shared ChurchConfig, with safe defaults', ()
 });
 
 test('dailyBibleHtml adapter preserves the old date/span/range structure with synthetic content', async () => {
-  const html = '<!doctype html><h1>測試資料</h1><div>2026-09-25 <span>|</span> <span> 約翰福音 1:1-5 </span></div>';
+  const html = '<!doctype html><h1>测试资料</h1><div>2026-09-25 <span>|</span> <span> 约翰福音 1:1-5 </span></div>';
   assert.deepEqual(parseDailyBibleHtml(html), data);
   const parsed = await fetchDailyVerse('https://example.invalid/source', {
     ...options, format: 'dailyBibleHtml', fetchImpl: async (_url, init) => {
@@ -44,12 +44,12 @@ test('dailyBibleHtml adapter preserves the old date/span/range structure with sy
   assert.throws(() => parseDailyBibleHtml('<div>2026-09-25 任意其他版型</div>'), /既定/);
   await assert.rejects(fetchDailyVerse('https://example.invalid/source', {
     ...options, fetchImpl: async () => new Response(html),
-  }), SyntaxError, '沒有明確選 HTML adapter 時不得猜測格式');
+  }), SyntaxError, '没有明确选 HTML adapter 时不得猜测格式');
 });
 
 test('preserves the existing JSON contract and respects configured time zone', () => {
   assert.deepEqual(validateDailyVerse(data, options), { ...data, fetchedAt: '2026-09-24T16:30:00.000Z' });
-  assert.throws(() => validateDailyVerse(data, { ...options, timeZone: 'America/New_York' }), /晚於/);
+  assert.throws(() => validateDailyVerse(data, { ...options, timeZone: 'America/New_York' }), /晚于/);
   assert.throws(() => validateDailyVerse(data, { ...options, timeZone: 'invalid' }));
 });
 
@@ -67,7 +67,7 @@ test('fetch requires HTTPS, no credentials and disallows redirects', async () =>
     return new Response(JSON.stringify(data));
   };
   await assert.rejects(fetchDailyVerse('http://example.invalid/feed.json', { fetchImpl }), /HTTPS/);
-  await assert.rejects(fetchDailyVerse('https://user:secret@example.invalid/feed.json', { fetchImpl }), /帳密/);
+  await assert.rejects(fetchDailyVerse('https://user:secret@example.invalid/feed.json', { fetchImpl }), /帐密/);
   assert.deepEqual(await fetchDailyVerse('https://example.invalid/feed.json', { fetchImpl, ...options }), validateDailyVerse(data, options));
 });
 

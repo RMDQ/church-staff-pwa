@@ -25,7 +25,7 @@ export const onRequestPost = ({ request, env, waitUntil }) =>
     // The raw Google item is returned on purpose: the client parses it with the
     // same code that parses the month listing, so the two cannot drift.
     const created = await response.json();
-    // 活動已經建好，通知成不成功都不改變這個回應。有 waitUntil 時它在背景跑完，
+    // 活动已经建好，通知成不成功都不改变这个回应。有 waitUntil 时它在背景跑完，
     // 使用者不必等 LINE。
     await scheduleNotify(waitUntil, notifyN8n(env, notifyPayload('created', created, actor, churchConfig(env).timeZone)));
     return jsonResponse(created, 201);

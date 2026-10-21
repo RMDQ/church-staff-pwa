@@ -13,25 +13,25 @@ import 'package:provider/provider.dart';
 import 'support/in_memory_roster_repository.dart';
 import 'support/signed_in_auth_repository.dart';
 
-/// 快取與伺服器回同一份，樣板只有主日。
+/// 快取与伺服器回同一份，样板只有主日。
 InMemoryRosterRepository _repo(List<ServiceRoster> rosters) =>
     InMemoryRosterRepository(
       rosters: rosters,
       cachedRosters: rosters,
       templates: {
-        ServiceType.sundayService: ['敬拜主領', '司琴', '招待'],
+        ServiceType.sundayService: ['敬拜主领', '司琴', '招待'],
       },
     );
 
-/// 切換檢視／編輯模式時，畫面要停在同一天。
+/// 切换检视／编辑模式时，画面要停在同一天。
 ///
-/// 兩份清單的高度本來就不一樣（編輯模式多一張匯入卡、每列多兩顆 48px 的按鈕，
-/// 展開的卡片因此高出一截），所以只保留 `position.pixels` 一定會對到別天 ——
-/// 這組測試釘的就是「錨在日期上，不是錨在 pixel 上」。
+/// 两份清单的高度本来就不一样（编辑模式多一张汇入卡、每列多两颗 48px 的按钮，
+/// 展开的卡片因此高出一截），所以只保留 `position.pixels` 一定会对到别天 ——
+/// 这组测试钉的就是「锚在日期上，不是锚在 pixel 上」。
 
 const _kEditorUser = User(
   id: 'u1',
-  name: '編輯者',
+  name: '编辑者',
   email: 'a@b.c',
   username: 'editor',
   role: UserRole.admin,
@@ -47,14 +47,14 @@ List<ServiceRoster> _buildRosters(int count) => List.generate(
     type: ServiceType.sundayService,
     serviceName: '主日崇拜',
     duties: [
-      RosterEntry(role: '敬拜主領', people: const ['美玉']),
-      RosterEntry(role: '司琴', people: const ['王小明', '李大華']),
-      RosterEntry(role: '招待', people: const ['陳美麗']),
+      RosterEntry(role: '敬拜主领', people: const ['美玉']),
+      RosterEntry(role: '司琴', people: const ['王小明', '李大华']),
+      RosterEntry(role: '招待', people: const ['陈美丽']),
     ],
   ),
 );
 
-/// 掛好畫面並等 session 還原完（理由同 permission_ui_test）。
+/// 挂好画面并等 session 还原完（理由同 permission_ui_test）。
 Future<RosterProvider> _pumpRosterScreen(WidgetTester tester) async {
   final session = SessionProvider(SignedInAuthRepository(_kEditorUser));
   final rosters = RosterProvider(_repo(_buildRosters(24)));
@@ -85,15 +85,15 @@ Future<RosterProvider> _pumpRosterScreen(WidgetTester tester) async {
   return rosters;
 }
 
-/// 目前畫面上，指定卡片的上緣落在哪裡（螢幕座標）。找不到代表它根本沒被
-/// build 出來 —— 那本身就是「位置跑掉了」。
+/// 目前画面上，指定卡片的上缘落在哪里（萤幕座标）。找不到代表它根本没被
+/// build 出来 —— 那本身就是「位置跑掉了」。
 double _topOf(WidgetTester tester, String rosterId) {
   final finder = find.byKey(ValueKey(rosterId));
-  expect(finder, findsOneWidget, reason: '$rosterId 不在畫面上');
+  expect(finder, findsOneWidget, reason: '$rosterId 不在画面上');
   return tester.getTopLeft(finder).dy;
 }
 
-/// 目前停在頂端的是哪一張卡片。
+/// 目前停在顶端的是哪一张卡片。
 String _topmostId(WidgetTester tester, int count) {
   var bestId = '';
   var bestDy = double.negativeInfinity;
@@ -113,33 +113,33 @@ String _topmostId(WidgetTester tester, int count) {
 void main() {
   setUpAll(() async => initializeDateFormatting('zh_TW'));
 
-  testWidgets('切到編輯模式後，原本停在頂端的那一天還在同一個位置', (tester) async {
+  testWidgets('切到编辑模式后，原本停在顶端的那一天还在同一个位置', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
     await _pumpRosterScreen(tester);
 
-    // 捲到中段，讓「頂端那張」不是第一張。
+    // 卷到中段，让「顶端那张」不是第一张。
     await tester.drag(find.byType(ListView), const Offset(0, -700));
     await tester.pumpAndSettle();
 
     final anchorId = _topmostId(tester, 24);
-    expect(anchorId, isNot(''), reason: '捲完之後畫面上應該還有卡片');
+    expect(anchorId, isNot(''), reason: '卷完之后画面上应该还有卡片');
     final before = _topOf(tester, anchorId);
 
     await tester.tap(find.byTooltip('切换至编辑模式'));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('切換至檢視模式'), findsOneWidget, reason: '應該已經在編輯模式');
+    expect(find.byTooltip('切换至检视模式'), findsOneWidget, reason: '应该已经在编辑模式');
     expect(
       _topOf(tester, anchorId),
       closeTo(before, 1.0),
-      reason: '切進編輯模式後，同一天應該停在同一個位置',
+      reason: '切进编辑模式后，同一天应该停在同一个位置',
     );
   });
 
-  testWidgets('切回檢視模式後也回到同一天', (tester) async {
+  testWidgets('切回检视模式后也回到同一天', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -149,27 +149,27 @@ void main() {
     await tester.tap(find.byTooltip('切换至编辑模式'));
     await tester.pumpAndSettle();
 
-    // 在編輯模式裡捲動，再切回檢視。
+    // 在编辑模式里卷动，再切回检视。
     await tester.drag(find.byType(ListView), const Offset(0, -900));
     await tester.pumpAndSettle();
 
     final anchorId = _topmostId(tester, 24);
     final before = _topOf(tester, anchorId);
 
-    await tester.tap(find.byTooltip('切換至檢視模式'));
+    await tester.tap(find.byTooltip('切换至检视模式'));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('切换至编辑模式'), findsOneWidget, reason: '應該已經回到檢視模式');
+    expect(find.byTooltip('切换至编辑模式'), findsOneWidget, reason: '应该已经回到检视模式');
     expect(
       _topOf(tester, anchorId),
       closeTo(before, 1.0),
-      reason: '切回檢視模式後，同一天應該停在同一個位置',
+      reason: '切回检视模式后，同一天应该停在同一个位置',
     );
   });
 
-  // 停在最上面時刻意不錨定：把第一張卡片拉回同一個 y，等於把編輯模式頂端的
-  // 匯入卡推到畫面外，那顆功能就沒人找得到了。
-  testWidgets('本來就在最上面時，切過去仍停在清單頂端', (tester) async {
+  // 停在最上面时刻意不锚定：把第一张卡片拉回同一个 y，等于把编辑模式顶端的
+  // 汇入卡推到画面外，那颗功能就没人找得到了。
+  testWidgets('本来就在最上面时，切过去仍停在清单顶端', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -179,12 +179,12 @@ void main() {
     await tester.tap(find.byTooltip('切换至编辑模式'));
     await tester.pumpAndSettle();
 
-    expect(find.text('進階：匯入整季服事表'), findsOneWidget, reason: '匯入卡應該看得到');
+    expect(find.text('进阶：汇入整季服事表'), findsOneWidget, reason: '汇入卡应该看得到');
     final listOffset = tester
         .widget<ListView>(find.byType(ListView))
         .controller!
         .position
         .pixels;
-    expect(listOffset, closeTo(0, 0.5), reason: '應該仍停在清單頂端');
+    expect(listOffset, closeTo(0, 0.5), reason: '应该仍停在清单顶端');
   });
 }

@@ -14,12 +14,12 @@ def close():
     if lst: out.append(f'</{lst}>'); lst=None
 while i<len(src):
     l=src[i]
-    m=re.match(r'【插入圖 (\d\d)｜([^】]+)】',l)
+    m=re.match(r'【插入图 (\d\d)｜([^】]+)】',l)
     if m:
         close(); cap=''
-        if i+1<len(src) and src[i+1].startswith('圖說：'): cap=src[i+1][3:]; i+=1
+        if i+1<len(src) and src[i+1].startswith('图说：'): cap=src[i+1][3:]; i+=1
         b=base64.b64encode(open('images/'+m[2],'rb').read()).decode()
-        out.append(f'<figure><div class="tag">圖 {m[1]} · images/{m[2]}</div><img src="data:image/png;base64,{b}" alt="{html.escape(cap)}"><figcaption>{inline(cap)}</figcaption></figure>')
+        out.append(f'<figure><div class="tag">图 {m[1]} · images/{m[2]}</div><img src="data:image/png;base64,{b}" alt="{html.escape(cap)}"><figcaption>{inline(cap)}</figcaption></figure>')
     elif l.startswith('# '): close(); out.append(f'<h1>{inline(l[2:])}</h1>')
     elif l.startswith('## '): close(); out.append(f'<h2>{inline(l[3:])}</h2>')
     elif l.startswith('### '): close(); out.append(f'<h3>{inline(l[4:])}</h3>')
@@ -46,8 +46,8 @@ figcaption{font-size:14px;color:#5b655f;margin-top:6px;text-align:center}
 .tag{font:12px/1.4 ui-monospace,Menlo,monospace;color:#8a4b00;background:#fff1dc;display:inline-block;padding:2px 8px;border-radius:4px;margin-bottom:6px}
 blockquote{margin:16px 0;padding:10px 16px;background:#eef5f1;border-radius:6px}
 code{background:#eef0ee;padding:1px 5px;border-radius:4px;font-size:.92em}hr{border:0;border-top:1px solid #e3e6e3;margin:36px 0}a{color:#1f6b4f}'''
-page=f'''<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>同工助手安裝教學預覽</title><style>{css}</style></head><body><main>
-<div class="note">vocus 貼文預覽：文字可直接複製貼到 vocus 編輯器；橘色標籤處請上傳對應的 images/ 圖片，並把灰字圖說填進圖片說明。</div>
+page=f'''<!doctype html><html lang="zh-Hans"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>同工助手安装教学预览</title><style>{css}</style></head><body><main>
+<div class="note">vocus 贴文预览：文字可直接复制贴到 vocus 编辑器；橘色标签处请上传对应的 images/ 图片，并把灰字图说填进图片说明。</div>
 {"".join(out)}</main></body></html>'''
 open('preview.html','w').write(page)
 print(len(page)//1024,'KB')

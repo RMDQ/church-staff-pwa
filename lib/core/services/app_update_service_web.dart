@@ -1,10 +1,10 @@
 import 'dart:js_interop';
 
-/// `web/app_update.js` 掛在 window 上的入口。回傳 'updating' 或 'latest'，
-/// 網路不通時 reject。
+/// `web/app_update.js` 挂在 window 上的入口。回传 'updating' 或 'latest'，
+/// 网路不通时 reject。
 ///
-/// 瀏覽器沒有 service worker 時那支腳本會提早結束、不掛這個函式，所以這裡是
-/// nullable —— 讀到 undefined 就是 null。
+/// 浏览器没有 service worker 时那支脚本会提早结束、不挂这个函式，所以这里是
+/// nullable —— 读到 undefined 就是 null。
 @JS('churchAppCheckForUpdate')
 external JSFunction? get _checkForUpdate;
 

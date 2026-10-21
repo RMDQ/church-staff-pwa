@@ -27,14 +27,14 @@ void main() {
     return picked;
   }
 
-  testWidgets('排成兩排各五個，窄螢幕也一樣', (tester) async {
+  testWidgets('排成两排各五个，窄萤幕也一样', (tester) async {
     await pump(tester, width: 280);
     final rows = tester.widgetList<Row>(find.byType(Row)).toList();
     expect(rows, hasLength(2));
     for (final row in rows) {
       expect(row.children, hasLength(EventColorPicker.columns));
     }
-    // 上下兩排對齊：同一欄的左邊界一樣。
+    // 上下两排对齐：同一栏的左边界一样。
     final swatches = find.byType(InkWell);
     expect(swatches, findsNWidgets(eventColorPalette.length));
     for (var i = 0; i < EventColorPicker.columns; i++) {
@@ -46,7 +46,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('點了就回傳那個顏色', (tester) async {
+  testWidgets('点了就回传那个颜色', (tester) async {
     final picked = await pump(tester);
     await tester.tap(find.byType(InkWell).at(7));
     await tester.pump();

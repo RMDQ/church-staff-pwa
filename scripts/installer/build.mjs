@@ -14,7 +14,7 @@ export { FLUTTER_VERSION };
 export async function readRelease(root = ROOT) {
   let release;
   try { release = JSON.parse(await readFile(path.join(root, 'release.json'), 'utf8')); } catch { /* Fixed error below. */ }
-  if (typeof release?.version !== 'string' || !/^\d{4}\.\d{1,2}\.\d{1,3}$/.test(release.version)) throw buildError('release.json 缺少有效的版本號。');
+  if (typeof release?.version !== 'string' || !/^\d{4}\.\d{1,2}\.\d{1,3}$/.test(release.version)) throw buildError('release.json 缺少有效的版本号。');
   return release.version;
 }
 
@@ -35,40 +35,40 @@ async function safeCopy(source, target, hash, relative) {
     const bytes = await readFile(source);
     hash.update(relative).update('\0').update(bytes).update('\0');
     await writeFile(target, bytes, { mode: 0o600 });
-  } else throw buildError('建置來源不得包含符號連結、硬連結或特殊檔案。');
+  } else throw buildError('建置来源不得包含符号连结、硬连结或特殊档案。');
 }
 
 async function requiredFile(dir, name) {
   const stat = await lstat(path.join(dir, name)).catch(() => null);
-  if (!stat?.isFile() || stat.nlink !== 1 || stat.size === 0) throw buildError(`建置不完整，缺少 ${name}；禁止發佈。`);
+  if (!stat?.isFile() || stat.nlink !== 1 || stat.size === 0) throw buildError(`建置不完整，缺少 ${name}；禁止发布。`);
 }
 
 export async function buildCoreDeployment(context, { command = runIsolatedCommand, root = ROOT, flutter = process.env.INSTALLER_FLUTTER || 'flutter', wrangler = process.env.INSTALLER_WRANGLER || 'wrangler', environment = process.env, prepare = prepareDeployment, finalize = finalizeWebDeployment } = {}) {
   const { plan, runDir, transient, signal, emit = () => {}, save = async () => {} } = context;
   const config = validateChurchConfig(plan.churchConfig);
-  if (Object.values(config.features).some(Boolean) || config.devotional.enabled || Object.entries(CORE_ICONS).some(([key, value]) => config.icons[key] !== value)) throw buildError('首次安裝只支援核心功能與中性圖示。');
-  if (!path.isAbsolute(runDir) || path.resolve(runDir) === root || !/^[A-Za-z0-9_-]{8,80}$/.test(plan.runId)) throw buildError('建置需要獨立的安裝目錄。');
+  if (Object.values(config.features).some(Boolean) || config.devotional.enabled || Object.entries(CORE_ICONS).some(([key, value]) => config.icons[key] !== value)) throw buildError('首次安装只支援核心功能与中性图示。');
+  if (!path.isAbsolute(runDir) || path.resolve(runDir) === root || !/^[A-Za-z0-9_-]{8,80}$/.test(plan.runId)) throw buildError('建置需要独立的安装目录。');
   const runStat = await lstat(runDir);
-  if (!isPrivateDirectory(runStat)) throw buildError('安裝目錄必須為私人目錄（0700）。');
+  if (!isPrivateDirectory(runStat)) throw buildError('安装目录必须为私人目录（0700）。');
   // The Google adapter returns Firebase's JS SDK shape; Flutter and the
   // finalizer use dart-define names. This is the only place that converts them.
   const source = transient.firebaseConfig ?? {};
   const firebase = Object.fromEntries(FIREBASE_KEYS.map((key) => {
     const value = source[WEB_CONFIG_FIELDS[key]] ?? source[key] ?? (OPTIONAL.has(key) ? '' : undefined);
-    if (typeof value !== 'string' || (!OPTIONAL.has(key) && !value.trim())) throw buildError(`缺少 ${key}，無法建置。`);
+    if (typeof value !== 'string' || (!OPTIONAL.has(key) && !value.trim())) throw buildError(`缺少 ${key}，无法建置。`);
     return [key, value];
   }));
-  if (firebase.FIREBASE_PROJECT_ID !== plan.projectId) throw buildError('Firebase 建置設定不屬於本次安裝專案。');
+  if (firebase.FIREBASE_PROJECT_ID !== plan.projectId) throw buildError('Firebase 建置设定不属于本次安装专案。');
   // Keep both intermediate and final Flutter outputs out of the checkout.
   // A dedicated source copy also prevents pub get from changing its lockfile.
   let workRoot = runDir;
   if (environment.INSTALLER_BUILD_ROOT) {
     const temporaryRoot = environment.INSTALLER_BUILD_ROOT;
     const stat = await lstat(temporaryRoot);
-    if (!path.isAbsolute(temporaryRoot) || !isPrivateDirectory(stat)) throw buildError('暫存建置根目錄必須是私人絕對路徑。');
+    if (!path.isAbsolute(temporaryRoot) || !isPrivateDirectory(stat)) throw buildError('暂存建置根目录必须是私人绝对路径。');
     workRoot = path.join(temporaryRoot, plan.runId);
     await mkdir(workRoot, { recursive: true, mode: 0o700 });
-    if (!(await lstat(workRoot)).isDirectory()) throw buildError('暫存建置目錄不得是符號連結。');
+    if (!(await lstat(workRoot)).isDirectory()) throw buildError('暂存建置目录不得是符号连结。');
   }
   const workspace = path.join(workRoot, 'build-workspace');
   const buildDir = path.join(workRoot, 'web-build');
@@ -78,7 +78,7 @@ export async function buildCoreDeployment(context, { command = runIsolatedComman
     // replacement of --output, including a failed/incomplete build.
     const receipt = path.join(workRoot, `.installer-${path.basename(dir)}`);
     const old = await lstat(dir).catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
-    if (old && (!old.isDirectory() || (await readFile(receipt, 'utf8').catch(() => '')) !== plan.runId)) throw buildError('建置目錄包含未知內容，禁止覆寫。');
+    if (old && (!old.isDirectory() || (await readFile(receipt, 'utf8').catch(() => '')) !== plan.runId)) throw buildError('建置目录包含未知内容，禁止覆写。');
     if (old) await rm(dir, { recursive: true });
     await writeFile(receipt, plan.runId, { mode: 0o600 });
     await mkdir(dir, { mode: 0o700 });
@@ -88,16 +88,16 @@ export async function buildCoreDeployment(context, { command = runIsolatedComman
   const env = { ...privateEnvironment(home, environment), FLUTTER_SUPPRESS_ANALYTICS: 'true', DART_SUPPRESS_ANALYTICS: 'true', PUB_CACHE: environment.PUB_CACHE || path.join(home, 'pub-cache') };
   async function run(executable, args, timeoutMs = 120_000, cwd = workspace) {
     let result;
-    try { result = await command(executable, args, { cwd, env, signal, timeoutMs }); } catch { throw buildError('建置工具無法執行、遭取消或逾時；請由 Cloud Shell 安裝入口重開。'); }
-    if (result.exitCode !== 0) throw buildError('建置工具未成功完成；請檢查工具版本、可用磁碟空間與套件下載連線後重試。');
+    try { result = await command(executable, args, { cwd, env, signal, timeoutMs }); } catch { throw buildError('建置工具无法执行、遭取消或逾时；请由 Cloud Shell 安装入口重开。'); }
+    if (result.exitCode !== 0) throw buildError('建置工具未成功完成；请检查工具版本、可用磁碟空间与套件下载连线后重试。');
     return result.stdout;
   }
   const flutterInfo = await run(flutter, ['--version', '--machine']);
   let version;
   try { version = JSON.parse(flutterInfo).frameworkVersion; } catch { /* Fixed error below. */ }
-  if (version !== FLUTTER_VERSION) throw buildError(`需要 Flutter ${FLUTTER_VERSION}，請由 Cloud Shell 安裝入口重開。`);
+  if (version !== FLUTTER_VERSION) throw buildError(`需要 Flutter ${FLUTTER_VERSION}，请由 Cloud Shell 安装入口重开。`);
   if ((await run(wrangler, ['--version'])).trim() !== WRANGLER_VERSION) throw buildError(`需要 Wrangler ${WRANGLER_VERSION}。`);
-  emit({ type: 'progress', step: 'build', message: '正在準備隔離的核心功能建置；不修改原始程式或正式設定。' });
+  emit({ type: 'progress', step: 'build', message: '正在准备隔离的核心功能建置；不修改原始程式或正式设定。' });
   const release = await readRelease(root);
   const hash = createHash('sha256').update(JSON.stringify({ runId: plan.runId, config, firebase, release }));
   for (const name of ['lib', 'web', 'pubspec.yaml', 'pubspec.lock', 'analysis_options.yaml']) await safeCopy(path.join(root, name), path.join(workspace, name), hash, name);
@@ -109,7 +109,7 @@ export async function buildCoreDeployment(context, { command = runIsolatedComman
   if (context.icons) {
     for (const [name, size] of Object.entries(ICON_SIZES)) {
       const bytes = checkPng(context.icons[name], size);
-      if (!bytes) throw buildError(`圖示 ${name} 不是 ${size}×${size} 的 PNG。`);
+      if (!bytes) throw buildError(`图示 ${name} 不是 ${size}×${size} 的 PNG。`);
       await writeFile(path.join(workspace, 'web', name), bytes, { mode: 0o600 });
       hash.update(`icon:${name}`).update('\0').update(bytes).update('\0');
     }

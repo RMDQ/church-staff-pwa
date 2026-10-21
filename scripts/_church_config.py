@@ -1,4 +1,4 @@
-"""共用公開設定；交給部署生成器的同一個 validator，避免兩份 schema 漂移。"""
+"""共用公开设定；交给部署生成器的同一个 validator，避免两份 schema 漂移。"""
 
 import json
 import pathlib

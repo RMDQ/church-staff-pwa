@@ -30,7 +30,7 @@ const LIVE_FIELDS = ['ROLES', 'EVENTS', 'NAMES', 'TODAY', 'SAMPLE_ROLE_A', 'SAMP
 /// the prompt verified locally is not the prompt that goes out, and nothing
 /// would say so. functions-tests/prompt_parity.test.js pins them together.
 const NAMES_PER_LINE = 6;
-const NO_EVENTS = '（尚未設定）';
+const NO_EVENTS = '（尚未设定）';
 
 /// Reads everything that changes, as the caller.
 ///
@@ -51,7 +51,7 @@ export async function loadRosterContext(env, type, token, fetchImpl = fetch) {
     // Without the ministry list the model has no vocabulary to map columns
     // onto, and every duty would come back as a name the app cannot place.
     console.error('no roster template for type', type);
-    throw new HttpError(500, '這個崇拜還沒有服事項目設定，請管理員先新增');
+    throw new HttpError(500, '这个崇拜还没有服事项目设定，请管理员先新增');
   }
 
   return {
@@ -79,7 +79,7 @@ export function fillPrompt(template, { roles, events, names, today }) {
   const leftover = filled.match(/\{\{[A-Z_]+\}\}/g);
   if (leftover) {
     console.error('template has unfilled fields', [...new Set(leftover)].join(', '));
-    throw new HttpError(500, '辨識設定有誤，請聯絡管理員');
+    throw new HttpError(500, '辨识设定有误，请联络管理员');
   }
   return filled;
 }

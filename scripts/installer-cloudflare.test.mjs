@@ -85,7 +85,7 @@ test('denied or timed-out authorization is sanitized and cleans partial credenti
       if (failure === 'timeout') throw new Error('timeout secret-access-token');
       return { exitCode: 1, stdout: 'denied secret-access-token', stderr: 'secret-refresh-token' };
     } });
-    await assert.rejects(installer.startLogin(), (error) => !error.message.includes('secret') && /授權/.test(error.message));
+    await assert.rejects(installer.startLogin(), (error) => !error.message.includes('secret') && /授权/.test(error.message));
     assert.deepEqual(await readdir(sessionDir), []);
   }
 });
@@ -99,7 +99,7 @@ test('cancel is observed without falling back to API tokens or browser callbacks
 test('Pages existing outside this run is rejected before any mutation', async (t) => {
   const methods = [];
   const { installer, context } = await fixture(t, { fetchImpl: async (_url, options) => { methods.push(options.method); return response(project()); } });
-  await assert.rejects(installer.execute('pages-project', context), /不會接管/);
+  await assert.rejects(installer.execute('pages-project', context), /不会接管/);
   assert.deepEqual(methods, ['GET']);
 });
 
@@ -148,7 +148,7 @@ test('resume queries real state, accepts its own empty project, rejects foreign 
   context.checkpoint.intents.pagesProject = intent();
   await installer.execute('pages-project', context);
   deployed = [{ id: 'foreign-deploy', environment: 'production', deployment_trigger: { metadata: { branch: 'main', commit_message: 'someone else' } } }];
-  await assert.rejects(installer.execute('pages-project', context), /非本次安裝/);
+  await assert.rejects(installer.execute('pages-project', context), /非本次安装/);
 });
 
 test('publish always specifies production and resumes a confirmed matching deployment without uploading again', async (t) => {
@@ -177,9 +177,9 @@ test('changed production binding or non-selected account stops all writes', asyn
   const modified = project(); modified.deployment_configs.production.env_vars.FIREBASE_PROJECT_ID.value = 'other-project';
   const { installer, context } = await fixture(t, { fetchImpl: async () => response(modified) });
   context.checkpoint.intents.pagesProject = intent();
-  await assert.rejects(installer.execute('pages-project', context), /不會接管/);
+  await assert.rejects(installer.execute('pages-project', context), /不会接管/);
   context.plan = { ...PLAN, cloudflareAccountId: 'b'.repeat(32) };
-  await assert.rejects(installer.execute('pages-project', context), /明確選擇/);
+  await assert.rejects(installer.execute('pages-project', context), /明确选择/);
 });
 
 test('shutdown waits for the CLI to stop before removing its credential directory', async (t) => {
@@ -210,7 +210,7 @@ test('Pages settings fingerprint detects unexpected changes even when ownership 
   context.checkpoint.intents.pagesProject = intent();
   await installer.execute('pages-project', context);
   state.deployment_configs.production.compatibility_flags = ['unexpected_flag'];
-  await assert.rejects(installer.execute('pages-project', context), /設定已變更/);
+  await assert.rejects(installer.execute('pages-project', context), /设定已变更/);
 });
 
 test('publish refuses an incomplete build before invoking the upload CLI', async (t) => {
@@ -219,14 +219,14 @@ test('publish refuses an incomplete build before invoking the upload CLI', async
   context.transient = { buildDir: path.join(context.runDir, 'incomplete'), buildVersion: 'installer-test' };
   await mkdir(context.transient.buildDir);
   await writeFile(path.join(context.transient.buildDir, 'index.html'), 'incomplete');
-  await assert.rejects(installer.execute('publish', context), /產物不完整/);
+  await assert.rejects(installer.execute('publish', context), /产物不完整/);
   assert.equal(calls.filter(({ args }) => args[0] === 'pages').length, 0);
 });
 
 test('real runner enforces exact environment and bounded timeout without cloud commands', async () => {
   const result = await runIsolatedCommand(process.execPath, ['-e', 'process.stdout.write(JSON.stringify({home:process.env.HOME, secret:process.env.TEST_SECRET}))'], { env: privateEnvironment('/isolated', { PATH: '/usr/bin', TEST_SECRET: 'do-not-inherit' }) });
   assert.deepEqual(JSON.parse(result.stdout), { home: '/isolated' });
-  await assert.rejects(runIsolatedCommand(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { env: {}, timeoutMs: 20 }), /逾時/);
+  await assert.rejects(runIsolatedCommand(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { env: {}, timeoutMs: 20 }), /逾时/);
 });
 
 test('website comes from the Cloudflare subdomain, not a guess from the project name', async (t) => {
@@ -238,7 +238,7 @@ test('website comes from the Cloudflare subdomain, not a guess from the project 
   for (const bad of ['evil.invalid', 'other-site.pages.dev', null]) {
     const next = await fixture(t, { fetchImpl: async (url) => response(url.includes('/deployments?') ? [] : project(bad)) });
     next.context.checkpoint.intents.pagesProject = intent();
-    await assert.rejects(next.installer.execute('pages-project', next.context), /網站網址|不會接管/);
+    await assert.rejects(next.installer.execute('pages-project', next.context), /网站网址|不会接管/);
   }
 });
 
@@ -250,7 +250,7 @@ test('private environment keeps Wrangler normal output visible', async () => {
 test('preflight is read-only: rejects a taken Pages name and never creates anything', async (t) => {
   const methods = [];
   const taken = await fixture(t, { fetchImpl: async (url, options) => { methods.push(options?.method ?? 'GET'); return response(project()); } });
-  await assert.rejects(taken.installer.preflight(PLAN), /已經有叫「new-church-example」的網站/);
+  await assert.rejects(taken.installer.preflight(PLAN), /已经有叫「new-church-example」的网站/);
   const free = await fixture(t, { fetchImpl: async (url, options) => { methods.push(options?.method ?? 'GET'); return new Response('{}', { status: 404 }); } });
   await free.installer.preflight(PLAN);
   assert.deepEqual([...new Set(methods)], ['GET']);
@@ -262,7 +262,7 @@ test('an expired device code tells the person to get a new one', async (t) => {
     if (args[0] === 'login') { opts.onStdout?.(prompt); return { exitCode: 1, stdout: '' }; }
     return { exitCode: 0, stdout: '{}' };
   } });
-  await assert.rejects(installer.startLogin({}), (error) => /取得新代碼/.test(error.message));
+  await assert.rejects(installer.startLogin({}), (error) => /取得新代码/.test(error.message));
 });
 
 // ---------------------------------------------------------------------------
@@ -323,7 +323,7 @@ test('publishUpdate uploads a new production deployment over this install\'s ear
 
 test('publishUpdate never overwrites a site that has deployments from somewhere else', async (t) => {
   const { installer, calls, context } = await updateFixture(t, [deployment('first', `installer:${UPDATE_RUN}:installer-old`), deployment('manual', 'fix typo')]);
-  await assert.rejects(installer.publishUpdate(context), /不是安裝精靈發布的版本/);
+  await assert.rejects(installer.publishUpdate(context), /不是安装精灵发布的版本/);
   assert.equal(calls.filter(({ args }) => args[0] === 'pages').length, 0);
 });
 

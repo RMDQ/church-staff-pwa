@@ -3,7 +3,7 @@ import 'package:church_staff_pwa/core/types/service_type.dart';
 class RosterEntry {
   final String role;
 
-  /// 這一天排到的人，照同工排序（`StaffOrder`）排好。
+  /// 这一天排到的人，照同工排序（`StaffOrder`）排好。
   final List<String> people;
   final Map<String, String> personIdsByName;
 
@@ -30,12 +30,12 @@ class ServiceRoster {
   final String id;
   final DateTime date;
 
-  /// 讀取時的 Firestore 時間點。修改內容不重算舊文件的午夜或時區。
+  /// 读取时的 Firestore 时间点。修改内容不重算旧文件的午夜或时区。
   final DateTime? storedDate;
-  final ServiceType type; // 新增類別
+  final ServiceType type; // 新增类别
   final String serviceName;
 
-  /// 名稱可由部署設定改顯示；文件裡的原始名稱仍保留，不搬動歷史資料。
+  /// 名称可由部署设定改显示；文件里的原始名称仍保留，不搬动历史资料。
   String get displayName => type.index >= 0 ? type.serviceName : serviceName;
 
   final List<RosterEntry> duties;

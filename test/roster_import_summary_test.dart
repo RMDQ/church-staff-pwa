@@ -22,25 +22,25 @@ List<String> _ministriesFor(User user, ServiceType type) =>
 
 void main() {
   group('addMinistriesToUser', () {
-    test('該崇拜還沒有任何設定時，開一筆新的', () {
+    test('该崇拜还没有任何设定时，开一笔新的', () {
       final updated = addMinistriesToUser(_user(), ServiceType.youth, ['招待']);
       expect(_ministriesFor(updated, ServiceType.youth), ['招待']);
     });
 
-    test('補上新服事時不覆蓋既有的，順序也不動', () {
+    test('补上新服事时不覆盖既有的，顺序也不动', () {
       final before = _user(
         zones: const [
           UserZoneInfo(
             serviceType: ServiceType.youth,
-            ministries: ['司琴', '領詩'],
+            ministries: ['司琴', '领诗'],
           ),
         ],
       );
       final updated = addMinistriesToUser(before, ServiceType.youth, ['招待']);
-      expect(_ministriesFor(updated, ServiceType.youth), ['司琴', '領詩', '招待']);
+      expect(_ministriesFor(updated, ServiceType.youth), ['司琴', '领诗', '招待']);
     });
 
-    test('已經有的服事不會重複加一次', () {
+    test('已经有的服事不会重复加一次', () {
       final before = _user(
         zones: const [
           UserZoneInfo(serviceType: ServiceType.youth, ministries: ['司琴']),
@@ -53,15 +53,15 @@ void main() {
       expect(_ministriesFor(updated, ServiceType.youth), ['司琴', '招待']);
     });
 
-    test('不會動到他在其他崇拜的設定', () {
+    test('不会动到他在其他崇拜的设定', () {
       final before = _user(
         zones: const [
           UserZoneInfo(
             serviceType: ServiceType.sundayService,
             ministries: ['司琴'],
-            smallGroups: ['一組'],
+            smallGroups: ['一组'],
           ),
-          UserZoneInfo(serviceType: ServiceType.youth, ministries: ['領詩']),
+          UserZoneInfo(serviceType: ServiceType.youth, ministries: ['领诗']),
         ],
       );
       final updated = addMinistriesToUser(before, ServiceType.youth, ['招待']);
@@ -71,23 +71,23 @@ void main() {
         updated.zones
             .firstWhere((z) => z.serviceType == ServiceType.sundayService)
             .smallGroups,
-        ['一組'],
-        reason: '補服事不該影響小組設定',
+        ['一组'],
+        reason: '补服事不该影响小组设定',
       );
-      expect(_ministriesFor(updated, ServiceType.youth), ['領詩', '招待']);
+      expect(_ministriesFor(updated, ServiceType.youth), ['领诗', '招待']);
     });
 
-    test('不會就地改動傳進來的 user', () {
+    test('不会就地改动传进来的 user', () {
       final before = _user(
         zones: const [
-          UserZoneInfo(serviceType: ServiceType.youth, ministries: ['領詩']),
+          UserZoneInfo(serviceType: ServiceType.youth, ministries: ['领诗']),
         ],
       );
       addMinistriesToUser(before, ServiceType.youth, ['招待']);
-      expect(_ministriesFor(before, ServiceType.youth), ['領詩']);
+      expect(_ministriesFor(before, ServiceType.youth), ['领诗']);
     });
 
-    test('其他欄位原封不動帶過去', () {
+    test('其他栏位原封不动带过去', () {
       final updated = addMinistriesToUser(_user(), ServiceType.youth, ['招待']);
       expect(updated.id, 'u1');
       expect(updated.name, '王大明');
@@ -114,11 +114,11 @@ void main() {
       notInEventCatalog: notInCatalog,
     );
 
-    test('全部乾淨時為 false', () {
+    test('全部干净时为 false', () {
       expect(summary().hasIssues, isFalse);
     });
 
-    test('任何一類非空都為 true', () {
+    test('任何一类非空都为 true', () {
       expect(summary(missingDates: ['2026-01-04']).hasIssues, isTrue);
       expect(summary(notInRoster: ['雅婷']).hasIssues, isTrue);
       expect(
@@ -130,27 +130,27 @@ void main() {
         isTrue,
       );
       expect(summary(other: ['志明']).hasIssues, isTrue);
-      expect(summary(notInCatalog: ['遇火重生營會']).hasIssues, isTrue);
+      expect(summary(notInCatalog: ['遇火重生营会']).hasIssues, isTrue);
     });
 
-    // 提示本身不是一類問題 —— 有提示就一定有「名單裡沒有這個人」，那一類才是
-    // 開視窗的理由。提示自己也算一類的話，同一件事會被算兩次。
-    test('只有形近字提示、沒有對不到的人時，不算問題', () {
+    // 提示本身不是一类问题 —— 有提示就一定有「名单里没有这个人」，那一类才是
+    // 开视窗的理由。提示自己也算一类的话，同一件事会被算两次。
+    test('只有形近字提示、没有对不到的人时，不算问题', () {
       expect(
         summary(
           nearMatched: {
-            '陳志豪': ['陳志明'],
+            '陈志豪': ['陈志明'],
           },
         ).hasIssues,
         isFalse,
       );
     });
 
-    test('提示跟著「名單裡沒有這個人」一起出現時照樣算問題', () {
+    test('提示跟著「名单里没有这个人」一起出现时照样算问题', () {
       final s = summary(
-        notInRoster: ['陳志豪'],
+        notInRoster: ['陈志豪'],
         nearMatched: {
-          '陳志豪': ['陳志明'],
+          '陈志豪': ['陈志明'],
         },
       );
       expect(s.hasIssues, isTrue);
@@ -158,13 +158,13 @@ void main() {
     });
   });
 
-  group('匯入結果視窗', () {
+  group('汇入结果视窗', () {
     Future<void> pump(
       WidgetTester tester,
       RosterImportSummary summary, {
       AddMinistryToUser? onAddMinistry,
       AddEventOption? onAddEvent,
-      // 補設定寫的是 users/{uid}，那是 admin only。服事表編輯者進得來匯入
+      // 补设定写的是 users/{uid}，那是 admin only。服事表编辑者进得来汇入
       // 流程，所以 onAddMinistry 可以是 null。
       bool canFix = true,
     }) async {
@@ -198,25 +198,25 @@ void main() {
       notInEventCatalog: [],
     );
 
-    // 沒有權限的人看到一顆按下去必定失敗的按鈕，比看不到還糟：他會一直重試，
-    // 而錯誤訊息只會是泛用的「操作失敗，請稍後再試」。
-    testWidgets('沒有補設定權限時不給按鈕，改說要找誰', (tester) async {
+    // 没有权限的人看到一颗按下去必定失败的按钮，比看不到还糟：他会一直重试，
+    // 而错误讯息只会是泛用的「操作失败，请稍后再试」。
+    testWidgets('没有补设定权限时不给按钮，改说要找谁', (tester) async {
       await pump(tester, mismatchOnly(), canFix: false);
 
       expect(find.text('新增服事至同工'), findsNothing);
-      expect(find.text('只有管理員能補進他的服事設定。'), findsOneWidget);
-      // 名字還是要列出來 —— 匯入結果不能因為沒權限就少報一項。
+      expect(find.text('只有管理员能补进他的服事设定。'), findsOneWidget);
+      // 名字还是要列出来 —— 汇入结果不能因为没权限就少报一项。
       expect(find.textContaining('王大明'), findsWidgets);
     });
 
-    testWidgets('有補設定權限時不會冒出那句提示', (tester) async {
+    testWidgets('有补设定权限时不会冒出那句提示', (tester) async {
       await pump(tester, mismatchOnly());
 
       expect(find.text('新增服事至同工'), findsOneWidget);
-      expect(find.text('只有管理員能補進他的服事設定。'), findsNothing);
+      expect(find.text('只有管理员能补进他的服事设定。'), findsNothing);
     });
 
-    testWidgets('未設定該服事的人有「新增服事至同工」按鈕，按下去帶著正確的姓名與服事', (tester) async {
+    testWidgets('未设定该服事的人有「新增服事至同工」按钮，按下去带著正确的姓名与服事', (tester) async {
       String? gotName;
       List<String>? gotRoles;
       await pump(
@@ -234,11 +234,11 @@ void main() {
       expect(gotName, '王大明');
       expect(gotRoles, ['招待']);
       expect(find.text('已新增'), findsOneWidget);
-      expect(find.text('新增服事至同工'), findsNothing, reason: '成功後不該還能再按一次');
+      expect(find.text('新增服事至同工'), findsNothing, reason: '成功后不该还能再按一次');
     });
 
-    testWidgets('一個人有多個服事時拆成獨立的列，各自一顆按鈕', (tester) async {
-      // 同一個人被排到兩項時，可能只有其中一項該補進設定（另一項是臨時支援）。
+    testWidgets('一个人有多个服事时拆成独立的列，各自一颗按钮', (tester) async {
+      // 同一个人被排到两项时，可能只有其中一项该补进设定（另一项是临时支援）。
       final calls = <List<String>>[];
       await pump(
         tester,
@@ -247,7 +247,7 @@ void main() {
           missingDates: [],
           notInRosterNames: [],
           roleMismatchDetails: {
-            '李小華': ['司琴', '領詩'],
+            '李小华': ['司琴', '领诗'],
           },
           otherNames: [],
           nearMatchSuggestions: {},
@@ -256,11 +256,11 @@ void main() {
         onAddMinistry: (name, roles) async => calls.add(roles),
       );
 
-      expect(find.text('・李小華：司琴'), findsOneWidget);
-      expect(find.text('・李小華：領詩'), findsOneWidget);
+      expect(find.text('・李小华：司琴'), findsOneWidget);
+      expect(find.text('・李小华：领诗'), findsOneWidget);
       expect(find.text('新增服事至同工'), findsNWidgets(2));
 
-      // 只按第一顆：另一項不該被一起加進去，按鈕也還要在。
+      // 只按第一颗：另一项不该被一起加进去，按钮也还要在。
       await tester.tap(find.text('新增服事至同工').first);
       await tester.pumpAndSettle();
 
@@ -271,10 +271,10 @@ void main() {
       expect(find.text('新增服事至同工'), findsOneWidget);
     });
 
-    testWidgets('同一個人的兩顆按鈕連按不會互相覆蓋', (tester) async {
-      // 每次新增都是「讀出這個人 → 加一項 → 整份寫回」。兩筆並行的話都會讀到
-      // 修改前的資料，後寫的會蓋掉先寫的 —— 畫面顯示兩行都成功，實際只進去
-      // 一項。這裡用一個共享的假資料庫把重疊直接測出來。
+    testWidgets('同一个人的两颗按钮连按不会互相覆盖', (tester) async {
+      // 每次新增都是「读出这个人 → 加一项 → 整份写回」。两笔并行的话都会读到
+      // 修改前的资料，后写的会盖掉先写的 —— 画面显示两行都成功，实际只进去
+      // 一项。这里用一个共享的假资料库把重叠直接测出来。
       final saved = <String>[];
       final gates = <Completer<void>>[];
 
@@ -285,46 +285,46 @@ void main() {
           missingDates: [],
           notInRosterNames: [],
           roleMismatchDetails: {
-            '李小華': ['司琴', '領詩'],
+            '李小华': ['司琴', '领诗'],
           },
           otherNames: [],
           nearMatchSuggestions: {},
           notInEventCatalog: [],
         ),
         onAddMinistry: (name, roles) async {
-          final snapshot = List<String>.from(saved); // 讀
+          final snapshot = List<String>.from(saved); // 读
           final gate = Completer<void>();
           gates.add(gate);
-          await gate.future; // 模擬網路來回
+          await gate.future; // 模拟网路来回
           saved
             ..clear()
-            ..addAll([...snapshot, ...roles]); // 整份寫回
+            ..addAll([...snapshot, ...roles]); // 整份写回
         },
       );
 
-      // 這裡不能用 pumpAndSettle：等待中的那一列有 CircularProgressIndicator，
-      // 動畫一直排新的 frame，settle 永遠等不到。
+      // 这里不能用 pumpAndSettle：等待中的那一列有 CircularProgressIndicator，
+      // 动画一直排新的 frame，settle 永远等不到。
       await tester.tap(find.text('新增服事至同工').first);
       await tester.pump();
       await tester.tap(find.text('新增服事至同工').last);
       await tester.pump();
 
-      expect(gates, hasLength(1), reason: '第二筆必須排隊，不能跟第一筆同時讀資料');
+      expect(gates, hasLength(1), reason: '第二笔必须排队，不能跟第一笔同时读资料');
 
       gates.first.complete();
       await tester.pump();
       await tester.pump();
-      expect(gates, hasLength(2), reason: '第一筆寫完之後第二筆才開始讀');
+      expect(gates, hasLength(2), reason: '第一笔写完之后第二笔才开始读');
 
       gates.last.complete();
       await tester.pump();
       await tester.pump();
 
-      expect(saved, ['司琴', '領詩'], reason: '兩項都要留下來，後寫的不能蓋掉先寫的');
+      expect(saved, ['司琴', '领诗'], reason: '两项都要留下来，后写的不能盖掉先写的');
       expect(find.text('已新增'), findsNWidgets(2));
     });
 
-    testWidgets('排隊中有一筆失敗，不會把後面那筆一起卡死', (tester) async {
+    testWidgets('排队中有一笔失败，不会把后面那笔一起卡死', (tester) async {
       final done = <String>[];
       await pump(
         tester,
@@ -333,7 +333,7 @@ void main() {
           missingDates: [],
           notInRosterNames: [],
           roleMismatchDetails: {
-            '李小華': ['司琴', '領詩'],
+            '李小华': ['司琴', '领诗'],
           },
           otherNames: [],
           nearMatchSuggestions: {},
@@ -350,12 +350,12 @@ void main() {
       await tester.tap(find.text('新增服事至同工').last);
       await tester.pumpAndSettle();
 
-      expect(done, ['領詩']);
-      expect(find.text('重試'), findsOneWidget);
+      expect(done, ['领诗']);
+      expect(find.text('重试'), findsOneWidget);
       expect(find.text('已新增'), findsOneWidget);
     });
 
-    testWidgets('補設定失敗時顯示原因並可重試', (tester) async {
+    testWidgets('补设定失败时显示原因并可重试', (tester) async {
       var attempts = 0;
       await pump(
         tester,
@@ -368,16 +368,16 @@ void main() {
 
       await tester.tap(find.text('新增服事至同工'));
       await tester.pumpAndSettle();
-      expect(find.text('重試'), findsOneWidget);
+      expect(find.text('重试'), findsOneWidget);
       expect(find.text('已新增'), findsNothing);
 
-      await tester.tap(find.text('重試'));
+      await tester.tap(find.text('重试'));
       await tester.pumpAndSettle();
       expect(attempts, 2);
       expect(find.text('已新增'), findsOneWidget);
     });
 
-    testWidgets('不在名單與同名多人只列出來，沒有一鍵按鈕', (tester) async {
+    testWidgets('不在名单与同名多人只列出来，没有一键按钮', (tester) async {
       await pump(
         tester,
         const RosterImportSummary(
@@ -396,7 +396,7 @@ void main() {
       expect(find.text('新增服事至同工'), findsNothing);
     });
 
-    testWidgets('沒有具體服事可補時不顯示按鈕（按了也只是重寫同一份資料）', (tester) async {
+    testWidgets('没有具体服事可补时不显示按钮（按了也只是重写同一份资料）', (tester) async {
       await pump(
         tester,
         const RosterImportSummary(
@@ -414,8 +414,8 @@ void main() {
       expect(find.text('新增服事至同工'), findsNothing);
     });
 
-    testWidgets('開頭就說明這些人已經匯入了，而且只說一次', (tester) async {
-      // 這句話是這次改動的重點：名字沒有被丟掉。每個區塊各講一遍會變成雜訊。
+    testWidgets('开头就说明这些人已经汇入了，而且只说一次', (tester) async {
+      // 这句话是这次改动的重点：名字没有被丢掉。每个区块各讲一遍会变成杂讯。
       await pump(
         tester,
         const RosterImportSummary(
@@ -430,8 +430,8 @@ void main() {
           notInEventCatalog: [],
         ),
       );
-      expect(find.text('已更新 13 筆服事表'), findsOneWidget);
-      expect(find.text('下面的名字都已經排進表裡了。'), findsOneWidget);
+      expect(find.text('已更新 13 笔服事表'), findsOneWidget);
+      expect(find.text('下面的名字都已经排进表里了。'), findsOneWidget);
     });
 
     RosterImportSummary eventsOnly() => const RosterImportSummary(
@@ -441,10 +441,10 @@ void main() {
       roleMismatchDetails: {},
       otherNames: [],
       nearMatchSuggestions: {},
-      notInEventCatalog: ['孩童奉獻禮', '感恩聚餐'],
+      notInEventCatalog: ['孩童奉献礼', '感恩聚餐'],
     );
 
-    testWidgets('沒有顏色的活動可以直接加進活動清單', (tester) async {
+    testWidgets('没有颜色的活动可以直接加进活动清单', (tester) async {
       final added = <String>[];
       await pump(
         tester,
@@ -452,17 +452,17 @@ void main() {
         onAddEvent: (name) async => added.add(name),
       );
 
-      await tester.tap(find.text('加入活動清單').first);
+      await tester.tap(find.text('加入活动清单').first);
       await tester.pumpAndSettle();
 
-      expect(added, ['孩童奉獻禮']);
+      expect(added, ['孩童奉献礼']);
       expect(find.text('已加入'), findsOneWidget);
-      // 另一個還沒按，按鈕還在。
-      expect(find.text('加入活動清單'), findsOneWidget);
+      // 另一个还没按，按钮还在。
+      expect(find.text('加入活动清单'), findsOneWidget);
     });
 
-    testWidgets('連按兩個活動，第二個等第一個寫完才開始', (tester) async {
-      // 活動清單是整份寫回去的，同時寫的話後面那筆會把前面的蓋掉。
+    testWidgets('连按两个活动，第二个等第一个写完才开始', (tester) async {
+      // 活动清单是整份写回去的，同时写的话后面那笔会把前面的盖掉。
       final first = Completer<void>();
       final started = <String>[];
       await pump(
@@ -470,64 +470,64 @@ void main() {
         eventsOnly(),
         onAddEvent: (name) {
           started.add(name);
-          return name == '孩童奉獻禮' ? first.future : Future.value();
+          return name == '孩童奉献礼' ? first.future : Future.value();
         },
       );
 
-      await tester.tap(find.text('加入活動清單').at(0));
+      await tester.tap(find.text('加入活动清单').at(0));
       await tester.pump();
-      await tester.tap(find.text('加入活動清單').at(0));
+      await tester.tap(find.text('加入活动清单').at(0));
       await tester.pump();
-      expect(started, ['孩童奉獻禮']);
+      expect(started, ['孩童奉献礼']);
 
       first.complete();
       await tester.pumpAndSettle();
-      expect(started, ['孩童奉獻禮', '感恩聚餐']);
+      expect(started, ['孩童奉献礼', '感恩聚餐']);
       expect(find.text('已加入'), findsNWidgets(2));
     });
 
-    testWidgets('加入失敗時那一列顯示原因並可以重試', (tester) async {
+    testWidgets('加入失败时那一列显示原因并可以重试', (tester) async {
       await pump(
         tester,
         eventsOnly(),
-        onAddEvent: (name) async => throw const ImportFixException('寫入被拒絕'),
+        onAddEvent: (name) async => throw const ImportFixException('写入被拒绝'),
       );
 
-      await tester.tap(find.text('加入活動清單').first);
+      await tester.tap(find.text('加入活动清单').first);
       await tester.pumpAndSettle();
 
-      expect(find.text('寫入被拒絕'), findsOneWidget);
-      expect(find.text('重試'), findsOneWidget);
+      expect(find.text('写入被拒绝'), findsOneWidget);
+      expect(find.text('重试'), findsOneWidget);
     });
 
-    testWidgets('不是管理員就不給按鈕，並講清楚誰能加', (tester) async {
+    testWidgets('不是管理员就不给按钮，并讲清楚谁能加', (tester) async {
       await pump(tester, eventsOnly(), canFix: false);
-      expect(find.text('加入活動清單'), findsNothing);
-      expect(find.text('只有管理員能加進活動清單。'), findsOneWidget);
-      // 活動名稱本身還是要列出來。
-      expect(find.textContaining('孩童奉獻禮'), findsOneWidget);
+      expect(find.text('加入活动清单'), findsNothing);
+      expect(find.text('只有管理员能加进活动清单。'), findsOneWidget);
+      // 活动名称本身还是要列出来。
+      expect(find.textContaining('孩童奉献礼'), findsOneWidget);
     });
 
-    testWidgets('外來講員一行帶過，不放進名單裡沒有這個人', (tester) async {
+    testWidgets('外来讲员一行带过，不放进名单里没有这个人', (tester) async {
       await pump(
         tester,
         const RosterImportSummary(
           updated: 13,
           missingDates: [],
-          notInRosterNames: ['黃雅婷'],
+          notInRosterNames: ['黄雅婷'],
           roleMismatchDetails: {},
           otherNames: [],
           nearMatchSuggestions: {},
           notInEventCatalog: [],
-          guestSpeakerNames: ['周慕恩', '林牧師'],
+          guestSpeakerNames: ['周慕恩', '林牧师'],
         ),
       );
-      expect(find.text('外來講員：周慕恩、林牧師'), findsOneWidget);
-      expect(find.text('・黃雅婷'), findsOneWidget);
+      expect(find.text('外来讲员：周慕恩、林牧师'), findsOneWidget);
+      expect(find.text('・黄雅婷'), findsOneWidget);
     });
 
-    test('只有外來講員時，snackbar 上也看得到他們', () {
-      // hasIssues 為 false 就不開視窗，只剩 snackbar 這一個地方能講。
+    test('只有外来讲员时，snackbar 上也看得到他们', () {
+      // hasIssues 为 false 就不开视窗，只剩 snackbar 这一个地方能讲。
       const summary = RosterImportSummary(
         updated: 13,
         missingDates: [],
@@ -536,12 +536,12 @@ void main() {
         otherNames: [],
         nearMatchSuggestions: {},
         notInEventCatalog: [],
-        guestSpeakerNames: ['周慕恩', '林牧師'],
+        guestSpeakerNames: ['周慕恩', '林牧师'],
       );
-      expect(importResultMessage(summary), '已更新 13 筆服事表。外來講員：周慕恩、林牧師');
+      expect(importResultMessage(summary), '已更新 13 笔服事表。外来讲员：周慕恩、林牧师');
     });
 
-    test('沒有外來講員時 snackbar 照舊', () {
+    test('没有外来讲员时 snackbar 照旧', () {
       const summary = RosterImportSummary(
         updated: 13,
         missingDates: [],
@@ -551,10 +551,10 @@ void main() {
         nearMatchSuggestions: {},
         notInEventCatalog: [],
       );
-      expect(importResultMessage(summary), '已更新 13 筆服事表');
+      expect(importResultMessage(summary), '已更新 13 笔服事表');
     });
 
-    test('只有外來講員時不算有問題', () {
+    test('只有外来讲员时不算有问题', () {
       const summary = RosterImportSummary(
         updated: 13,
         missingDates: [],
@@ -569,9 +569,9 @@ void main() {
     });
 
     for (final canFix in [true, false]) {
-      testWidgets('文案不叫使用者去做事（${canFix ? '管理員' : '非管理員'}）', (tester) async {
-        // 臨時支援的人一年可能就來一次，把他們設成固定班底反而弄髒名單。
-        // 要不要補設定是管理者當下的判斷，畫面只陳述事實，不下指令。
+      testWidgets('文案不叫使用者去做事（${canFix ? '管理员' : '非管理员'}）', (tester) async {
+        // 临时支援的人一年可能就来一次，把他们设成固定班底反而弄脏名单。
+        // 要不要补设定是管理者当下的判断，画面只陈述事实，不下指令。
         await pump(
           tester,
           const RosterImportSummary(
@@ -583,7 +583,7 @@ void main() {
             },
             otherNames: ['志明'],
             nearMatchSuggestions: {},
-            notInEventCatalog: ['遇火重生營會'],
+            notInEventCatalog: ['遇火重生营会'],
             guestSpeakerNames: ['周慕恩'],
           ),
           canFix: canFix,
@@ -592,40 +592,40 @@ void main() {
         final copy = tester
             .widgetList<Text>(find.byType(Text))
             .map((t) => t.data ?? '')
-            // 按鈕本身是動作，不算祈使文案
-            .where((s) => s != '新增服事至同工' && s != '加入活動清單')
+            // 按钮本身是动作，不算祈使文案
+            .where((s) => s != '新增服事至同工' && s != '加入活动清单')
             .join('\n');
-        for (final imperative in ['請', '需要', '要補', '應該', '記得']) {
+        for (final imperative in ['请', '需要', '要补', '应该', '记得']) {
           expect(
             copy.contains(imperative),
             isFalse,
-            reason: '文案裡出現了「$imperative」，變成在派工作：\n$copy',
+            reason: '文案里出现了「$imperative」，变成在派工作：\n$copy',
           );
         }
       });
     }
 
-    testWidgets('名單裡有很像的，附在那個名字後面，但沒有換掉它', (tester) async {
-      // 陳志豪還沒建帳號，而名單裡有陳志明 —— 只差最後一個字。自動換過去
-      // 等於把他的服事記到陳志明頭上、連上陳志明的 uid，提醒發給錯的人。
+    testWidgets('名单里有很像的，附在那个名字后面，但没有换掉它', (tester) async {
+      // 陈志豪还没建帐号，而名单里有陈志明 —— 只差最后一个字。自动换过去
+      // 等于把他的服事记到陈志明头上、连上陈志明的 uid，提醒发给错的人。
       await pump(
         tester,
         const RosterImportSummary(
           updated: 13,
           missingDates: [],
-          notInRosterNames: ['陳志豪'],
+          notInRosterNames: ['陈志豪'],
           roleMismatchDetails: {},
           otherNames: [],
           nearMatchSuggestions: {
-            '陳志豪': ['陳志明'],
+            '陈志豪': ['陈志明'],
           },
           notInEventCatalog: [],
         ),
       );
-      expect(find.text('・陳志豪（名單裡有很像的：陳志明）'), findsOneWidget);
+      expect(find.text('・陈志豪（名单里有很像的：陈志明）'), findsOneWidget);
     });
 
-    testWidgets('很像的有好幾位就全部列出來，不挑一個', (tester) async {
+    testWidgets('很像的有好几位就全部列出来，不挑一个', (tester) async {
       await pump(
         tester,
         const RosterImportSummary(
@@ -635,38 +635,38 @@ void main() {
           roleMismatchDetails: {},
           otherNames: [],
           nearMatchSuggestions: {
-            '佳芸': ['陳佳蓉', '林淑芸'],
+            '佳芸': ['陈佳蓉', '林淑芸'],
           },
           notInEventCatalog: [],
         ),
       );
-      expect(find.text('・佳芸（名單裡有很像的：陳佳蓉、林淑芸）'), findsOneWidget);
+      expect(find.text('・佳芸（名单里有很像的：陈佳蓉、林淑芸）'), findsOneWidget);
     });
 
-    testWidgets('沒有很像的就只列名字，不留一個空括號', (tester) async {
+    testWidgets('没有很像的就只列名字，不留一个空括号', (tester) async {
       await pump(
         tester,
         const RosterImportSummary(
           updated: 13,
           missingDates: [],
-          notInRosterNames: ['阿寶'],
+          notInRosterNames: ['阿宝'],
           roleMismatchDetails: {},
           otherNames: [],
-          nearMatchSuggestions: {'阿寶': []},
+          nearMatchSuggestions: {'阿宝': []},
           notInEventCatalog: [],
         ),
       );
-      expect(find.text('・阿寶'), findsOneWidget);
+      expect(find.text('・阿宝'), findsOneWidget);
     });
 
-    /// 完整比對整句，不用 textContaining 抓片段。
+    /// 完整比对整句，不用 textContaining 抓片段。
     ///
-    /// 這條原本寫成 `find.textContaining('下面的人')`，但畫面上的字是
-    /// 「下面的名字都已經排進表裡了。」—— 兩者沒有子字串關係，所以不管那句
-    /// 有沒有顯示都是綠的，等於什麼都沒保護。
-    const promise = '下面的名字都已經排進表裡了。';
+    /// 这条原本写成 `find.textContaining('下面的人')`，但画面上的字是
+    /// 「下面的名字都已经排进表里了。」—— 两者没有子字串关系，所以不管那句
+    /// 有没有显示都是绿的，等于什么都没保护。
+    const promise = '下面的名字都已经排进表里了。';
 
-    testWidgets('只有日期或活動的問題時，不會冒出那句安撫', (tester) async {
+    testWidgets('只有日期或活动的问题时，不会冒出那句安抚', (tester) async {
       await pump(
         tester,
         const RosterImportSummary(
@@ -676,49 +676,49 @@ void main() {
           roleMismatchDetails: {},
           otherNames: [],
           nearMatchSuggestions: {},
-          notInEventCatalog: ['遇火重生營會'],
+          notInEventCatalog: ['遇火重生营会'],
         ),
       );
       expect(find.text(promise), findsNothing);
     });
 
-    testWidgets('有日期沒匯入時不敢說「都排進去了」', (tester) async {
-      // 未匹配的名單是整份 JSON 的統計，但找不到的日期那幾筆根本沒寫進去，
-      // 名字照樣會出現在清單上。這時那句話可能是假的。
+    testWidgets('有日期没汇入时不敢说「都排进去了」', (tester) async {
+      // 未匹配的名单是整份 JSON 的统计，但找不到的日期那几笔根本没写进去，
+      // 名字照样会出现在清单上。这时那句话可能是假的。
       await pump(
         tester,
         const RosterImportSummary(
           updated: 12,
           missingDates: ['2026-01-11'],
-          notInRosterNames: ['陳訪客'],
+          notInRosterNames: ['陈访客'],
           roleMismatchDetails: {},
           otherNames: [],
           nearMatchSuggestions: {},
           notInEventCatalog: [],
         ),
       );
-      expect(find.text('・陳訪客'), findsOneWidget);
+      expect(find.text('・陈访客'), findsOneWidget);
       expect(find.text(promise), findsNothing);
     });
 
-    testWidgets('一筆都沒更新時更不能說「都排進去了」', (tester) async {
+    testWidgets('一笔都没更新时更不能说「都排进去了」', (tester) async {
       await pump(
         tester,
         const RosterImportSummary(
           updated: 0,
           missingDates: [],
-          notInRosterNames: ['陳訪客'],
+          notInRosterNames: ['陈访客'],
           roleMismatchDetails: {},
           otherNames: [],
           nearMatchSuggestions: {},
           notInEventCatalog: [],
         ),
       );
-      expect(find.text('已更新 0 筆服事表'), findsOneWidget);
+      expect(find.text('已更新 0 笔服事表'), findsOneWidget);
       expect(find.text(promise), findsNothing);
     });
 
-    testWidgets('同名多人那一段要講明沒有對到帳號', (tester) async {
+    testWidgets('同名多人那一段要讲明没有对到帐号', (tester) async {
       await pump(
         tester,
         const RosterImportSummary(
@@ -731,31 +731,31 @@ void main() {
           notInEventCatalog: [],
         ),
       );
-      expect(find.text('這一格沒有對到帳號，兩位都不會在自己的首頁看到。'), findsOneWidget);
+      expect(find.text('这一格没有对到帐号，两位都不会在自己的首页看到。'), findsOneWidget);
     });
 
-    testWidgets('ImportFixException 的訊息原文顯示，不被壓成泛用字串', (tester) async {
-      // 「有 2 位同工都叫王大明」這種訊息是唯一有用的資訊，被
-      // mapErrorToUserMessage 換成「操作失敗，請稍後再試」的話，使用者只會
-      // 一直按重試，永遠不知道要去帳號管理處理。
+    testWidgets('ImportFixException 的讯息原文显示，不被压成泛用字串', (tester) async {
+      // 「有 2 位同工都叫王大明」这种讯息是唯一有用的资讯，被
+      // mapErrorToUserMessage 换成「操作失败，请稍后再试」的话，使用者只会
+      // 一直按重试，永远不知道要去帐号管理处理。
       await pump(
         tester,
         mismatchOnly(),
         onAddMinistry: (name, roles) async {
-          throw const ImportFixException('有 2 位同工都叫「王大明」，請到帳號管理手動設定');
+          throw const ImportFixException('有 2 位同工都叫「王大明」，请到帐号管理手动设定');
         },
       );
 
       await tester.tap(find.text('新增服事至同工'));
       await tester.pumpAndSettle();
 
-      expect(find.text('有 2 位同工都叫「王大明」，請到帳號管理手動設定'), findsOneWidget);
-      expect(find.textContaining('操作失敗'), findsNothing);
+      expect(find.text('有 2 位同工都叫「王大明」，请到帐号管理手动设定'), findsOneWidget);
+      expect(find.textContaining('操作失败'), findsNothing);
     });
 
-    testWidgets('寫入卡住時會逾時，不會整份永遠轉圈', (tester) async {
-      // PWA 斷線時 Firestore 的寫入 future 不會 resolve。沒有逾時的話佇列
-      // 的 Completer 永遠不 complete，後面每一列都卡在等待、連錯誤都沒有。
+    testWidgets('写入卡住时会逾时，不会整份永远转圈', (tester) async {
+      // PWA 断线时 Firestore 的写入 future 不会 resolve。没有逾时的话伫列
+      // 的 Completer 永远不 complete，后面每一列都卡在等待、连错误都没有。
       var started = 0;
       await pump(
         tester,
@@ -764,7 +764,7 @@ void main() {
           missingDates: [],
           notInRosterNames: [],
           roleMismatchDetails: {
-            '李小華': ['司琴', '領詩'],
+            '李小华': ['司琴', '领诗'],
           },
           otherNames: [],
           nearMatchSuggestions: {},
@@ -781,19 +781,19 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('新增服事至同工').last);
       await tester.pump();
-      expect(started, 1, reason: '第二筆還在排隊');
+      expect(started, 1, reason: '第二笔还在排队');
 
       await tester.pump(fixTimeout + const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
-      expect(started, 2, reason: '第一筆逾時之後佇列要放行，第二筆才跑得到');
-      expect(find.text('重試'), findsOneWidget);
+      expect(started, 2, reason: '第一笔逾时之后伫列要放行，第二笔才跑得到');
+      expect(find.text('重试'), findsOneWidget);
       expect(find.text('已新增'), findsOneWidget);
     });
 
-    testWidgets('不出現工程術語', (tester) async {
-      // 使用者是同工不是工程師。uid / JSON / Firestore 這種字出現在畫面上
-      // 就是 bug —— 第一版真的寫了「沒有帳號就沒有 uid」。
+    testWidgets('不出现工程术语', (tester) async {
+      // 使用者是同工不是工程师。uid / JSON / Firestore 这种字出现在画面上
+      // 就是 bug —— 第一版真的写了「没有帐号就没有 uid」。
       await pump(
         tester,
         const RosterImportSummary(
@@ -805,7 +805,7 @@ void main() {
           },
           otherNames: ['志明'],
           nearMatchSuggestions: {},
-          notInEventCatalog: ['遇火重生營會'],
+          notInEventCatalog: ['遇火重生营会'],
         ),
       );
 
@@ -817,7 +817,7 @@ void main() {
         expect(
           shown.contains(jargon),
           isFalse,
-          reason: '畫面上出現了「$jargon」：\n$shown',
+          reason: '画面上出现了「$jargon」：\n$shown',
         );
       }
     });

@@ -156,15 +156,15 @@ export async function callGemini(
     // Busy is checked first: it is the only one of these that goes away by
     // itself within minutes, so it is the most useful thing to say.
     if (response.status === 503) {
-      throw new HttpError(503, 'Gemini 免費版現在太多人用，過幾分鐘再試一次');
+      throw new HttpError(503, 'Gemini 免费版现在太多人用，过几分钟再试一次');
     }
     if (quotaDetail !== null) throw new HttpError(429, quotaMessage(quotaDetail, now(), churchConfig(env).timeZone));
     if (response.status === 404) {
       // No model answered, and at least the last one does not exist — a typo in
       // GEMINI_MODEL or a retired model. Nothing the caller can do.
-      throw new HttpError(500, '辨識服務設定有誤，請聯絡管理員');
+      throw new HttpError(500, '辨识服务设定有误，请联络管理员');
     }
-    throw new HttpError(502, '辨識失敗，請稍後再試');
+    throw new HttpError(502, '辨识失败，请稍后再试');
   }
 
   return extractJson(await response.json());
@@ -181,7 +181,7 @@ export function extractJson(payload) {
     // Blocked by a safety filter, or the whole request was refused. The prompt
     // feedback says which, and it is the operator who needs to see it.
     console.error('gemini returned no candidates', JSON.stringify(payload?.promptFeedback));
-    throw new HttpError(502, '辨識沒有產生結果，請換一張照片再試');
+    throw new HttpError(502, '辨识没有产生结果，请换一张照片再试');
   }
 
   const text = (candidate.content?.parts ?? [])
@@ -193,9 +193,9 @@ export function extractJson(payload) {
     const reason = candidate.finishReason ?? 'unknown';
     console.error('gemini returned empty text', reason);
     if (reason === 'MAX_TOKENS') {
-      throw new HttpError(502, '服事表太大，請把照片裁成上下兩半，分兩次辨識');
+      throw new HttpError(502, '服事表太大，请把照片裁成上下两半，分两次辨识');
     }
-    throw new HttpError(502, '辨識沒有產生結果，請換一張照片再試');
+    throw new HttpError(502, '辨识没有产生结果，请换一张照片再试');
   }
 
   let parsed;
@@ -205,12 +205,12 @@ export function extractJson(payload) {
     // responseMimeType should prevent this, but a truncated response parses as
     // nothing and the caller deserves better than a raw SyntaxError.
     console.error('gemini returned unparseable text', text.slice(0, 300));
-    throw new HttpError(502, '辨識結果不是有效的資料，請再試一次');
+    throw new HttpError(502, '辨识结果不是有效的资料，请再试一次');
   }
 
   if (!Array.isArray(parsed)) {
     console.error('gemini returned a non-array', typeof parsed);
-    throw new HttpError(502, '辨識結果格式不對，請再試一次');
+    throw new HttpError(502, '辨识结果格式不对，请再试一次');
   }
   return parsed;
 }
@@ -244,10 +244,10 @@ async function post(fetchImpl, model, key, body, timeoutMs) {
       // Our own timeout, not a network failure: "cannot connect" would send
       // the caller checking their Wi-Fi when the fix is a smaller photo.
       console.error('gemini request timed out', model, timeoutMs);
-      throw new HttpError(504, '辨識太久了，請把照片裁到只剩表格再試');
+      throw new HttpError(504, '辨识太久了，请把照片裁到只剩表格再试');
     }
     console.error('gemini request failed', error);
-    throw new HttpError(502, '無法連上辨識服務，請稍後再試');
+    throw new HttpError(502, '无法连上辨识服务，请稍后再试');
   } finally {
     clearTimeout(timer);
   }
@@ -271,9 +271,9 @@ function modelList(env) {
 /// out, so say which one it was.
 function quotaMessage(detail, nowMs, timeZone) {
   if (/PerDay/i.test(detail)) {
-    return `今天的免費辨識次數用完了，${quotaResetText(nowMs, timeZone)}後再試（或先展開下面自己貼 JSON）`;
+    return `今天的免费辨识次数用完了，${quotaResetText(nowMs, timeZone)}后再试（或先展开下面自己贴 JSON）`;
   }
-  return '辨識太頻繁了，等一分鐘再試';
+  return '辨识太频繁了，等一分钟再试';
 }
 
 const PACIFIC_HOUR = new Intl.DateTimeFormat('en-US', {

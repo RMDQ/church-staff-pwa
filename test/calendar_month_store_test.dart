@@ -207,7 +207,7 @@ void main() {
       final client = googleWith([
         {
           'id': 'early',
-          'summary': '清晨禱告',
+          'summary': '清晨祷告',
           'start': {'dateTime': start.toUtc().toIso8601String()},
           'end': {
             'dateTime': start
@@ -261,7 +261,7 @@ void main() {
       addTearDown(months.dispose);
 
       await months.ensureLoaded(_september);
-      expect(months.errorForMonth(_september), '載入失敗（400）：API key not valid');
+      expect(months.errorForMonth(_september), '载入失败（400）：API key not valid');
     });
 
     test('offline with nothing cached says so', () async {
@@ -271,7 +271,7 @@ void main() {
       addTearDown(months.dispose);
 
       await months.ensureLoaded(_september);
-      expect(months.errorForMonth(_september), '離線或連線逾時，且沒有快取資料');
+      expect(months.errorForMonth(_september), '离线或连线逾时，且没有快取资料');
     });
 
     test('offline with a cached copy shows the copy and no error', () async {

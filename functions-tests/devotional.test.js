@@ -12,11 +12,11 @@ const CONFIG = {
   ...ENABLED_CONFIG,
   devotional: {
     enabled: true, dataUrl: 'https://data.example/daily-verse.json', linkUrl: SOURCE,
-    sourceName: '每日靈糧', fetchUrl: SOURCE, fetchFormat: 'dailyBibleHtml',
+    sourceName: '每日灵粮', fetchUrl: SOURCE, fetchFormat: 'dailyBibleHtml',
   },
 };
 const today = () => dateKeyInZone(new Date(), CONFIG.timeZone);
-const page = (date) => `<html><div>${date} <span>|</span> <span>  哥林多後書一：12-一：24  </span></div></html>`;
+const page = (date) => `<html><div>${date} <span>|</span> <span>  哥林多后书一：12-一：24  </span></div></html>`;
 
 function withSource(html, { status = 200 } = {}) {
   const base = fakeFetch();
@@ -43,7 +43,7 @@ describe('GET /api/devotional/today', () => {
     const fetchImpl = withSource(page(today()));
     const response = await get(await testEnv({ [TEST_CHURCH_CONFIG]: CONFIG }), fetchImpl);
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { date: today(), rawRange: '哥林多後書一：12-一：24' });
+    assert.deepEqual(await response.json(), { date: today(), rawRange: '哥林多后书一：12-一：24' });
     assert.equal(fetchImpl.sourceCalls.length, 1);
     assert.equal(fetchImpl.sourceCalls[0].redirect, 'error');
   });
@@ -74,7 +74,7 @@ describe('GET /api/devotional/today', () => {
     try {
       const response = await get(await testEnv({ [TEST_CHURCH_CONFIG]: CONFIG }), withSource('down', { status: 503 }));
       assert.equal(response.status, 502);
-      assert.deepEqual(await response.json(), { error: '暫時無法讀取今日經文' });
+      assert.deepEqual(await response.json(), { error: '暂时无法读取今日经文' });
     } finally {
       restore();
     }
@@ -91,7 +91,7 @@ describe('GET /api/devotional/today', () => {
     await get(env, fetchImpl);
     const again = await get(env, fetchImpl);
     assert.equal(again.status, 200);
-    assert.deepEqual(await again.json(), { date: today(), rawRange: '哥林多後書一：12-一：24' });
+    assert.deepEqual(await again.json(), { date: today(), rawRange: '哥林多后书一：12-一：24' });
     assert.equal(fetchImpl.sourceCalls.length, 1);
     assert.deepEqual([...stored.keys()], [`https://app.example/api/devotional/today?d=${today()}`]);
   });

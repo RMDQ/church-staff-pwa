@@ -1,24 +1,24 @@
 import 'package:church_staff_pwa/features/auth/domain/entities/user.dart';
 import 'package:church_staff_pwa/features/auth/domain/repositories/auth_repository.dart';
 
-/// 測試共用的 [AuthRepository]：[user] 已經登入，什麼都不寫。
+/// 测试共用的 [AuthRepository]：[user] 已经登入，什么都不写。
 ///
-/// 給只需要「有人登入」的 widget 測試 —— SessionProvider 要還原出一個使用者，
-/// UserAdminProvider.getUsers() 才過得了權限檢查。要模擬登入失敗、阻塞或計數
-/// 的測試各自有自己的 fake（session_provider_test、user_admin_provider_test）。
+/// 给只需要「有人登入」的 widget 测试 —— SessionProvider 要还原出一个使用者，
+/// UserAdminProvider.getUsers() 才过得了权限检查。要模拟登入失败、阻塞或计数
+/// 的测试各自有自己的 fake（session_provider_test、user_admin_provider_test）。
 class SignedInAuthRepository implements AuthRepository {
   SignedInAuthRepository(this.user, {List<User>? users})
     : users = users ?? [?user];
 
   final User? user;
 
-  /// [getUsers] 回傳的同工名單。預設只有登入的那個人。
+  /// [getUsers] 回传的同工名单。预设只有登入的那个人。
   final List<User> users;
 
-  /// 每次 [sendPasswordResetEmail] 收到的 Email，依呼叫順序。
+  /// 每次 [sendPasswordResetEmail] 收到的 Email，依呼叫顺序。
   final List<String> resetEmails = [];
 
-  /// 不為 null 時 [sendPasswordResetEmail] 會丟出這個例外。
+  /// 不为 null 时 [sendPasswordResetEmail] 会丢出这个例外。
   Object? resetException;
 
   @override

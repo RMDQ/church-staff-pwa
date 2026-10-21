@@ -37,7 +37,7 @@ async function importPrivateKey(pem) {
   try {
     der = Uint8Array.from(atob(body), (char) => char.charCodeAt(0));
   } catch {
-    throw new HttpError(500, '伺服器設定不完整，請聯絡管理員');
+    throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
   return crypto.subtle.importKey(
     'pkcs8',
@@ -56,11 +56,11 @@ function serviceAccount(env) {
   } catch {
     // Never log the value itself: it contains a private key.
     console.error('GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON');
-    throw new HttpError(500, '伺服器設定不完整，請聯絡管理員');
+    throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
   if (!parsed?.client_email || !parsed?.private_key) {
     console.error('GOOGLE_SERVICE_ACCOUNT_JSON is missing client_email/private_key');
-    throw new HttpError(500, '伺服器設定不完整，請聯絡管理員');
+    throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
   return parsed;
 }
@@ -72,7 +72,7 @@ async function fetchWithTimeout(fetchImpl, url, init = {}) {
     return await fetchImpl(url, { ...init, signal: controller.signal });
   } catch (error) {
     console.error('service account token request failed', error?.name);
-    throw new HttpError(502, '無法連上 Google 服務，請稍後再試');
+    throw new HttpError(502, '无法连上 Google 服务，请稍后再试');
   } finally {
     clearTimeout(timer);
   }
@@ -110,11 +110,11 @@ export async function getServiceAccessToken(env, scope, fetchImpl = fetch, now =
   });
   if (!response.ok) {
     console.error('service account token exchange failed', response.status);
-    throw new HttpError(502, '無法連上 Google 服務，請稍後再試');
+    throw new HttpError(502, '无法连上 Google 服务，请稍后再试');
   }
   const data = await response.json();
   if (typeof data?.access_token !== 'string') {
-    throw new HttpError(502, '無法連上 Google 服務，請稍後再試');
+    throw new HttpError(502, '无法连上 Google 服务，请稍后再试');
   }
   const lifetimeMs = typeof data.expires_in === 'number' ? data.expires_in * 1000 : 3600000;
   cache.set(scope, { token: data.access_token, expiresAt: now + lifetimeMs });

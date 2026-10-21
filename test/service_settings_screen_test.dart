@@ -49,43 +49,43 @@ void main() {
   });
   tearDown(() => ServiceCatalog.resetForTesting(deployed));
 
-  testWidgets('列出部署設定的聚會和星期', (tester) async {
+  testWidgets('列出部署设定的聚会和星期', (tester) async {
     await _pump(tester);
     final first = deployed.services.first;
     expect(find.text('${first.label}｜${first.name}'), findsOneWidget);
     expect(find.text('每周${weekdayLabel(first.weekday)}'), findsWidgets);
   });
 
-  testWidgets('新增一個聚會並儲存：寫入清單、ids 只增不減', (tester) async {
+  testWidgets('新增一个聚会并储存：写入清单、ids 只增不减', (tester) async {
     final repo = await _pump(tester);
     await tester.tap(find.text('新增聚会'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextFormField, '简称'), '禱告');
-    await tester.enterText(find.widgetWithText(TextFormField, '完整名称'), '週三禱告會');
+    await tester.enterText(find.widgetWithText(TextFormField, '简称'), '祷告');
+    await tester.enterText(find.widgetWithText(TextFormField, '完整名称'), '周三祷告会');
     await tester.tap(find.byType(DropdownButtonFormField<int>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('星期三').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('确定'));
     await tester.pumpAndSettle();
-    expect(find.text('禱告｜週三禱告會'), findsOneWidget);
+    expect(find.text('祷告｜周三祷告会'), findsOneWidget);
 
     await tester.tap(find.byTooltip('保存'));
     await tester.pumpAndSettle();
     final saved = repo.document!.services!;
     expect(saved.length, deployed.services.length + 1);
     final prayer = saved.last;
-    expect(prayer.label, '禱告');
+    expect(prayer.label, '祷告');
     expect(prayer.weekday, 3);
     expect(
       RegExp(r'^[A-Za-z][A-Za-z0-9_-]{0,63}$').hasMatch(prayer.id),
       isTrue,
     );
     expect(repo.document!.ids, containsAll(deployed.services.map((s) => s.id)));
-    expect(find.byType(ServiceSettingsScreen), findsNothing, reason: '存好回上一頁');
+    expect(find.byType(ServiceSettingsScreen), findsNothing, reason: '存好回上一页');
   });
 
-  testWidgets('簡稱不能跟別的聚會重複', (tester) async {
+  testWidgets('简称不能跟别的聚会重复', (tester) async {
     await _pump(tester);
     await tester.tap(find.text('新增聚会'));
     await tester.pumpAndSettle();
@@ -93,7 +93,7 @@ void main() {
       find.widgetWithText(TextFormField, '简称'),
       deployed.services.first.label,
     );
-    await tester.enterText(find.widgetWithText(TextFormField, '完整名称'), '另一個');
+    await tester.enterText(find.widgetWithText(TextFormField, '完整名称'), '另一个');
     await tester.tap(find.text('确定'));
     await tester.pumpAndSettle();
     expect(find.text('已有相同简称的聚会'), findsOneWidget);
@@ -113,7 +113,7 @@ void main() {
     expect(repo.saves, 0);
   });
 
-  testWidgets('改了沒存就離開會先問', (tester) async {
+  testWidgets('改了没存就离开会先问', (tester) async {
     final repo = await _pump(tester);
     await tester.tap(find.byType(Switch).first);
     await tester.pumpAndSettle();

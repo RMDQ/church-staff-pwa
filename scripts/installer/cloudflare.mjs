@@ -38,19 +38,19 @@ export function parseDevicePrompt(output) {
 }
 
 function safeJson(stdout) {
-  try { return JSON.parse(stdout); } catch { throw cloudflareError('Cloudflare 工具回應格式不符，請重新授權。'); }
+  try { return JSON.parse(stdout); } catch { throw cloudflareError('Cloudflare 工具回应格式不符，请重新授权。'); }
 }
 
 const configurationFingerprint = (project) => fingerprint(project.deployment_configs);
 
 async function verifyUpload(directory) {
-  if (!path.isAbsolute(directory) || !(await lstat(directory)).isDirectory()) throw cloudflareError('Pages 建置目錄格式不符。');
+  if (!path.isAbsolute(directory) || !(await lstat(directory)).isDirectory()) throw cloudflareError('Pages 建置目录格式不符。');
   async function visit(dir) {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
       const file = path.join(dir, entry.name);
-      if (entry.name.startsWith('.env') || ['firebase-config.json', 'firestore.rules', 'dart-defines.json'].includes(entry.name)) throw cloudflareError('Pages 產物含私人設定檔，禁止發佈。');
+      if (entry.name.startsWith('.env') || ['firebase-config.json', 'firestore.rules', 'dart-defines.json'].includes(entry.name)) throw cloudflareError('Pages 产物含私人设定档，禁止发布。');
       if (entry.isDirectory()) await visit(file);
-      else if (!entry.isFile() || (await lstat(file)).nlink !== 1) throw cloudflareError('Pages 產物不可包含符號連結、硬連結或特殊檔案。');
+      else if (!entry.isFile() || (await lstat(file)).nlink !== 1) throw cloudflareError('Pages 产物不可包含符号连结、硬连结或特殊档案。');
     }
   }
   await visit(directory);
@@ -58,7 +58,7 @@ async function verifyUpload(directory) {
 }
 
 export function createCloudflareInstaller({ command = runIsolatedCommand, fetchImpl = fetch, sessionDir, wrangler = process.env.INSTALLER_WRANGLER || 'wrangler', environment = process.env, loginTimeoutMs = 310_000, requestTimeoutMs = 30_000, wait = delay } = {}) {
-  if (!sessionDir || !path.isAbsolute(sessionDir)) throw cloudflareError('Cloudflare 需要獨立的絕對路徑暫存目錄。');
+  if (!sessionDir || !path.isAbsolute(sessionDir)) throw cloudflareError('Cloudflare 需要独立的绝对路径暂存目录。');
   let home;
   let initializing;
   let disposed = false;
@@ -66,10 +66,10 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
   const activeCommands = new Set();
   const lifetime = new AbortController();
   async function init() {
-    if (disposed) throw cloudflareError('Cloudflare 授權已結束，請重新開啟安裝精靈。');
+    if (disposed) throw cloudflareError('Cloudflare 授权已结束，请重新开启安装精灵。');
     if (!initializing) initializing = (async () => {
       const stat = await lstat(sessionDir);
-      if (!isPrivateDirectory(stat)) throw cloudflareError('Cloudflare 暫存目錄必須是私人目錄（0700）。');
+      if (!isPrivateDirectory(stat)) throw cloudflareError('Cloudflare 暂存目录必须是私人目录（0700）。');
       home = await mkdtemp(path.join(sessionDir, 'cloudflare-'));
       await chmod(home, 0o700);
       // Wrangler prefers the legacy home once it exists. Create it before any CLI
@@ -87,20 +87,20 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
     }));
     activeCommands.add(pending);
     try { return await pending; }
-    catch { throw cloudflareError('Cloudflare 工具無法完成，請重新授權或重試。'); }
+    catch { throw cloudflareError('Cloudflare 工具无法完成，请重新授权或重试。'); }
     finally { activeCommands.delete(pending); }
   }
   async function inspectIdentity({ signal } = {}) {
     const result = await cli(['whoami', '--json'], { signal });
     const data = safeJson(result.stdout);
     if (!data.loggedIn) return { loggedIn: false, accounts: [] };
-    if (result.exitCode !== 0 || data.authType !== 'OAuth Token' || !Array.isArray(data.accounts)) throw cloudflareError('請使用本次安裝的 Cloudflare 官方授權，不支援 API Key。');
-    if (!CLOUDFLARE_SCOPES.every((scope) => data.tokenPermissions?.includes(scope))) throw cloudflareError('Cloudflare 授權缺少必要的 Pages 或帳號讀取權限，請重新授權。');
+    if (result.exitCode !== 0 || data.authType !== 'OAuth Token' || !Array.isArray(data.accounts)) throw cloudflareError('请使用本次安装的 Cloudflare 官方授权，不支援 API Key。');
+    if (!CLOUDFLARE_SCOPES.every((scope) => data.tokenPermissions?.includes(scope))) throw cloudflareError('Cloudflare 授权缺少必要的 Pages 或帐号读取权限，请重新授权。');
     const accounts = data.accounts.filter((account) => ACCOUNT_ID.test(account.id) && typeof account.name === 'string').map(({ id, name }) => ({ id, name: name.slice(0, 200) }));
     return { loggedIn: true, email: typeof data.email === 'string' ? data.email.slice(0, 254) : '', accounts };
   }
   async function startLogin({ emit = () => {}, signal } = {}) {
-    if (loginActive) throw cloudflareError('Cloudflare 授權正在進行，請完成或取消後再試。');
+    if (loginActive) throw cloudflareError('Cloudflare 授权正在进行，请完成或取消后再试。');
     loginActive = true;
     let buffer = '';
     let shown = false;
@@ -111,31 +111,31 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
         shown = true;
         // The wizard stops waiting at loginTimeoutMs; approving later cannot finish this login.
         emit({ type: 'authorization', provider: 'cloudflare', ...prompt, expiresInMs: Math.max(0, loginTimeoutMs - 10_000),
-          message: '請按「開啟官方授權頁」，在 Cloudflare 頁面輸入下列代碼，再按 Authorize。' });
+          message: '请按「开启官方授权页」，在 Cloudflare 页面输入下列代码，再按 Authorize。' });
       }
     };
     try {
       const version = await cli(['--version'], { signal });
-      if (version.exitCode !== 0 || version.stdout.trim() !== WRANGLER_VERSION) throw cloudflareError(`需要 Wrangler ${WRANGLER_VERSION}，請由 Cloud Shell 安裝入口重開。`);
+      if (version.exitCode !== 0 || version.stdout.trim() !== WRANGLER_VERSION) throw cloudflareError(`需要 Wrangler ${WRANGLER_VERSION}，请由 Cloud Shell 安装入口重开。`);
       const result = await cli(['login', '--device', '--browser=false', '--scopes', ...CLOUDFLARE_SCOPES], { signal, onStdout, timeoutMs: loginTimeoutMs });
       onStdout(result.stdout);
-      if (result.exitCode !== 0 || !shown) throw cloudflareError('Cloudflare 授權未完成或已過期；請確認未拒絕授權，再重新連接。');
+      if (result.exitCode !== 0 || !shown) throw cloudflareError('Cloudflare 授权未完成或已过期；请确认未拒绝授权，再重新连接。');
       const identity = await inspectIdentity({ signal });
-      if (!identity.loggedIn || !identity.accounts.length) throw cloudflareError('Cloudflare 尚無可用帳號，請在官方網站建立帳號後重試。');
+      if (!identity.loggedIn || !identity.accounts.length) throw cloudflareError('Cloudflare 尚无可用帐号，请在官方网站建立帐号后重试。');
       return identity;
     } catch (error) {
       // Even CLI failures can contain token text. Only our own fixed messages
       // are exposed; partial credentials are discarded before another attempt.
       if (home) { await rm(home, { recursive: true, force: true }); home = undefined; initializing = undefined; }
-      if (signal?.aborted || lifetime.signal.aborted) throw cloudflareError('Cloudflare 授權已取消。');
-      if (shown) throw cloudflareError('這組 Cloudflare 代碼已失效或未獲授權。請按「連接 Cloudflare」取得新代碼，並在倒數結束前按 Authorize；舊代碼即使顯示成功也不能再用。');
-      throw cloudflareError('Cloudflare 授權未完成、遭拒絕或已逾時，請重新連接；請確認使用指定版本 Wrangler。');
+      if (signal?.aborted || lifetime.signal.aborted) throw cloudflareError('Cloudflare 授权已取消。');
+      if (shown) throw cloudflareError('这组 Cloudflare 代码已失效或未获授权。请按「连接 Cloudflare」取得新代码，并在倒数结束前按 Authorize；旧代码即使显示成功也不能再用。');
+      throw cloudflareError('Cloudflare 授权未完成、遭拒绝或已逾时，请重新连接；请确认使用指定版本 Wrangler。');
     } finally { loginActive = false; }
   }
   async function token(signal) {
     const result = await cli(['auth', 'token', '--json'], { signal });
     const data = safeJson(result.stdout);
-    if (result.exitCode !== 0 || data.type !== 'oauth' || typeof data.token !== 'string' || !data.token) throw cloudflareError('Cloudflare 授權已失效，請重新連接。');
+    if (result.exitCode !== 0 || data.type !== 'oauth' || typeof data.token !== 'string' || !data.token) throw cloudflareError('Cloudflare 授权已失效，请重新连接。');
     return data.token;
   }
   async function api(route, { method = 'GET', body, signal, missing = false } = {}) {
@@ -148,12 +148,12 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
           ...(body ? { body: JSON.stringify(body) } : {}),
           signal: AbortSignal.any([lifetime.signal, AbortSignal.timeout(requestTimeoutMs), ...(signal ? [signal] : [])]), redirect: 'error',
         });
-      } catch { throw cloudflareError('無法連線 Cloudflare，請稍後重新授權並續跑；不會自動刪除資源。'); }
+      } catch { throw cloudflareError('无法连线 Cloudflare，请稍后重新授权并续跑；不会自动删除资源。'); }
       if (response.status === 404 && missing) return null;
       if (method === 'GET' && (response.status === 429 || response.status >= 500) && attempt < 3) { await wait(500 * 2 ** attempt, undefined, { signal }); continue; }
       let data;
-      try { data = await response.json(); } catch { throw cloudflareError('Cloudflare 回傳無法辨識的資料，已停止。'); }
-      if (!response.ok || data.success !== true) throw cloudflareError(`Cloudflare 操作失敗（HTTP ${response.status}）；請確認 Pages 權限、帳號方案與額度，再續跑。`);
+      try { data = await response.json(); } catch { throw cloudflareError('Cloudflare 回传无法辨识的资料，已停止。'); }
+      if (!response.ok || data.success !== true) throw cloudflareError(`Cloudflare 操作失败（HTTP ${response.status}）；请确认 Pages 权限、帐号方案与额度，再续跑。`);
       return data;
     }
   }
@@ -162,17 +162,17 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
     const pageSize = 25;
     for (let page = 1; page <= 20; page += 1) {
       const data = await api(`${base}/deployments?per_page=${pageSize}&page=${page}`, { signal });
-      if (!Array.isArray(data.result)) throw cloudflareError('Pages 部署清單格式不符。');
+      if (!Array.isArray(data.result)) throw cloudflareError('Pages 部署清单格式不符。');
       result.push(...data.result);
       if (data.result.length < pageSize) return result;
     }
-    throw cloudflareError('Pages 已有過多部署，不符合全新安裝條件。');
+    throw cloudflareError('Pages 已有过多部署，不符合全新安装条件。');
   }
   // Cloudflare may add a suffix when the name is taken elsewhere; trust only its answer.
   function pagesSubdomain(project, plan) {
     const subdomain = project?.subdomain;
     if (typeof subdomain !== 'string' || !/^[a-z0-9][a-z0-9-]{0,62}\.pages\.dev$/.test(subdomain) || !subdomain.startsWith(plan.pagesProject)) {
-      throw cloudflareError('Cloudflare 未回傳可辨識的網站網址，已停止。');
+      throw cloudflareError('Cloudflare 未回传可辨识的网站网址，已停止。');
     }
     return subdomain;
   }
@@ -196,7 +196,7 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
       (!recorded.pagesConfigFingerprint || configurationFingerprint(project) === recorded.pagesConfigFingerprint) &&
       (!recorded.pagesSubdomain || project.subdomain === recorded.pagesSubdomain);
     if (!createdByThisRun || !bindingsMatch || !unchangedSinceRecorded) {
-      throw cloudflareError('Pages 目標已存在或設定已變更，且無法確認屬於本次安裝；不會接管或覆蓋。');
+      throw cloudflareError('Pages 目标已存在或设定已变更，且无法确认属于本次安装；不会接管或覆盖。');
     }
   }
   // Every deployment must be this run's production upload (same marker).
@@ -204,27 +204,27 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
     for (const deployment of existing) {
       if (!marker || deployment.environment !== 'production' || deployment.deployment_trigger?.metadata?.branch !== 'main' ||
           deployment.deployment_trigger?.metadata?.commit_message !== marker) {
-        throw cloudflareError('Pages 已有非本次安裝的部署，已停止；不會覆蓋既有網站。');
+        throw cloudflareError('Pages 已有非本次安装的部署，已停止；不会覆盖既有网站。');
       }
     }
   }
   const projectRoute = (plan) => `/accounts/${plan.cloudflareAccountId}/pages/projects/${plan.pagesProject}`;
   async function prepare(context) {
     const { plan, signal } = context;
-    if (!ACCOUNT_ID.test(plan.cloudflareAccountId) || !/^[a-z0-9][a-z0-9-]{0,57}$/.test(plan.pagesProject) || !/^[A-Za-z0-9_-]{8,80}$/.test(plan.runId) || !/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(plan.projectId)) throw cloudflareError('Cloudflare 安裝計畫格式不符。');
+    if (!ACCOUNT_ID.test(plan.cloudflareAccountId) || !/^[a-z0-9][a-z0-9-]{0,57}$/.test(plan.pagesProject) || !/^[A-Za-z0-9_-]{8,80}$/.test(plan.runId) || !/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(plan.projectId)) throw cloudflareError('Cloudflare 安装计划格式不符。');
     const identity = await inspectIdentity({ signal });
-    if (!identity.accounts.some((account) => account.id === plan.cloudflareAccountId)) throw cloudflareError('請明確選擇目前已授權的 Cloudflare 帳號。');
+    if (!identity.accounts.some((account) => account.id === plan.cloudflareAccountId)) throw cloudflareError('请明确选择目前已授权的 Cloudflare 帐号。');
     return (await api(projectRoute(plan), { signal, missing: true }))?.result;
   }
   // Read-only check before confirmation: the account is usable and the name free.
   async function preflight(plan, { signal } = {}) {
-    if (await prepare({ plan, signal })) throw cloudflareError(`你的 Cloudflare 帳號裡已經有叫「${plan.pagesProject}」的網站，請換一個網站名稱再預覽。`);
+    if (await prepare({ plan, signal })) throw cloudflareError(`你的 Cloudflare 帐号里已经有叫「${plan.pagesProject}」的网站，请换一个网站名称再预览。`);
   }
   async function createPagesProject(context) {
     const { plan, checkpoint, save, signal } = context;
     let project = await prepare(context);
     if (!project) {
-      if (checkpoint.resources?.pagesProjectId) throw cloudflareError('本次 Pages 專案已被移除，已停止以避免重建其他站台。');
+      if (checkpoint.resources?.pagesProjectId) throw cloudflareError('本次 Pages 专案已被移除，已停止以避免重建其他站台。');
       const intent = { runId: plan.runId, accountId: plan.cloudflareAccountId, name: plan.pagesProject };
       await save({ intents: { pagesProject: intent } });
       checkpoint.intents = { ...checkpoint.intents, pagesProject: intent };
@@ -248,10 +248,10 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
     const existing = await deployments(base, signal);
     const publishIntent = checkpoint.intents?.pagesPublish;
     assertOnlyOwnDeployments(existing, publishIntent?.marker);
-    if (!transient.buildDir || !transient.buildVersion) throw cloudflareError('缺少已驗證的建置產物，禁止發佈。');
+    if (!transient.buildDir || !transient.buildVersion) throw cloudflareError('缺少已验证的建置产物，禁止发布。');
     await verifyUpload(transient.buildDir);
     const marker = `installer:${plan.runId}:${transient.buildVersion}`;
-    if (publishIntent && publishIntent.marker !== marker) throw cloudflareError('本次建置版本已改變，請勿用續跑覆蓋已部署內容。');
+    if (publishIntent && publishIntent.marker !== marker) throw cloudflareError('本次建置版本已改变，请勿用续跑覆盖已部署内容。');
     await save({ intents: { pagesPublish: { marker } } });
     const completed = (item) => item?.latest_stage?.name === 'deploy' && item.latest_stage.status === 'success';
     const failed = (item) => ['failure', 'canceled'].includes(item?.latest_stage?.status);
@@ -260,11 +260,11 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
     if (!deployment) {
       verifyProject((await api(base, { signal })).result, context);
       const result = await cli(['pages', 'deploy', transient.buildDir, '--project-name', plan.pagesProject, '--branch', 'main', '--commit-message', marker, '--commit-dirty=true'], { signal, accountId: plan.cloudflareAccountId, timeoutMs: 600_000 });
-      if (result.exitCode !== 0) throw cloudflareError('Pages 發佈尚未確認完成；請重新授權並續跑，安裝器會先查詢實際部署狀態。');
+      if (result.exitCode !== 0) throw cloudflareError('Pages 发布尚未确认完成；请重新授权并续跑，安装器会先查询实际部署状态。');
     }
     for (let attempt = 0; attempt < 60; attempt += 1) {
       const all = await deployments(base, signal);
-      if (all.some((item) => item.environment !== 'production' || item.deployment_trigger?.metadata?.branch !== 'main' || item.deployment_trigger?.metadata?.commit_message !== marker)) throw cloudflareError('發佈期間偵測到其他 Pages 部署，已停止。');
+      if (all.some((item) => item.environment !== 'production' || item.deployment_trigger?.metadata?.branch !== 'main' || item.deployment_trigger?.metadata?.commit_message !== marker)) throw cloudflareError('发布期间侦测到其他 Pages 部署，已停止。');
       deployment = all.find(completed) || all.find((item) => !failed(item)) || all.find((item) => !previousFailures.has(item.id));
       if (completed(deployment)) {
         const current = (await api(base, { signal })).result;
@@ -274,20 +274,20 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
         await save({ resources: { pagesDeploymentId: deployment.id, website } });
         return { website };
       }
-      if (failed(deployment)) throw cloudflareError('Pages 部署失敗，請至 Cloudflare 官方部署頁確認原因；不會自動覆寫。');
+      if (failed(deployment)) throw cloudflareError('Pages 部署失败，请至 Cloudflare 官方部署页确认原因；不会自动覆写。');
       await wait(2000, undefined, { signal });
     }
-    throw cloudflareError('Pages 部署仍未完成，請稍後續跑以確認實際狀態。');
+    throw cloudflareError('Pages 部署仍未完成，请稍后续跑以确认实际状态。');
   }
   // Every install in the connected accounts, for update mode to offer.
   async function listInstalls({ signal } = {}) {
     const identity = await inspectIdentity({ signal });
-    if (!identity.loggedIn) throw cloudflareError('請先連接 Cloudflare。');
+    if (!identity.loggedIn) throw cloudflareError('请先连接 Cloudflare。');
     const found = [];
     for (const account of identity.accounts) {
       for (let page = 1; page <= 20; page += 1) {
         const data = await api(`/accounts/${account.id}/pages/projects?per_page=10&page=${page}`, { signal });
-        if (!Array.isArray(data.result)) throw cloudflareError('Pages 專案清單格式不符。');
+        if (!Array.isArray(data.result)) throw cloudflareError('Pages 专案清单格式不符。');
         for (const project of data.result) {
           const binding = installerBinding(project);
           if (binding && /^[a-z0-9][a-z0-9-]{0,57}$/.test(project.name ?? '')) {
@@ -303,11 +303,11 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
   // Update mode's ownership proof, re-read right before anything is uploaded.
   async function updateTarget(context) {
     const { plan, signal } = context;
-    if (!ACCOUNT_ID.test(plan.cloudflareAccountId) || !/^[a-z0-9][a-z0-9-]{0,57}$/.test(plan.pagesProject)) throw cloudflareError('更新目標格式不符。');
+    if (!ACCOUNT_ID.test(plan.cloudflareAccountId) || !/^[a-z0-9][a-z0-9-]{0,57}$/.test(plan.pagesProject)) throw cloudflareError('更新目标格式不符。');
     const project = (await api(projectRoute(plan), { signal, missing: true }))?.result;
     const binding = installerBinding(project);
     if (!binding || binding.runId !== plan.runId || binding.projectId !== plan.projectId || project.name !== plan.pagesProject) {
-      throw cloudflareError('這個 Cloudflare 網站不是安裝精靈為這次選擇的教會建立的，或設定已被改過；不會更新。');
+      throw cloudflareError('这个 Cloudflare 网站不是安装精灵为这次选择的教会建立的，或设定已被改过；不会更新。');
     }
     return project;
   }
@@ -317,7 +317,7 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
     for (const deployment of existing) {
       if (deployment.environment !== 'production' || deployment.deployment_trigger?.metadata?.branch !== 'main' ||
           !String(deployment.deployment_trigger?.metadata?.commit_message ?? '').startsWith(`installer:${runId}:`)) {
-        throw cloudflareError('這個網站有不是安裝精靈發布的版本；為避免覆蓋別人的部署，已停止。');
+        throw cloudflareError('这个网站有不是安装精灵发布的版本；为避免覆盖别人的部署，已停止。');
       }
     }
   }
@@ -331,7 +331,7 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
     const failed = (item) => ['failure', 'canceled'].includes(item?.latest_stage?.status);
     const website = `https://${project.subdomain}/`;
     if (transient.unchanged) return { website, unchanged: true };
-    if (!transient.buildDir || !transient.buildVersion) throw cloudflareError('缺少已驗證的建置產物，禁止發佈。');
+    if (!transient.buildDir || !transient.buildVersion) throw cloudflareError('缺少已验证的建置产物，禁止发布。');
     await verifyUpload(transient.buildDir);
     const marker = `installer:${plan.runId}:${transient.buildVersion}`;
     const ours = (item) => item.deployment_trigger?.metadata?.commit_message === marker;
@@ -339,7 +339,7 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
     // A resumed update whose upload already went through only waits for it.
     if (!existing.some((item) => ours(item) && !failed(item))) {
       const result = await cli(['pages', 'deploy', transient.buildDir, '--project-name', plan.pagesProject, '--branch', 'main', '--commit-message', marker, '--commit-dirty=true'], { signal, accountId: plan.cloudflareAccountId, timeoutMs: 600_000 });
-      if (result.exitCode !== 0) throw cloudflareError('新版網站發佈尚未確認完成；請重新按「開始更新」，精靈會先查詢實際部署狀態。');
+      if (result.exitCode !== 0) throw cloudflareError('新版网站发布尚未确认完成；请重新按「开始更新」，精灵会先查询实际部署状态。');
     }
     for (let attempt = 0; attempt < 60; attempt += 1) {
       const all = await deployments(base, signal);
@@ -349,10 +349,10 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
         await updateTarget(context);
         return { website, unchanged: false };
       }
-      if (failed(deployment)) throw cloudflareError('新版網站部署失敗，請至 Cloudflare 官方部署頁確認原因；舊版網站仍照常運作。');
+      if (failed(deployment)) throw cloudflareError('新版网站部署失败，请至 Cloudflare 官方部署页确认原因；旧版网站仍照常运作。');
       await wait(2000, undefined, { signal });
     }
-    throw cloudflareError('新版網站部署仍未完成，請稍後重新按「開始更新」確認實際狀態。');
+    throw cloudflareError('新版网站部署仍未完成，请稍后重新按「开始更新」确认实际状态。');
   }
   // Attach the church's own subdomain. The wizard has no DNS permission, so
   // the church adds the CNAME itself; Cloudflare checks it and issues the
@@ -362,17 +362,17 @@ export function createCloudflareInstaller({ command = runIsolatedCommand, fetchI
     const { plan, signal } = context;
     const project = await updateTarget(context);
     const domain = plan.customDomain;
-    if (typeof domain !== 'string' || !/^[a-z0-9.-]{4,253}$/.test(domain)) throw cloudflareError('自訂網址格式不符。');
+    if (typeof domain !== 'string' || !/^[a-z0-9.-]{4,253}$/.test(domain)) throw cloudflareError('自订网址格式不符。');
     const route = `${projectRoute(plan)}/domains`;
     const listed = await api(route, { signal });
-    if (!Array.isArray(listed.result)) throw cloudflareError('Pages 網域清單格式不符。');
+    if (!Array.isArray(listed.result)) throw cloudflareError('Pages 网域清单格式不符。');
     let entry = listed.result.find((item) => item.name === domain);
     if (!entry) entry = (await api(route, { method: 'POST', body: { name: domain }, signal })).result;
     const status = ['initializing', 'pending', 'active', 'deactivated', 'blocked', 'error'].includes(entry?.status) ? entry.status : 'pending';
     return { domain, status, cname: { name: domain.split('.')[0], fullName: domain, target: project.subdomain } };
   }
   async function execute(step, context) {
-    if (!STEP_IDS.has(step)) throw cloudflareError('不支援的 Cloudflare 安裝步驟。');
+    if (!STEP_IDS.has(step)) throw cloudflareError('不支援的 Cloudflare 安装步骤。');
     return step === 'pages-project' ? createPagesProject(context) : publish(context);
   }
   async function dispose() {

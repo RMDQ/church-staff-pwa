@@ -84,7 +84,7 @@ test('the launcher keeps the version of an unfinished install older than RESUMES
   await record('11111111-1111-4111-8111-111111111111', 'paused', revisions.old);
   await record('22222222-2222-4222-8222-222222222222', 'failed', revisions.beforeFloor);
   const { output, head } = await launch();
-  assert.match(output, /新版本無法接續，維持目前程式版本/);
+  assert.match(output, /新版本无法接续，维持目前程式版本/);
   assert.equal(head, revisions.current);
 });
 
@@ -92,7 +92,7 @@ test('the launcher keeps the version of an unfinished install it cannot read', {
   const { record, revisions, launch } = await launcherRepository(t);
   await record('11111111-1111-4111-8111-111111111111', 'paused', 'development');
   const { output, head } = await launch();
-  assert.match(output, /新版本無法接續/);
+  assert.match(output, /新版本无法接续/);
   assert.equal(head, revisions.current);
 });
 
@@ -100,7 +100,7 @@ test('the launcher keeps the version of a shallow clone it cannot check', { skip
   const { revisions, record, launch } = await launcherRepository(t, { shallow: true });
   await record('11111111-1111-4111-8111-111111111111', 'paused', revisions.old);
   const { output, head } = await launch();
-  assert.match(output, /新版本無法接續/);
+  assert.match(output, /新版本无法接续/);
   assert.equal(head, revisions.current);
 });
 
@@ -109,7 +109,7 @@ test('the launcher says nothing about updating a clone that is already the lates
   await record('11111111-1111-4111-8111-111111111111', 'paused', revisions.beforeFloor);
   await git(clone, 'reset', '-q', '--hard', revisions.latest);
   const { output, head } = await launch();
-  assert.doesNotMatch(output, /更新|無法接續/);
+  assert.doesNotMatch(output, /更新|无法接续/);
   assert.equal(head, revisions.latest);
 });
 
@@ -123,6 +123,6 @@ test('the launcher does not update while another wizard is running', { skip: !cl
   t.after(async () => { await rm(session, { recursive: true, force: true }); if (created) await rm(base, { recursive: true, force: true }); });
   await writeFile(path.join(session, '.installer-pid'), `${process.pid}\n`);
   const { output, head } = await launch();
-  assert.match(output, /另一個安裝精靈還在執行/);
+  assert.match(output, /另一个安装精灵还在执行/);
   assert.equal(head, revisions.current);
 });

@@ -2,7 +2,7 @@ import 'package:church_staff_pwa/features/dashboard/domain/season_window.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('早於季末兩週只看本季', () {
+  test('早于季末两周只看本季', () {
     final window = seasonWindow(DateTime.utc(2026, 9, 16));
     expect(window.start, DateTime.utc(2026, 7, 1));
     expect(window.end, DateTime.utc(2026, 9, 30));
@@ -10,7 +10,7 @@ void main() {
     expect(window.title, '我的服事');
   });
 
-  test('季末最後兩週一併列出下一季', () {
+  test('季末最后两周一并列出下一季', () {
     for (final day in [
       DateTime.utc(2026, 9, 17),
       DateTime.utc(2026, 9, 28),
@@ -29,7 +29,7 @@ void main() {
     expect(window.end, DateTime.utc(2027, 3, 31));
   });
 
-  test('新的一季從第一天起只看本季', () {
+  test('新的一季从第一天起只看本季', () {
     final window = seasonWindow(DateTime.utc(2026, 10, 1));
     expect(window.start, DateTime.utc(2026, 10, 1));
     expect(window.end, DateTime.utc(2026, 12, 31));

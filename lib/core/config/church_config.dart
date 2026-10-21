@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../time/time_zone_database.dart';
 import 'default_church_config.dart';
 
-/// 部署者提供的公開設定。憑證不屬於這份設定，也不應進入前端 bundle。
+/// 部署者提供的公开设定。凭证不属于这份设定，也不应进入前端 bundle。
 class ChurchConfig {
   ChurchConfig._({
     required this.appName,
@@ -57,13 +57,13 @@ class ChurchConfig {
       'checkin',
     ]);
     if (json['schemaVersion'] != 1) {
-      throw const FormatException('不支援的教會設定版本');
+      throw const FormatException('不支援的教会设定版本');
     }
     final timeZone = _text(json, 'timeZone');
     try {
       timeZoneLocation(timeZone);
     } catch (_) {
-      throw FormatException('無效的 IANA 時區：$timeZone');
+      throw FormatException('无效的 IANA 时区：$timeZone');
     }
     final services = parseServices(json['services']);
     final rawIcons = _object(json['icons'], 'icons');
@@ -80,7 +80,7 @@ class ChurchConfig {
           !RegExp(
             r'^[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*\.png$',
           ).hasMatch(value)) {
-        throw FormatException('圖示必須是安全的相對 PNG 路徑：$key');
+        throw FormatException('图示必须是安全的相对 PNG 路径：$key');
       }
       return MapEntry(key, value);
     });
@@ -91,7 +91,7 @@ class ChurchConfig {
       'maskable192',
       'maskable512',
     ]) {
-      if (!icons.containsKey(key)) throw FormatException('缺少圖示：$key');
+      if (!icons.containsKey(key)) throw FormatException('缺少图示：$key');
     }
     return ChurchConfig._(
       appName: _text(json, 'appName'),
@@ -107,8 +107,8 @@ class ChurchConfig {
     );
   }
 
-  /// 同一份設定，換成另一份聚會清單 —— 管理員在 App 裡改過的那份
-  /// （settings/services，見 ServiceCatalog）。其他欄位仍來自部署設定。
+  /// 同一份设定，换成另一份聚会清单 —— 管理员在 App 里改过的那份
+  /// （settings/services，见 ServiceCatalog）。其他栏位仍来自部署设定。
   ChurchConfig withServices(List<ServiceDefinition> services) => ChurchConfig._(
     appName: appName,
     shortName: shortName,
@@ -120,12 +120,12 @@ class ChurchConfig {
     icons: icons,
   );
 
-  /// 部署設定和 settings/services 共用同一套檢查。
+  /// 部署设定和 settings/services 共用同一套检查。
   static List<ServiceDefinition> parseServices(Object? rawServices) {
     if (rawServices is! List ||
         rawServices.isEmpty ||
         rawServices.length > 20) {
-      throw const FormatException('services 必須包含 1 至 20 種聚會');
+      throw const FormatException('services 必须包含 1 至 20 种聚会');
     }
     final services = rawServices
         .map(
@@ -138,7 +138,7 @@ class ChurchConfig {
         )
         .toList();
     if (services.map((s) => s.id).toSet().length != services.length) {
-      throw const FormatException('聚會 ID 不可重複');
+      throw const FormatException('聚会 ID 不可重复');
     }
     return services;
   }
@@ -176,11 +176,11 @@ class ServiceDefinition {
     final id = _text(json, 'id', max: 64);
     if (!RegExp(r'^[A-Za-z][A-Za-z0-9_-]{0,63}$').hasMatch(id) ||
         const ['constructor', 'prototype'].contains(id)) {
-      throw FormatException('無效的聚會 ID：$id');
+      throw FormatException('无效的聚会 ID：$id');
     }
     final weekday = json['weekday'];
     if (weekday is! int || weekday < 1 || weekday > 7) {
-      throw FormatException('聚會 $id 的 weekday 必須是 1 至 7');
+      throw FormatException('聚会 $id 的 weekday 必须是 1 至 7');
     }
     return ServiceDefinition(
       id: id,
@@ -326,7 +326,7 @@ class ChurchFeatures {
       lineNotifications: _flag(json, 'lineNotifications'),
     );
     if (result.lineNotifications && !result.calendar) {
-      throw const FormatException('LINE 行事曆通知需要啟用行事曆');
+      throw const FormatException('LINE 行事历通知需要启用行事历');
     }
     return result;
   }
@@ -368,7 +368,7 @@ class DevotionalConfig {
     final enabled = _flag(json, 'enabled');
     final format = json['fetchFormat'] ?? 'json';
     if (format != 'json' && format != 'dailyBibleHtml') {
-      throw const FormatException('不支援的每日靈糧抓取格式');
+      throw const FormatException('不支援的每日灵粮抓取格式');
     }
     return DevotionalConfig(
       enabled: enabled,
@@ -396,14 +396,14 @@ class DevotionalConfig {
 
 Map<String, dynamic> _object(Object? value, String field) {
   if (value is! Map<String, dynamic>) {
-    throw FormatException('$field 必須是物件');
+    throw FormatException('$field 必须是物件');
   }
   return value;
 }
 
 void _checkKeys(Map<String, dynamic> json, List<String> allowed) {
   if (json.keys.any((key) => !allowed.contains(key))) {
-    throw const FormatException('不支援的設定欄位；憑證不能放在公開設定檔');
+    throw const FormatException('不支援的设定栏位；凭证不能放在公开设定档');
   }
 }
 
@@ -413,14 +413,14 @@ String _text(Map<String, dynamic> json, String field, {int max = 100}) {
       value.trim().isEmpty ||
       value.length > max ||
       RegExp(r'[\x00-\x1f\x7f]').hasMatch(value)) {
-    throw FormatException('$field 必須是 1 至 $max 字的純文字');
+    throw FormatException('$field 必须是 1 至 $max 字的纯文字');
   }
   return value;
 }
 
 bool _flag(Map<String, dynamic> json, String field) {
   final value = json[field];
-  if (value is! bool) throw FormatException('$field 必須是布林值');
+  if (value is! bool) throw FormatException('$field 必须是布林值');
   return value;
 }
 
@@ -433,7 +433,7 @@ String _httpsUrl(
   if (value is! String ||
       value.length > 2048 ||
       RegExp(r'[\x00-\x1f\x7f]').hasMatch(value)) {
-    throw FormatException('$field 必須是安全的 URL 字串');
+    throw FormatException('$field 必须是安全的 URL 字串');
   }
   if (value.isEmpty && !isRequired) return '';
   final uri = Uri.tryParse(value);
@@ -441,7 +441,7 @@ String _httpsUrl(
       uri.scheme != 'https' ||
       uri.host.isEmpty ||
       uri.userInfo.isNotEmpty) {
-    throw FormatException('$field 必須是 HTTPS 網址');
+    throw FormatException('$field 必须是 HTTPS 网址');
   }
   return value;
 }

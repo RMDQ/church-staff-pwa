@@ -25,7 +25,7 @@ function verseResponse(body, cacheControl) {
 export const onRequestGet = ({ request, env, waitUntil }) =>
   handleWith(LOG_LABEL, async () => {
     const { devotional, timeZone } = churchConfig(env);
-    if (!devotional.enabled || !devotional.fetchUrl) throw new HttpError(404, '此教會未啟用每日靈糧來源');
+    if (!devotional.enabled || !devotional.fetchUrl) throw new HttpError(404, '此教会未启用每日灵粮来源');
     await identifyCaller(request, env);
 
     const now = new Date();
@@ -41,10 +41,10 @@ export const onRequestGet = ({ request, env, waitUntil }) =>
       verse = await fetchDailyVerse(devotional.fetchUrl, { format: devotional.fetchFormat ?? 'json', timeZone, now });
     } catch (error) {
       console.error('devotional source failed', error.message);
-      throw new HttpError(502, '暫時無法讀取今日經文');
+      throw new HttpError(502, '暂时无法读取今日经文');
     }
     // The source itself may still be on yesterday; say so rather than cache it.
-    if (verse.date !== today) throw new HttpError(404, '來源尚未更新今日經文');
+    if (verse.date !== today) throw new HttpError(404, '来源尚未更新今日经文');
 
     const body = JSON.stringify({ date: verse.date, rawRange: verse.rawRange });
     if (cache) {

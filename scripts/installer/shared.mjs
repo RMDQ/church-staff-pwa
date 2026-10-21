@@ -9,18 +9,18 @@ export const WRANGLER_VERSION = '4.138.0';
 
 // Order is execution order. `provider` selects the adapter that owns the step.
 export const STEPS = [
-  ['google-project', '建立專屬 Google 專案', 'google'],
-  ['firebase', '準備 Firebase', 'google'],
-  ['database', '建立資料庫', 'google'],
-  ['auth', '設定帳號登入', 'google'],
-  ['web-app', '取得網站設定', 'google'],
-  ['pages-project', '準備網站空間', 'cloudflare'],
-  ['build', '建置教會網站', 'build'],
-  ['rules', '部署資料存取規則', 'google'],
-  ['admin', '建立指定管理員', 'google'],
-  ['publish', '發布網站', 'cloudflare'],
-  ['auth-domains', '設定登入網域', 'google'],
-  ['activation', '寄送管理員設定密碼信', 'google'],
+  ['google-project', '建立专属 Google 专案', 'google'],
+  ['firebase', '准备 Firebase', 'google'],
+  ['database', '建立资料库', 'google'],
+  ['auth', '设定帐号登入', 'google'],
+  ['web-app', '取得网站设定', 'google'],
+  ['pages-project', '准备网站空间', 'cloudflare'],
+  ['build', '建置教会网站', 'build'],
+  ['rules', '部署资料存取规则', 'google'],
+  ['admin', '建立指定管理员', 'google'],
+  ['publish', '发布网站', 'cloudflare'],
+  ['auth-domains', '设定登入网域', 'google'],
+  ['activation', '寄送管理员设定密码信', 'google'],
 ].map(([id, label, provider]) => ({ id, label, provider }));
 
 export const stepIdsFor = (provider) => new Set(STEPS.filter((step) => step.provider === provider).map((step) => step.id));
@@ -28,12 +28,12 @@ export const stepIdsFor = (provider) => new Set(STEPS.filter((step) => step.prov
 // Update mode: rebuild an existing install from the latest source. Nothing is
 // created and no data, account or admin is touched; only the site and rules change.
 export const UPDATE_STEPS = [
-  ['inspect', '核對網站與 Google 專案', 'google'],
-  ['build', '建置新版網站', 'build'],
-  ['rules', '更新資料存取規則', 'google'],
-  ['publish', '發布新版網站', 'cloudflare'],
+  ['inspect', '核对网站与 Google 专案', 'google'],
+  ['build', '建置新版网站', 'build'],
+  ['rules', '更新资料存取规则', 'google'],
+  ['publish', '发布新版网站', 'cloudflare'],
   // Only when the church asked for its own address.
-  ['domain', '設定自訂網址', 'domain'],
+  ['domain', '设定自订网址', 'domain'],
 ].map(([id, label, provider]) => ({ id, label, provider }));
 
 // A subdomain the church owns, e.g. staff.hope-church.org. Apex domains only
@@ -92,9 +92,9 @@ const UNRESOLVED_PLACEHOLDER = /__(?:FIREBASE_[A-Z_]+|BUILD_VERSION|VENDOR_VERSI
 export async function verifyBuildArtifacts(directory, fail) {
   for (const name of REQUIRED_BUILD_FILES) {
     const stat = await lstat(path.join(directory, name)).catch(() => null);
-    if (!stat?.isFile() || stat.size === 0) throw fail('建置產物不完整，禁止發佈。');
+    if (!stat?.isFile() || stat.size === 0) throw fail('建置产物不完整，禁止发布。');
   }
   for (const name of ['cache_sw.js', 'firebase-messaging-sw.js']) {
-    if (UNRESOLVED_PLACEHOLDER.test(await readFile(path.join(directory, name), 'utf8'))) throw fail('建置含未替換設定，禁止發佈。');
+    if (UNRESOLVED_PLACEHOLDER.test(await readFile(path.join(directory, name), 'utf8'))) throw fail('建置含未替换设定，禁止发布。');
   }
 }

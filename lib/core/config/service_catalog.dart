@@ -5,15 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'church_config.dart';
 
-/// 聚會清單從哪裡來。
+/// 聚会清单从哪里来。
 ///
-/// 部署設定（build 時寫死的 CHURCH_CONFIG_JSON）是預設值；管理員在「聚會設定」
-/// 改過之後，清單存在 Firestore 的 settings/services，以那份為準。這樣新增
-/// 禱告會、改星期幾都不必重新部署。
+/// 部署设定（build 时写死的 CHURCH_CONFIG_JSON）是预设值；管理员在「聚会设定」
+/// 改过之后，清单存在 Firestore 的 settings/services，以那份为准。这样新增
+/// 祷告会、改星期几都不必重新部署。
 ///
-/// App 各處都透過 [ChurchConfig.current] 讀聚會（見 ServiceType），所以這裡只
-/// 負責把 current 換成「部署設定 + 另一份聚會清單」。為了不在啟動時等網路，
-/// 最後一次讀到的清單會存在本機，啟動時先套用（[applyCached]）。
+/// App 各处都透过 [ChurchConfig.current] 读聚会（见 ServiceType），所以这里只
+/// 负责把 current 换成「部署设定 + 另一份聚会清单」。为了不在启动时等网路，
+/// 最后一次读到的清单会存在本机，启动时先套用（[applyCached]）。
 class ServiceCatalog {
   ServiceCatalog._();
 
@@ -21,27 +21,27 @@ class ServiceCatalog {
 
   static ChurchConfig? _deployed;
 
-  /// build 時的部署設定。第一次存取時記下，之後 current 被換掉也不受影響。
+  /// build 时的部署设定。第一次存取时记下，之后 current 被换掉也不受影响。
   static ChurchConfig get deployed => _deployed ??= ChurchConfig.current;
 
-  /// 測試用：換一份部署設定，並清掉已套用的覆寫。
+  /// 测试用：换一份部署设定，并清掉已套用的覆写。
   static void resetForTesting(ChurchConfig config) {
     _deployed = config;
     ChurchConfig.current = config;
   }
 
-  /// settings/services 裡的清單；格式不對就當作沒有，沿用部署設定。
+  /// settings/services 里的清单；格式不对就当作没有，沿用部署设定。
   static List<ServiceDefinition>? parseDocument(Map<String, dynamic>? data) {
     if (data == null) return null;
     try {
       return ChurchConfig.parseServices(data['services']);
     } catch (e) {
-      log('settings/services 格式不正確，沿用部署設定', error: e);
+      log('settings/services 格式不正确，沿用部署设定', error: e);
       return null;
     }
   }
 
-  /// 套用 [services]（null = 回到部署設定）。回傳清單有沒有真的改變。
+  /// 套用 [services]（null = 回到部署设定）。回传清单有没有真的改变。
   static bool apply(List<ServiceDefinition>? services) {
     final next = services ?? deployed.services;
     final current = ChurchConfig.current.services;
@@ -53,7 +53,7 @@ class ServiceCatalog {
     return true;
   }
 
-  /// 啟動時先用上一次讀到的清單，不等網路。
+  /// 启动时先用上一次读到的清单，不等网路。
   static Future<void> applyCached() async {
     deployed;
     try {
@@ -62,7 +62,7 @@ class ServiceCatalog {
       if (raw == null) return;
       apply(ChurchConfig.parseServices(jsonDecode(raw)));
     } catch (e) {
-      log('讀取本機聚會清單失敗，沿用部署設定', error: e);
+      log('读取本机聚会清单失败，沿用部署设定', error: e);
     }
   }
 
@@ -78,12 +78,12 @@ class ServiceCatalog {
         );
       }
     } catch (e) {
-      log('儲存本機聚會清單失敗', error: e);
+      log('储存本机聚会清单失败', error: e);
     }
   }
 
-  /// 要寫進 settings/services 的 ids：用過的聚會 ID 永遠留著（Firestore rules
-  /// 用它判斷哪些聚會存在，只能增加不能減少），加上部署設定的和這次的。
+  /// 要写进 settings/services 的 ids：用过的聚会 ID 永远留著（Firestore rules
+  /// 用它判断哪些聚会存在，只能增加不能减少），加上部署设定的和这次的。
   static List<String> knownIds(
     Iterable<String> previous,
     List<ServiceDefinition> services,

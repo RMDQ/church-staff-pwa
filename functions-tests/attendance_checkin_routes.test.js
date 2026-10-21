@@ -113,7 +113,7 @@ describe('POST /api/checkin: who may check in', () => {
   test('a signed-in uid with neither a member nor a pending sign-up gets the plain refusal', async () => {
     const response = await call(checkinPost, checkinRequest({ uid: GONE }));
     assert.equal(response.status, 403);
-    assert.equal((await response.json()).error, '這個帳號沒有權限');
+    assert.equal((await response.json()).error, '这个帐号没有权限');
   });
 });
 

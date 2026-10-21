@@ -26,11 +26,11 @@ typedef CalendarMonthFetcher =
 /// so `identical()` on [eventsForMonth] is enough to tell whether a cached
 /// layout is still good.
 class CalendarMonthStore with ChangeNotifier {
-  /// 同一個月在这段時間內不重抓。沒有這道閘門的話，每次左右換頁都會對
-  /// 當月 + 前後月各打一次 Google Calendar API，來回滑幾次就燒掉配額。
+  /// 同一个月在这段时间内不重抓。没有这道闸门的话，每次左右换页都会对
+  /// 当月 + 前后月各打一次 Google Calendar API，来回滑几次就烧掉配额。
   static const Duration monthFreshness = Duration(minutes: 10);
 
-  /// SharedPreferences 只保留距今前後這麼多個月的快取，避免 key 無限累積。
+  /// SharedPreferences 只保留距今前后这么多个月的快取，避免 key 无限累积。
   static const int _cacheKeepMonths = 12;
   static String get _cacheKeyPrefix =>
       'calendar_events_v2_${Uri.encodeComponent(GoogleCalendarConfig.calendarId)}_'
@@ -45,9 +45,9 @@ class CalendarMonthStore with ChangeNotifier {
   final Map<String, String?> _errorsByMonth = {};
   final Map<String, DateTime> _fetchedAtByMonth = {};
 
-  // 每个月的寫入世代。寫入時 +1；fetch 開始時記下當時的值，回來時若已經
-  // 不同，代表這份回應是在寫入之前發出去的 —— 它不知道那筆寫入，套上去會
-  // 蓋掉本地 patch 還蓋上新鮮戳記，錯的資料會掛十分鐘。所以丟掉，重抓。
+  // 每个月的写入世代。写入时 +1；fetch 开始时记下当时的值，回来时若已经
+  // 不同，代表这份回应是在写入之前发出去的 —— 它不知道那笔写入，套上去会
+  // 盖掉本地 patch 还盖上新鲜戳记，错的资料会挂十分钟。所以丢掉，重抓。
   final Map<String, int> _writeGeneration = {};
 
   bool _disposed = false;
@@ -165,8 +165,8 @@ class CalendarMonthStore with ChangeNotifier {
 
   Future<void> _loadCached(DateTime month) async {
     final key = _keyFor(month);
-    // 記憶體裡已經有這個月了就不要再讀 disk：重讀會 jsonDecode 整個月、
-    // 通知畫面、並讓 layout 快取失效，等於每次換頁都把三個月的版面重算一次。
+    // 记忆体里已经有这个月了就不要再读 disk：重读会 jsonDecode 整个月、
+    // 通知画面、并让 layout 快取失效，等于每次换页都把三个月的版面重算一次。
     if (_eventsByMonth.containsKey(key)) return;
 
     try {
@@ -210,8 +210,8 @@ class CalendarMonthStore with ChangeNotifier {
     }
   }
 
-  /// 每瀏覽一個新月份就多一筆 key，永遠不清的話 localStorage 會一直長大。
-  /// 只留距今 [_cacheKeepMonths] 個月內的月份，其餘刪掉。
+  /// 每浏览一个新月份就多一笔 key，永远不清的话 localStorage 会一直长大。
+  /// 只留距今 [_cacheKeepMonths] 个月内的月份，其余删掉。
   Future<void> _pruneCachedMonths(SharedPreferences prefs) async {
     final now = _now();
     final nowIndex = now.year * 12 + now.month;
@@ -239,7 +239,7 @@ class CalendarMonthStore with ChangeNotifier {
 
     final fetchedAt = _fetchedAtByMonth[key];
     if (fetchedAt != null && _now().difference(fetchedAt) < monthFreshness) {
-      return; // 這個月剛抓過，直接用記憶體裡的資料
+      return; // 这个月刚抓过，直接用记忆体里的资料
     }
 
     final generation = _writeGeneration[key] ?? 0;
@@ -265,7 +265,7 @@ class CalendarMonthStore with ChangeNotifier {
       // already showing that copy.
       _errorsByMonth[key] = await _hasCachedCopy(key)
           ? null
-          : '離線或連線逾時，且沒有快取資料';
+          : '离线或连线逾时，且没有快取资料';
     } finally {
       _loadingMonths.remove(key);
       if (!_disposed) {

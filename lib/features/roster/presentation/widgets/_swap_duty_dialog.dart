@@ -1,21 +1,21 @@
 part of 'roster_card.dart';
 
 // ---------------------------------------------------------------------------
-// 交換服事
+// 交换服事
 //
-// 換班在教會裡是最常見的異動（「1/1 的破冰跟 1/8 換一下」），但在編輯畫面上
-// 它原本要拆成兩次獨立的編輯：找到 1/1、取消勾自己、勾對方、存檔，再捲到
-// 1/8 反過來做一次。中間任一步失敗，就會留下一個人被排兩天、另一個人的那天
-// 空著的狀態。
+// 换班在教会里是最常见的异动（「1/1 的破冰跟 1/8 换一下」），但在编辑画面上
+// 它原本要拆成两次独立的编辑：找到 1/1、取消勾自己、勾对方、存档，再卷到
+// 1/8 反过来做一次。中间任一步失败，就会留下一个人被排两天、另一个人的那天
+// 空著的状态。
 //
-// 這個 sheet 把它壓成一次操作，並且交給 [RosterProvider.swapDutyPeople] 以
-// 單一 batch 寫入 —— 要嘛兩天都換好，要嘛兩天都沒動。
+// 这个 sheet 把它压成一次操作，并且交给 [RosterProvider.swapDutyPeople] 以
+// 单一 batch 写入 —— 要嘛两天都换好，要嘛两天都没动。
 // ---------------------------------------------------------------------------
 
-/// 一個可以換過去的對象：某一天、某個服事項目上的某個人。
+/// 一个可以换过去的对象：某一天、某个服事项目上的某个人。
 ///
-/// 刻意攤平到「人」這一層而不是「那一天」：一個項目上可能排了兩個人，若以天
-/// 為單位，使用者選完日期還要再選一次人。攤平之後清單直接就是可選的結果。
+/// 刻意摊平到「人」这一层而不是「那一天」：一个项目上可能排了两个人，若以天
+/// 为单位，使用者选完日期还要再选一次人。摊平之后清单直接就是可选的结果。
 class _SwapCandidate {
   final ServiceRoster roster;
   final int dutyIndex;
@@ -57,11 +57,11 @@ class _SwapDutyDialogState extends State<_SwapDutyDialog> {
       ? const [placeholderPerson]
       : widget.duty.people;
 
-  /// 可選的對象，濾掉「那一天的同一項已經有 [_sourcePerson]」的選項。
+  /// 可选的对象，滤掉「那一天的同一项已经有 [_sourcePerson]」的选项。
   ///
-  /// 換過去會讓對方那天出現兩次同名，去重之後吃掉一個 —— 結果是那天平白少
-  /// 一個人。候選清單建立時只濾得掉「來源這天已經有的人」，反方向要等使用者
-  /// 選定要換誰才知道，所以濾在這裡，並隨 [_sourcePerson] 改變。
+  /// 换过去会让对方那天出现两次同名，去重之后吃掉一个 —— 结果是那天平白少
+  /// 一个人。候选清单建立时只滤得掉「来源这天已经有的人」，反方向要等使用者
+  /// 选定要换谁才知道，所以滤在这里，并随 [_sourcePerson] 改变。
   List<_SwapCandidate> get _visibleCandidates {
     final source = _sourcePerson.trim();
     return widget.candidates.where((candidate) {
@@ -103,19 +103,19 @@ class _SwapDutyDialogState extends State<_SwapDutyDialog> {
         targetPerson: target.person,
       );
     } catch (e, st) {
-      log('交換服事失敗', error: e, stackTrace: st);
+      log('交换服事失败', error: e, stackTrace: st);
       if (!mounted) return;
-      // 留在 sheet 上顯示錯誤，不 pop：關掉之後使用者得從頭再選一次日期。
+      // 留在 sheet 上显示错误，不 pop：关掉之后使用者得从头再选一次日期。
       setState(() {
         _isSubmitting = false;
-        _errorText = '交換失敗：${mapErrorToUserMessage(e)}';
+        _errorText = '交换失败：${mapErrorToUserMessage(e)}';
       });
       return;
     }
 
     if (!mounted) return;
     Navigator.of(context).pop();
-    messenger.showSnackBar(SnackBar(content: Text('已交換：$summary')));
+    messenger.showSnackBar(SnackBar(content: Text('已交换：$summary')));
   }
 
   @override
@@ -126,8 +126,8 @@ class _SwapDutyDialogState extends State<_SwapDutyDialog> {
     final hasCandidates = candidates.isNotEmpty;
 
     return SettingsBottomSheet(
-      title: '交換服事',
-      submitLabel: '交換',
+      title: '交换服事',
+      submitLabel: '交换',
       isSubmitting: _isSubmitting,
       onSubmit: (!hasCandidates || _selectedIndex == null || _isSubmitting)
           ? null
@@ -141,11 +141,11 @@ class _SwapDutyDialogState extends State<_SwapDutyDialog> {
             style: theme.textTheme.titleSmall,
           ),
           const SizedBox(height: 12),
-          // 一個項目只排一個人時不必問「要換誰」—— 那顆 chip 沒有第二個選項，
-          // 只是多一行要讀的東西。
+          // 一个项目只排一个人时不必问「要换谁」—— 那颗 chip 没有第二个选项，
+          // 只是多一行要读的东西。
           if (_sourcePeople.length > 1) ...[
             Text(
-              '要換誰',
+              '要换谁',
               style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
             ),
             const SizedBox(height: 6),
@@ -157,7 +157,7 @@ class _SwapDutyDialogState extends State<_SwapDutyDialog> {
                   selected: _sourcePerson == person,
                   onSelected: _isSubmitting
                       ? null
-                      // 換了要換的人，可選對象也跟著變，舊的選取索引指到別人。
+                      // 换了要换的人，可选对象也跟著变，旧的选取索引指到别人。
                       : (_) => setState(() {
                           _sourcePerson = person;
                           _selectedIndex = null;
@@ -168,7 +168,7 @@ class _SwapDutyDialogState extends State<_SwapDutyDialog> {
             const SizedBox(height: 12),
           ],
           Text(
-            '換到哪一天的「$role」',
+            '换到哪一天的「$role」',
             style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
           ),
           const SizedBox(height: 6),
@@ -176,7 +176,7 @@ class _SwapDutyDialogState extends State<_SwapDutyDialog> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                '其他日期沒有可以交換的「$role」',
+                '其他日期没有可以交换的「$role」',
                 style: TextStyle(color: theme.colorScheme.error),
               ),
             )

@@ -19,10 +19,10 @@ const _midweek = ServiceType('midweek');
 const _archived = ServiceType('archived');
 
 Map<ServiceType, List<String>> _oldTemplates() => {
-  ServiceType.sundayService: ['原有主日項目'],
-  ServiceType.youth: ['原有青年項目'],
-  ServiceType.children: ['原有兒童項目'],
-  _archived: ['歷史項目'],
+  ServiceType.sundayService: ['原有主日项目'],
+  ServiceType.youth: ['原有青年项目'],
+  ServiceType.children: ['原有儿童项目'],
+  _archived: ['历史项目'],
 };
 
 class _GroupRepository implements GroupSettingsRepository {
@@ -94,7 +94,7 @@ Future<void> _openSettings(
   );
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('週間'));
+  await tester.tap(find.text('周间'));
   await tester.pumpAndSettle();
 }
 
@@ -121,8 +121,8 @@ void main() {
     final config = jsonDecode(defaultChurchConfigJson) as Map<String, dynamic>;
     (config['services'] as List).add({
       'id': _midweek.name,
-      'label': '週間',
-      'name': '週間聚會',
+      'label': '周间',
+      'name': '周间聚会',
       'weekday': 3,
       'enabled': true,
     });
@@ -147,11 +147,11 @@ void main() {
         rosters: rosters,
         userAdmin: userAdmin,
       );
-      await _addAndSave(tester, action: '新增項目', name: '新聚會招待');
+      await _addAndSave(tester, action: '新增项目', name: '新聚会招待');
 
       final expected = {
         ..._oldTemplates(),
-        _midweek: ['新聚會招待'],
+        _midweek: ['新聚会招待'],
       };
       expect(repository.templates, expected);
       expect(rosters.templates, expected);
@@ -177,11 +177,11 @@ void main() {
       groups: groups,
       userAdmin: userAdmin,
     );
-    await _addAndSave(tester, action: '新增小组', name: '新聚會小組');
+    await _addAndSave(tester, action: '新增小组', name: '新聚会小组');
 
     final expected = {
       ..._oldTemplates(),
-      _midweek: ['新聚會小組'],
+      _midweek: ['新聚会小组'],
     };
     expect(repository.templates, expected);
     expect(groups.templates, expected);

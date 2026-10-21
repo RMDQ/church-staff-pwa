@@ -22,7 +22,7 @@ def load_script():
     config.CONFIG = {"timeZone": "UTC"}
     config.TYPES = {
         "sundayService": "主日",
-        "mid-week": "週間",
+        "mid-week": "周间",
         "other_service": "其他",
     }
     firestore = ModuleType("_firestore")

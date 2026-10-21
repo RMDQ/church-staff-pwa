@@ -62,7 +62,7 @@ async function importPrivateKey(pem) {
   try {
     der = base64UrlToBytes(body);
   } catch {
-    throw new HttpError(500, '伺服器設定不完整，請聯絡管理員');
+    throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
   return crypto.subtle.importKey(
     'pkcs8',
@@ -80,11 +80,11 @@ function serviceAccount(env) {
     parsed = JSON.parse(raw);
   } catch {
     console.error('GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON');
-    throw new HttpError(500, '伺服器設定不完整，請聯絡管理員');
+    throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
   if (!parsed?.client_email || !parsed?.private_key) {
     console.error('GOOGLE_SERVICE_ACCOUNT_JSON is missing client_email/private_key');
-    throw new HttpError(500, '伺服器設定不完整，請聯絡管理員');
+    throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
   return parsed;
 }
@@ -134,11 +134,11 @@ export async function getAccessToken(env, fetchImpl = fetch, now = Date.now()) {
 
   if (!response.ok) {
     console.error('token exchange failed', response.status, await safeText(response));
-    throw new HttpError(502, '無法連上 Google 日曆，請稍後再試');
+    throw new HttpError(502, '无法连上 Google 日历，请稍后再试');
   }
   const data = await response.json();
   if (typeof data?.access_token !== 'string') {
-    throw new HttpError(502, '無法連上 Google 日曆，請稍後再試');
+    throw new HttpError(502, '无法连上 Google 日历，请稍后再试');
   }
 
   const lifetimeMs = (Number(data.expires_in) || 3600) * 1000;
@@ -157,7 +157,7 @@ const DATE_TIME_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(\
 /// dates (2026-02-30 would otherwise roll over into March).
 function parseDate(text, label) {
   const match = typeof text === 'string' ? DATE_PATTERN.exec(text) : null;
-  if (!match) throw new HttpError(400, `${label}格式不正確`);
+  if (!match) throw new HttpError(400, `${label}格式不正确`);
   const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
@@ -199,13 +199,13 @@ function wallClockStamp(instant, timeZone) {
 /// a nonexistent or ambiguous DST time is rejected rather than silently shifted.
 function parseDateTime(text, label, timeZone) {
   const match = typeof text === 'string' ? DATE_TIME_PATTERN.exec(text) : null;
-  if (!match) throw new HttpError(400, `${label}格式不正確`);
+  if (!match) throw new HttpError(400, `${label}格式不正确`);
   parseDate(`${match[1]}-${match[2]}-${match[3]}`, label);
   const hour = Number(match[4]);
   const minute = Number(match[5]);
   const second = Number(match[6] ?? '0');
   if (hour > 23 || minute > 59 || second > 59) {
-    throw new HttpError(400, `${label}不是有效的時間`);
+    throw new HttpError(400, `${label}不是有效的时间`);
   }
   const pad = (value) => String(value).padStart(2, '0');
   const wall = `${match[1]}-${match[2]}-${match[3]}T${pad(hour)}:${pad(minute)}:${pad(second)}${match[7] ?? ''}`;
@@ -214,7 +214,7 @@ function parseDateTime(text, label, timeZone) {
   if (offset) {
     const stamp = Date.parse(wall + offset);
     if (!Number.isFinite(stamp) || wallClockStamp(stamp, timeZone) !== nominal) {
-      throw new HttpError(400, `${label}的時區偏移不符合教會時區，或該時間不存在`);
+      throw new HttpError(400, `${label}的时区偏移不符合教会时区，或该时间不存在`);
     }
     return { text: wall + offset, stamp };
   }
@@ -228,18 +228,18 @@ function parseDateTime(text, label, timeZone) {
   }
   if (candidates.size !== 1) {
     throw new HttpError(400, candidates.size === 0
-      ? `${label}在教會時區不存在，請重新選擇`
-      : `${label}有兩個可能時間，請指定明確時區偏移`);
+      ? `${label}在教会时区不存在，请重新选择`
+      : `${label}有两个可能时间，请指定明确时区偏移`);
   }
   return { text: wall, stamp: [...candidates][0] };
 }
 
 function optionalText(value, label, max) {
   if (value === undefined || value === null) return undefined;
-  if (typeof value !== 'string') throw new HttpError(400, `${label}格式不正確`);
+  if (typeof value !== 'string') throw new HttpError(400, `${label}格式不正确`);
   const trimmed = value.trim();
   if (trimmed === '') return '';
-  if (trimmed.length > max) throw new HttpError(400, `${label}太長了（上限 ${max} 字）`);
+  if (trimmed.length > max) throw new HttpError(400, `${label}太长了（上限 ${max} 字）`);
   return trimmed;
 }
 
@@ -258,29 +258,29 @@ function optionalText(value, label, max) {
 /// event that carries both.
 export function buildGoogleEvent(body, { forPatch = false, timeZone = TIME_ZONE } = {}) {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
-    throw new HttpError(400, '資料格式不正確');
+    throw new HttpError(400, '资料格式不正确');
   }
 
-  const title = optionalText(body.title, '標題', MAX_TITLE);
-  if (!title) throw new HttpError(400, '請填寫標題');
+  const title = optionalText(body.title, '标题', MAX_TITLE);
+  if (!title) throw new HttpError(400, '请填写标题');
 
   if (typeof body.allDay !== 'boolean') {
-    throw new HttpError(400, '資料格式不正確');
+    throw new HttpError(400, '资料格式不正确');
   }
 
   const event = { summary: title };
 
-  const location = optionalText(body.location, '地點', MAX_LOCATION);
+  const location = optionalText(body.location, '地点', MAX_LOCATION);
   if (location !== undefined) event.location = location;
-  const description = optionalText(body.description, '說明', MAX_DESCRIPTION);
+  const description = optionalText(body.description, '说明', MAX_DESCRIPTION);
   if (description !== undefined) event.description = description;
 
   if (body.allDay) {
-    const start = parseDate(body.start, '開始日期');
+    const start = parseDate(body.start, '开始日期');
     const end = body.end === undefined || body.end === null
       ? start
-      : parseDate(body.end, '結束日期');
-    if (end < start) throw new HttpError(400, '結束日期不能早於開始日期');
+      : parseDate(body.end, '结束日期');
+    if (end < start) throw new HttpError(400, '结束日期不能早于开始日期');
     event.start = { date: formatDate(start) };
     event.end = { date: formatDate(end + 86400000) };
     if (forPatch) {
@@ -288,12 +288,12 @@ export function buildGoogleEvent(body, { forPatch = false, timeZone = TIME_ZONE 
       event.end.dateTime = null;
     }
   } else {
-    const start = parseDateTime(body.start, '開始時間', timeZone);
+    const start = parseDateTime(body.start, '开始时间', timeZone);
     const end = body.end === undefined || body.end === null
       ? start
-      : parseDateTime(body.end, '結束時間', timeZone);
+      : parseDateTime(body.end, '结束时间', timeZone);
     // A DST fold can reverse lexical wall-clock order. Compare instants.
-    if (end.stamp < start.stamp) throw new HttpError(400, '結束時間不能早於開始時間');
+    if (end.stamp < start.stamp) throw new HttpError(400, '结束时间不能早于开始时间');
     event.start = { dateTime: start.text, timeZone };
     event.end = { dateTime: end.text, timeZone };
     if (forPatch) {
@@ -325,7 +325,7 @@ async function fetchWithTimeout(fetchImpl, url, init = {}) {
   } catch (error) {
     if (error instanceof HttpError) throw error;
     console.error('upstream request failed', url, error);
-    throw new HttpError(502, '無法連上 Google 日曆，請稍後再試');
+    throw new HttpError(502, '无法连上 Google 日历，请稍后再试');
   } finally {
     clearTimeout(timer);
   }
@@ -353,16 +353,16 @@ export async function callCalendar(env, { method, eventId, body, fetchImpl = fet
   });
 
   if (response.status === 404 || response.status === 410) {
-    throw new HttpError(404, '這個活動已經不存在了');
+    throw new HttpError(404, '这个活动已经不存在了');
   }
   if (response.status === 403) {
     // Almost always the calendar not being shared with the service account.
     console.error('calendar API forbidden', await safeText(response));
-    throw new HttpError(502, '沒有權限寫入這本日曆，請聯絡管理員');
+    throw new HttpError(502, '没有权限写入这本日历，请联络管理员');
   }
   if (!response.ok) {
     console.error('calendar API failed', response.status, await safeText(response));
-    throw new HttpError(502, '無法連上 Google 日曆，請稍後再試');
+    throw new HttpError(502, '无法连上 Google 日历，请稍后再试');
   }
   return response;
 }

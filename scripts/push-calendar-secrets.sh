@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 #
-# 把行事曆寫入需要的執行期變數推到 Cloudflare Pages。
+# 把行事历写入需要的执行期变数推到 Cloudflare Pages。
 #
-# 為什麼要有這支：GOOGLE_SERVICE_ACCOUNT_JSON 是一整份多行 JSON，貼進
-# dashboard 的輸入框很容易漏字或被改成單行，而失敗的樣子是部署後才發現
-# 「伺服器設定不完整」。用 CLI 從檔案直接送就沒有這個問題。
+# 为什么要有这支：GOOGLE_SERVICE_ACCOUNT_JSON 是一整份多行 JSON，贴进
+# dashboard 的输入框很容易漏字或被改成单行，而失败的样子是部署后才发现
+# 「伺服器设定不完整」。用 CLI 从档案直接送就没有这个问题。
 #
-# 這三個是 **執行期** 變數（Pages Functions 讀的），跟 build 階段的
-# --dart-define 是兩套，要分開設。
+# 这三个是 **执行期** 变数（Pages Functions 读的），跟 build 阶段的
+# --dart-define 是两套，要分开设。
 #
 # 用法：
-#     wrangler login          # 只有第一次，或 token 過期時
+#     wrangler login          # 只有第一次，或 token 过期时
 #     bash scripts/push-calendar-secrets.sh
 #
 # 需要 .local/service-account.json（已 gitignore）。
 #
-# LINE 通知（選用）：另讀 .local/n8n-notify-url 與 .local/n8n-notify-secret。
-# Wrangler Pages secret put 只支援 Production，沒有 --env。
-# Preview 必須另用 Cloudflare Dashboard 或 REST API 設定，避免測試通知發到正式群組。
+# LINE 通知（选用）：另读 .local/n8n-notify-url 与 .local/n8n-notify-secret。
+# Wrangler Pages secret put 只支援 Production，没有 --env。
+# Preview 必须另用 Cloudflare Dashboard 或 REST API 设定，避免测试通知发到正式群组。
 
 set -euo pipefail
 
@@ -29,12 +29,12 @@ WRANGLER=(npx --yes wrangler@4)
 
 if [[ ! -f "$KEY_FILE" ]]; then
   echo "找不到 $KEY_FILE" >&2
-  echo "先產生 service account 金鑰再跑這支。" >&2
+  echo "先产生 service account 金钥再跑这支。" >&2
   exit 1
 fi
 
-# Firebase 專案 id 決定 Function 去哪個 Firestore 查管理員身分。讀錯專案的話
-# 每個人都會被判成沒有權限。
+# Firebase 专案 id 决定 Function 去哪个 Firestore 查管理员身分。读错专案的话
+# 每个人都会被判成没有权限。
 firebase_project_id() {
   if [[ -n "${FIREBASE_PROJECT_ID:-}" ]]; then
     printf '%s' "$FIREBASE_PROJECT_ID"
@@ -60,7 +60,7 @@ CALENDAR_ID="$(calendar_id)"
 
 if [[ -z "$PROJECT_ID" || -z "$CALENDAR_ID" ]]; then
   echo "拿不到 FIREBASE_PROJECT_ID 或 GOOGLE_CALENDAR_ID。" >&2
-  echo "用環境變數指定，或先跑 gh auth login。" >&2
+  echo "用环境变数指定，或先跑 gh auth login。" >&2
   exit 1
 fi
 
@@ -68,8 +68,8 @@ fi
 for environment in production; do
   echo "── $environment ──"
 
-  # 全部走 secret：值不會回顯在 dashboard 或 wrangler 的輸出裡，而 Function
-  # 讀的方式完全相同。
+  # 全部走 secret：值不会回显在 dashboard 或 wrangler 的输出里，而 Function
+  # 读的方式完全相同。
   "${WRANGLER[@]}" pages secret put GOOGLE_SERVICE_ACCOUNT_JSON \
     --project-name "$PROJECT_NAME" < "$KEY_FILE"
 
@@ -80,9 +80,9 @@ for environment in production; do
     --project-name "$PROJECT_NAME"
 done
 
-# ── LINE 通知（選用）────────────────────────────────────────────────────────
-# 兩個檔案都在才推。缺一個就整個跳過：Function 那邊也是任一沒設就關掉通知，
-# 只推一半只會得到「設了卻不會動」這種最難查的狀態。
+# ── LINE 通知（选用）────────────────────────────────────────────────────────
+# 两个档案都在才推。缺一个就整个跳过：Function 那边也是任一没设就关掉通知，
+# 只推一半只会得到「设了却不会动」这种最难查的状态。
 notify_url() {
   if [[ -n "${NOTIFY_WEBHOOK_URL:-}" ]]; then
     printf '%s' "$NOTIFY_WEBHOOK_URL"
@@ -112,8 +112,8 @@ if [[ -n "$NOTIFY_URL" && -n "$NOTIFY_SECRET" ]]; then
       --project-name "$PROJECT_NAME"
   done
 else
-  echo "略過 LINE 通知：找不到 .local/n8n-notify-url 或 .local/n8n-notify-secret。"
+  echo "略过 LINE 通知：找不到 .local/n8n-notify-url 或 .local/n8n-notify-secret。"
 fi
 
 echo
-echo "完成。下一次部署才會生效 —— 現有的 deployment 不會自動帶到新設定。"
+echo "完成。下一次部署才会生效 —— 现有的 deployment 不会自动带到新设定。"
