@@ -7,7 +7,7 @@ import { validateChurchConfig } from '../worker/church_config.js';
 const service = (id, enabled = true) => ({ id, label: id, name: id, weekday: 1, enabled });
 const configWithServices = (services) => ({ ...defaultConfig, services });
 
-const args = ['--project', 'demo-church-staff', '--uid', 'owner-uid', '--name', '測試管理員'];
+const args = ['--project', 'demo-church-staff', '--uid', 'owner-uid', '--name', '测试管理员'];
 const options = () => parseArgs([...args, '--apply', '--confirm-project', 'demo-church-staff', '--confirm-uid', 'owner-uid']);
 const auth = { localId: 'owner-uid', email: 'owner@example.invalid' };
 const response = (status, body) => new Response(body === undefined ? null : JSON.stringify(body), { status });
@@ -19,7 +19,7 @@ function fakeApi(responses) {
     calls,
     fetchImpl: async (url, init) => {
       calls.push({ url, ...init, body: init.body && JSON.parse(init.body) });
-      assert.ok(responses.length, '不應多送請求');
+      assert.ok(responses.length, '不应多送请求');
       return responses.shift();
     },
     getAccessToken: () => 'fake-token',
@@ -30,7 +30,7 @@ function fakeApi(responses) {
 test('dry-run is fully offline, including token acquisition', async () => {
   const result = await bootstrap(parseArgs(args), {
     fetchImpl: () => assert.fail('不得呼叫 API'),
-    getAccessToken: () => assert.fail('不得讀取憑證'),
+    getAccessToken: () => assert.fail('不得读取凭证'),
     log: silent,
   });
   assert.equal(result.applied, false);
@@ -41,7 +41,7 @@ test('apply requires explicit project and UID confirmation before any network ac
   assert.throws(() => parseArgs([...args, '--apply', '--confirm-project', 'other-project', '--confirm-uid', 'owner-uid']), /confirm-project/);
   assert.throws(() => parseArgs([...args, '--apply', '--confirm-project', 'demo-church-staff', '--confirm-uid', 'wrong-uid']), /不一致/);
   await assert.rejects(bootstrap({ ...parseArgs(args), apply: true }, {
-    fetchImpl: () => assert.fail('不得呼叫 API'), getAccessToken: () => assert.fail('不得讀取憑證'), log: silent,
+    fetchImpl: () => assert.fail('不得呼叫 API'), getAccessToken: () => assert.fail('不得读取凭证'), log: silent,
   }), /confirm-project/);
 });
 
@@ -50,14 +50,14 @@ test('CLI rejects missing identity, project, name and unknown options', () => {
   assert.throws(() => parseArgs(['--project', 'demo-church-staff', '--name', 'test']), /uid/);
   assert.throws(() => parseArgs(['--project', 'demo-church-staff', '--uid', 'x']), /name/);
   assert.throws(() => parseArgs([...args, '--password', 'not-accepted']), /不支援/);
-  assert.throws(() => parseArgs([...args, '--project', 'demo-other']), /重複/);
+  assert.throws(() => parseArgs([...args, '--project', 'demo-other']), /重复/);
 });
 
 test('profile matches required User fields, with zones and zoneTypes derived together', () => {
   const ids = enabledServiceIds(configWithServices([service('sundayService'), service('archived', false)]));
   const profile = buildAdminProfile(options(), auth, ids);
   assert.deepEqual(profile, {
-    id: 'owner-uid', email: 'owner@example.invalid', name: '測試管理員', username: '測試管理員', role: 'admin',
+    id: 'owner-uid', email: 'owner@example.invalid', name: '测试管理员', username: '测试管理员', role: 'admin',
     groups: [], zones: [{ serviceType: 'sundayService', smallGroups: [], ministries: [] }], zoneTypes: ['sundayService'],
   });
   assert.throws(() => enabledServiceIds(configWithServices([service('same'), service('same', false)])), /duplicate service id/);
@@ -76,8 +76,8 @@ test('bootstrap uses the deployment schema and service limit before reading cred
   assert.throws(() => enabledServiceIds(tooMany), /1 to 20/);
   await assert.rejects(bootstrap({ ...options(), config: 'test-church.json' }, {
     readConfig: () => tooMany,
-    getAccessToken: () => assert.fail('無效設定不得讀取憑證'),
-    fetchImpl: () => assert.fail('無效設定不得呼叫 API'),
+    getAccessToken: () => assert.fail('无效设定不得读取凭证'),
+    fetchImpl: () => assert.fail('无效设定不得呼叫 API'),
     log: silent,
   }), /1 to 20/);
 });
@@ -118,25 +118,25 @@ test('new profile uses create-only atomic precondition, never writes to Auth', a
 });
 
 test('email lookup requires Console-confirmed matching UID', async () => {
-  const opts = parseArgs(['--project', 'demo-church-staff', '--email', auth.email, '--name', '測試管理員', '--apply', '--confirm-project', 'demo-church-staff', '--confirm-uid', 'wrong-uid']);
+  const opts = parseArgs(['--project', 'demo-church-staff', '--email', auth.email, '--name', '测试管理员', '--apply', '--confirm-project', 'demo-church-staff', '--confirm-uid', 'wrong-uid']);
   const api = fakeApi([response(200, { users: [auth] })]);
-  await assert.rejects(bootstrap(opts, api), /核對過的 UID/);
+  await assert.rejects(bootstrap(opts, api), /核对过的 UID/);
   assert.deepEqual(api.calls[0].body, { email: [auth.email] });
   assert.equal(api.calls.length, 1);
 });
 
 test('existing profile is never overwritten or promoted', async () => {
   const api = fakeApi([response(200, { users: [auth] }), response(200, {})]);
-  await assert.rejects(bootstrap(options(), api), /不覆寫、不升權/);
+  await assert.rejects(bootstrap(options(), api), /不覆写、不升权/);
   assert.equal(api.calls.length, 2);
 });
 
 test('missing Auth, denied read, and concurrent profile creation all fail closed', async (t) => {
   for (const [label, responses, pattern] of [
     ['missing Auth', [response(200, { users: [] })], /找不到唯一/],
-    ['Auth unavailable', [response(403)], /lookup 失敗/],
-    ['denied Firestore read', [response(200, { users: [auth] }), response(403)], /無法確認/],
-    ['concurrent create', [response(200, { users: [auth] }), response(404), response(409)], /不會覆寫/],
+    ['Auth unavailable', [response(403)], /lookup 失败/],
+    ['denied Firestore read', [response(200, { users: [auth] }), response(403)], /无法确认/],
+    ['concurrent create', [response(200, { users: [auth] }), response(404), response(409)], /不会覆写/],
   ]) {
     await t.test(label, async () => {
       const api = fakeApi(responses);

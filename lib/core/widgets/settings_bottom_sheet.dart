@@ -8,8 +8,8 @@ class SettingsBottomSheet extends StatelessWidget {
   final String cancelLabel;
   final Widget? submitChild;
 
-  /// 為 true 時，按鈕顯示 spinner + `${submitLabel}中…`（例：'匯入中…'）。
-  /// 呼叫端應確保 submitLabel 是可組合的動詞。
+  /// 为 true 时，按钮显示 spinner + `${submitLabel}中…`（例：'汇入中…'）。
+  /// 呼叫端应确保 submitLabel 是可组合的动词。
   final bool isSubmitting;
 
   const SettingsBottomSheet({
@@ -17,7 +17,7 @@ class SettingsBottomSheet extends StatelessWidget {
     required this.title,
     required this.child,
     required this.onSubmit,
-    this.submitLabel = '儲存',
+    this.submitLabel = '储存',
     this.cancelLabel = '取消',
     this.submitChild,
     this.isSubmitting = false,

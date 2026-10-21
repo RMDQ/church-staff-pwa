@@ -3,8 +3,8 @@ import 'dart:js_interop_unsafe';
 
 import 'install_hint_service.dart';
 
-/// `web/install_hint.js` 掛在 window 上的物件。那支腳本沒載到（例如被舊快取
-/// 服務的舊 index.html）時是 undefined，這裡就當成不用提醒。
+/// `web/install_hint.js` 挂在 window 上的物件。那支脚本没载到（例如被旧快取
+/// 服务的旧 index.html）时是 undefined，这里就当成不用提醒。
 @JS('churchInstallHint')
 external _InstallHintJs? get _hint;
 
@@ -31,7 +31,7 @@ InstallHint readInstallHint() {
       'android' => InstallPlatform.android,
       _ => InstallPlatform.other,
     },
-    // 舊版 install_hint.js 沒有 browser()；讀不到就照一般瀏覽器教。
+    // 旧版 install_hint.js 没有 browser()；读不到就照一般浏览器教。
     browser: switch (_browserOf(hint)) {
       'safari' => InstallBrowser.safari,
       'chrome' => InstallBrowser.chrome,

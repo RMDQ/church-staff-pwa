@@ -5,7 +5,7 @@ os.chdir(TOOLS); sys.path.insert(0, TOOLS)
 import sys, base64, json, time, os, re; sys.path.insert(0,'.')
 from vc import *
 D=ARTICLE_DIR+'/'
-names=re.findall(r'【插入圖 \d\d｜([^】]+)】', open(D+'article.md').read())
+names=re.findall(r'【插入图 \d\d｜([^】]+)】', open(D+'article.md').read())
 out={}
 if os.path.exists('vocus-images.json'): out=json.load(open('vocus-images.json'))
 STATE="JSON.stringify(document.querySelector('.ContentEditable__root').__lexicalEditor.getEditorState().toJSON().root.children.filter(n=>n.type==='image').map(n=>[n.src,n.width,n.height]))"

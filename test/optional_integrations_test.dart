@@ -43,7 +43,7 @@ Future<void> _pumpSignedIn(WidgetTester tester, Widget screen) async {
     SignedInAuthRepository(
       User(
         id: 'test-admin',
-        name: '測試同工',
+        name: '测试同工',
         username: 'tester',
         email: 'tester@example.org',
         role: UserRole.admin,
@@ -143,9 +143,9 @@ void main() {
   );
 
   testWidgets('login uses the configured app name', (tester) async {
-    ChurchConfig.current = testChurchConfig(appName: '範例聚會');
+    ChurchConfig.current = testChurchConfig(appName: '范例聚会');
     await _pumpSignedIn(tester, const LoginScreen());
-    expect(find.text('範例聚會'), findsOneWidget);
+    expect(find.text('范例聚会'), findsOneWidget);
   });
 
   testWidgets('disabled cards make no requests and leave the roster visible', (
@@ -157,8 +157,8 @@ void main() {
         httpClient: MockClient((_) async => fail('HTTP must not be called')),
       ),
     );
-    expect(find.text('每日靈糧'), findsNothing);
-    expect(find.text('行事曆'), findsNothing);
+    expect(find.text('每日灵粮'), findsNothing);
+    expect(find.text('行事历'), findsNothing);
     expect(find.text(seasonWindow(ChurchTime.today()).title), findsOneWidget);
   });
 
@@ -172,7 +172,7 @@ void main() {
         httpClient: MockClient((_) async => fail('HTTP must not be called')),
       ),
     );
-    expect(find.text('行事曆'), findsNothing);
+    expect(find.text('行事历'), findsNothing);
   });
 
   testWidgets('direct navigation to disabled Calendar cannot read or edit', (
@@ -182,8 +182,8 @@ void main() {
       tester,
       CalendarScreen(fetchMonth: (_) async => fail('must not fetch')),
     );
-    expect(find.byTooltip('新增活動'), findsNothing);
-    expect(find.text('行事曆未啟用或設定不完整'), findsOneWidget);
+    expect(find.byTooltip('新增活动'), findsNothing);
+    expect(find.text('行事历未启用或设定不完整'), findsOneWidget);
   });
 
   testWidgets('disabled push hides its settings without a push provider', (
@@ -194,21 +194,21 @@ void main() {
       const ProfileScreen(versionService: _NoVersionService()),
     );
     expect(find.text('服事提醒'), findsNothing);
-    expect(find.text('登出'), findsOneWidget);
+    expect(find.text('退出登录'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('reminder toggle stays hidden until a sender exists', (
     tester,
   ) async {
-    // 開了推播也不顯示：App 只記偏好，沒有東西在週一真的寄提醒。
+    // 开了推播也不显示：App 只记偏好，没有东西在周一真的寄提醒。
     ChurchConfig.current = testChurchConfig(pushNotifications: true);
     await _pumpSignedIn(
       tester,
       const ProfileScreen(versionService: _NoVersionService()),
     );
     expect(find.text('服事提醒'), findsNothing);
-    expect(find.text('登出'), findsOneWidget);
+    expect(find.text('退出登录'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -226,11 +226,11 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.text('匯入服事表'));
+    await tester.tap(find.text('汇入服事表'));
     await tester.pumpAndSettle();
-    expect(find.text('從照片辨識'), findsNothing);
+    expect(find.text('从照片辨识'), findsNothing);
     expect(find.byType(TextField), findsOneWidget);
-    expect(find.text('匯入'), findsOneWidget);
+    expect(find.text('汇入'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -242,8 +242,8 @@ void main() {
           for (var i = 0; i < 6; i++)
             {
               'id': 'service$i',
-              'label': '聚會$i',
-              'name': '聚會$i',
+              'label': '聚会$i',
+              'name': '聚会$i',
               'weekday': 7,
               'enabled': true,
             },
@@ -276,7 +276,7 @@ void main() {
         'enabled': true,
         'dataUrl': 'https://example.org/devotional.json?edition=study',
         'linkUrl': 'https://example.org/devotional',
-        'sourceName': '每日讀經',
+        'sourceName': '每日读经',
       },
     );
     final requests = <Uri>[];
@@ -288,7 +288,7 @@ void main() {
           return http.Response(
             jsonEncode({
               'date': ChurchTime.dateKey(ChurchTime.today()),
-              'rawRange': '約翰福音三:16-18',
+              'rawRange': '约翰福音三:16-18',
             }),
             200,
             headers: {'content-type': 'application/json; charset=utf-8'},
@@ -304,8 +304,8 @@ void main() {
       requests.single.queryParameters['d'],
       ChurchTime.dateKey(ChurchTime.today()),
     );
-    expect(find.text('每日讀經'), findsOneWidget);
-    expect(find.text('約翰福音3:16-18'), findsOneWidget);
+    expect(find.text('每日读经'), findsOneWidget);
+    expect(find.text('约翰福音3:16-18'), findsOneWidget);
   });
 
   group('devotional fallback while the data branch is still on yesterday', () {
@@ -315,7 +315,7 @@ void main() {
           'enabled': true,
           'dataUrl': 'https://example.org/devotional.json',
           'linkUrl': 'https://example.org/devotional',
-          'sourceName': '每日靈糧',
+          'sourceName': '每日灵粮',
           'fetchUrl': 'https://example.org/source',
           'fetchFormat': 'dailyBibleHtml',
         },
@@ -327,7 +327,7 @@ void main() {
         'date': ChurchTime.dateKey(
           ChurchTime.today().subtract(const Duration(days: 1)),
         ),
-        'rawRange': '哥林多後書一：1-一：11',
+        'rawRange': '哥林多后书一：1-一：11',
       }),
       200,
       headers: {'content-type': 'application/json; charset=utf-8'},
@@ -345,7 +345,7 @@ void main() {
             return http.Response(
               jsonEncode({
                 'date': ChurchTime.dateKey(ChurchTime.today()),
-                'rawRange': '哥林多後書一：12-一：24',
+                'rawRange': '哥林多后书一：12-一：24',
               }),
               200,
               headers: {'content-type': 'application/json; charset=utf-8'},
@@ -356,7 +356,7 @@ void main() {
       expect(requests, hasLength(2));
       expect(requests.last.url.path, '/api/devotional/today');
       expect(requests.last.headers['Authorization'], 'Bearer test-token');
-      expect(find.text('哥林多後書1:12-24'), findsOneWidget);
+      expect(find.text('哥林多后书1:12-24'), findsOneWidget);
       expect(find.textContaining('一：1-'), findsNothing);
     });
 
@@ -369,11 +369,11 @@ void main() {
           idToken: () async => 'test-token',
           httpClient: MockClient((request) async {
             if (request.url.host == 'example.org') return stale(request);
-            return http.Response('{"error":"來源尚未更新今日經文"}', 404);
+            return http.Response('{"error":"来源尚未更新今日经文"}', 404);
           }),
         ),
       );
-      expect(find.text('查看今日經文範圍'), findsOneWidget);
+      expect(find.text('查看今日经文范围'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

@@ -19,6 +19,9 @@ import '../../domain/entities/recent_activity.dart';
 import '../../domain/season_window.dart';
 import '../widgets/recent_activity_row.dart';
 import '../widgets/add_to_home_card.dart';
+import '../../../checkin/presentation/checkin_card.dart';
+import '../../../attendance/presentation/attendance_screen.dart';
+import '../../../auth/domain/entities/user.dart' show UserRole;
 import '../../../roster/domain/entities/service_roster.dart';
 import '../../../roster/presentation/providers/roster_provider.dart';
 import '../../../calendar/presentation/screens/calendar_screen.dart'
@@ -48,7 +51,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   static const int _recentActivitiesLimit = 3;
   static const int _recentActivitiesFetchMax = 20;
-  static const _dailyBreadRangeFallback = '查看今日經文範圍';
+  static const _dailyBreadRangeFallback = '查看今日经文范围';
 
   static final _whitespaceRe = RegExp(r'\s+');
   static final _latinRe = RegExp(r'[A-Za-z]');
@@ -61,16 +64,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _recentActivitiesError;
   List<RecentActivity> _recentActivities = const [];
 
-  // 追蹤上一次的 userId，用來在 didChangeDependencies 偵測帳號切換。
+  final ScrollController _seasonScrollController = ScrollController();
+
+  // 追踪上一次的 userId，用来在 didChangeDependencies 侦测帐号切换。
   String? _lastUserId;
 
   @override
   void initState() {
     super.initState();
     _loadDailyBreadRange();
-    // 近期活動不在這裡抓：didChangeDependencies 在第一次 build 前必定會跑，
-    // 且 _lastUserId 初始為 null，所以首次進畫面就會由它觸發一次。
-    // 兩邊都抓會讓每次開首頁都打兩次 Google Calendar API。
+    // 近期活动不在这里抓：didChangeDependencies 在第一次 build 前必定会跑，
+    // 且 _lastUserId 初始为 null，所以首次进画面就会由它触发一次。
+    // 两边都抓会让每次开首页都打两次 Google Calendar API。
+  }
+
+  @override
+  void dispose() {
+    _seasonScrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -81,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _lastUserId = userId;
 
     if (userId != null) {
-      // 首次進畫面、登入或切換帳號：抓近期活動
+      // 首次进画面、登入或切换帐号：抓近期活动
       //（RosterProvider cache 已由 ProxyProvider 清掉）。
       _loadRecentActivities();
     }
@@ -93,18 +104,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final fullName = user?.name ?? '';
     final displayName = _displayName(fullName);
     return Scaffold(
-      appBar: AppBar(title: const Text('首頁'), centerTitle: true),
+      appBar: AppBar(title: const Text('首页'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '歡迎回來，$displayName！',
+              '欢迎回来，$displayName！',
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             AddToHomeCard(service: widget.installHints),
+            const CheckinCard(),
+            const SizedBox(height: 16),
+            if (user != null &&
+                (user.role == UserRole.admin ||
+                    user.role == UserRole.leader)) ...[
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.fact_check_outlined),
+                  title: const Text(
+                    '出勤',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    user.role == UserRole.admin ? '全部成员的打卡记录' : '本小组的打卡记录',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AttendanceScreen(),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             if (ChurchConfig.current.devotional.enabled) ...[
               _buildFeatureCard(
                 context,
@@ -141,9 +181,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return hasLatin ? parts.first : parts.last;
     }
 
-    // 三個字的中文名最常見是單姓＋兩字名，叫名字比較親切（王小明 → 小明）。
-    // 兩個字（李安）或四個字以上（複姓、「測試管理員」這種非人名）就整個叫，
-    // 否則會變成「安」「試管理員」。
+    // 三个字的中文名最常见是单姓＋两字名，叫名字比较亲切（王小明 → 小明）。
+    // 两个字（李安）或四个字以上（复姓、「测试管理员」这种非人名）就整个叫，
+    // 否则会变成「安」「试管理员」。
     if (_cjkRe.hasMatch(name) && name.length == 3) {
       return name.substring(1);
     }
@@ -164,10 +204,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         context,
       ).push(MaterialPageRoute(builder: (_) => calendar.CalendarScreen()));
     } catch (error, st) {
-      log('載入行事曆畫面失敗', error: error, stackTrace: st);
+      log('载入行事历画面失败', error: error, stackTrace: st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('載入失敗：${mapErrorToUserMessage(error)}')),
+        SnackBar(content: Text('载入失败：${mapErrorToUserMessage(error)}')),
       );
     } finally {
       if (mounted) {
@@ -185,7 +225,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!launched && mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('無法開啟每日靈糧頁面')));
+      ).showSnackBar(const SnackBar(content: Text('无法打开每日灵粮页面')));
     }
   }
 
@@ -195,7 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return range;
     }
     if (_isLoadingDailyBreadRange) {
-      return '載入今日經文範圍中...';
+      return '载入今日经文范围中...';
     }
     return _dailyBreadRangeFallback;
   }
@@ -242,8 +282,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return '$_dailyBreadKeyPrefix${Uri.encodeComponent(ChurchConfig.current.devotional.dataUrl)}_$today';
   }
 
-  /// key 帶日期，每天都會產生新的一筆。不清掉的話 localStorage 會無限長大，
-  /// 用久了可能撞到瀏覽器的 quota。寫新的時候順手把舊的刪掉。
+  /// key 带日期，每天都会产生新的一笔。不清掉的话 localStorage 会无限长大，
+  /// 用久了可能撞到浏览器的 quota。写新的时候顺手把旧的删掉。
   Future<void> _pruneDailyBreadCache(
     SharedPreferences prefs,
     String currentKey,
@@ -277,9 +317,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e, st) {
       log('daily verse data fetch failed', error: e, stackTrace: st);
     }
-    // 資料分支靠 GitHub 排程每天更新，但排程常晚好幾個小時（凌晨一點排的，
-    // 實際三、四點才跑），這段時間首頁會看不到今天的範圍。還沒更新時改請
-    // 網站當場讀一次來源。
+    // 资料分支靠 GitHub 排程每天更新，但排程常晚好几个小时（凌晨一点排的，
+    // 实际三、四点才跑），这段时间首页会看不到今天的范围。还没更新时改请
+    // 网站当场读一次来源。
     raw ??= await _fetchDailyVerseFromSite(today);
     if (raw == null || raw.isEmpty) return null;
     return _normalizeBibleRange(raw);
@@ -311,7 +351,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  /// 見 functions/api/devotional/today.js。失敗一律當作沒有，首頁顯示預設文字。
+  /// 见 functions/api/devotional/today.js。失败一律当作没有，首页显示预设文字。
   Future<String?> _fetchDailyVerseFromSite(String today) async {
     if (ChurchConfig.current.devotional.fetchUrl.isEmpty) return null;
     try {
@@ -341,10 +381,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .replaceAll('，', ',')
         .trim();
     final singleRangePattern = RegExp(
-      r'^(.+?)([零一二三四五六七八九十百千兩〇]+):(\d+)-([零一二三四五六七八九十百千兩〇]+):(\d+)$',
+      r'^(.+?)([零一二三四五六七八九十百千两〇]+):(\d+)-([零一二三四五六七八九十百千两〇]+):(\d+)$',
     );
     final singleChapterPattern = RegExp(
-      r'^(.+?)([零一二三四五六七八九十百千兩〇]+):(\d+)-(\d+)$',
+      r'^(.+?)([零一二三四五六七八九十百千两〇]+):(\d+)-(\d+)$',
     );
 
     final singleRangeMatch = singleRangePattern.firstMatch(
@@ -375,7 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return normalizedPunctuation.replaceAllMapped(
-      RegExp(r'[零一二三四五六七八九十百千兩〇]+'),
+      RegExp(r'[零一二三四五六七八九十百千两〇]+'),
       (match) => _chineseNumberToArabic(match.group(0)!),
     );
   }
@@ -386,7 +426,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       '〇': 0,
       '一': 1,
       '二': 2,
-      '兩': 2,
+      '两': 2,
       '三': 3,
       '四': 4,
       '五': 5,
@@ -454,7 +494,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!mounted) return;
       if (cachedUpcoming.isEmpty) {
         setState(() {
-          _recentActivitiesError = '近期活動載入失敗';
+          _recentActivitiesError = '近期活动载入失败';
         });
       }
     } finally {
@@ -474,7 +514,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
 
   String _cacheKeyForRecentActivities() {
-    // v1 的內容沒有 endTime，跨日活動會被當成一日活動。升版讓舊快取自然作廢。
+    // v1 的内容没有 endTime，跨日活动会被当成一日活动。升版让旧快取自然作废。
     return 'dashboard_recent_activities_v3_${Uri.encodeComponent(GoogleCalendarConfig.calendarId)}_${GoogleCalendarConfig.timeZone}';
   }
 
@@ -513,8 +553,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'maxResults': _recentActivitiesFetchMax.toString(),
           'timeMin': todayStart.toIso8601String(),
           'timeZone': GoogleCalendarConfig.timeZone,
-          // 一定要拿 end：沒有它就無法判斷跨日活動是否仍在進行，
-          // 也無法顯示區間。timeMin 本來就是以 end 過濾，資料一直都在。
+          // 一定要拿 end：没有它就无法判断跨日活动是否仍在进行，
+          // 也无法显示区间。timeMin 本来就是以 end 过滤，资料一直都在。
           'fields': 'items(status,start,end,summary)',
         }).replace(
           pathSegments: [
@@ -575,10 +615,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             title: const Text(
-              '行事曆',
+              '行事历',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: const Text('教會年度活動一覽'),
+            subtitle: const Text('教会年度活动一览'),
             trailing: _isLoadingCalendar
                 ? const SizedBox(
                     width: 20,
@@ -615,13 +655,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (_recentActivities.isEmpty) {
-      return const Text('近期暫無活動');
+      return const Text('近期暂无活动');
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('近期活動', style: TextStyle(fontWeight: FontWeight.w600)),
+        const Text('近期活动', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         ..._recentActivities.map((event) => RecentActivityRow(activity: event)),
       ],
@@ -636,8 +676,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final window = seasonWindow(ChurchTime.today());
     return Consumer<RosterProvider>(
       builder: (context, provider, child) {
-        // 僅在 isLoading 且 cache 尚無資料時顯示 spinner（stale-while-revalidate）。
-        // 若 IndexedDB cache 已有 roster，isLoading 仍可能為 true，但直接顯示卡內容。
+        // 仅在 isLoading 且 cache 尚无资料时显示 spinner（stale-while-revalidate）。
+        // 若 IndexedDB cache 已有 roster，isLoading 仍可能为 true，但直接显示卡内容。
         if (provider.isLoading && provider.rosters.isEmpty) {
           return _buildSectionCard(
             title: window.title,
@@ -650,7 +690,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const Center(child: CircularProgressIndicator()),
                   const SizedBox(height: 12),
                   Text(
-                    '載入近期活動中…',
+                    '载入近期活动中…',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -674,7 +714,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 FilledButton.icon(
                   onPressed: () => provider.fetchInitialData(),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('重試'),
+                  label: const Text('重试'),
                 ),
               ],
             ),
@@ -688,7 +728,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
         if (assignments.isEmpty) {
           final emptyText = fullName.trim().isEmpty
-              ? '尚未登入同工資料'
+              ? '尚未登入同工资料'
               : window.emptyText;
           return _buildSectionCard(
             title: window.title,
@@ -703,14 +743,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: SizedBox(
             height: _seasonListHeight(assignments.length),
             child: Scrollbar(
+              controller: _seasonScrollController,
+              thumbVisibility: assignments.length > 5,
               child: ListView.separated(
+                controller: _seasonScrollController,
                 itemCount: assignments.length,
                 separatorBuilder: (_, itemIndex) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final assignment = assignments[index];
                   final dateText = DateFormat(
                     'MM/dd (EEEEE)',
-                    'zh_TW',
+                    'zh_CN',
                   ).format(assignment.roster.date);
                   final roleText = assignment.roles.join('、');
                   return Row(
@@ -760,9 +803,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return (visibleCount * rowHeight) + ((visibleCount - 1) * separatorHeight);
   }
 
-  // 上一次算出來的本季服事，避免每次 setState（推播開關、每日靈糧載入…）
-  // 都重排一次全部 roster。RosterProvider 的 rosters 在資料沒變時是同一個
-  // reference，所以用 identical 判斷就夠。
+  // 上一次算出来的本季服事，避免每次 setState（推播开关、每日灵粮载入…）
+  // 都重排一次全部 roster。RosterProvider 的 rosters 在资料没变时是同一个
+  // reference，所以用 identical 判断就够。
   List<ServiceRoster>? _assignmentsSourceRosters;
   String? _assignmentsSourceKey;
   List<_UserServiceAssignment> _cachedAssignments = const [];
@@ -772,8 +815,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String userName,
     required String? userId,
   }) {
-    // key 必須含日期：季度區間是從 ChurchTime.now() 推導的，App 一直開著跨過
-    // 季末時，只看 rosters identity 的話會永遠回傳上一季的結果。
+    // key 必须含日期：季度区间是从 ChurchTime.now() 推导的，App 一直开著跨过
+    // 季末时，只看 rosters identity 的话会永远回传上一季的结果。
     final today = ChurchTime.today();
     final sourceKey = '$userId|$userName|${today.toIso8601String()}';
     if (identical(rosters, _assignmentsSourceRosters) &&
@@ -822,15 +865,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return results;
   }
 
-  /// 判斷這筆 duty 是否排到本人。
+  /// 判断这笔 duty 是否排到本人。
   ///
-  /// uid 相符直接算數（改名之後照樣對得上）；uid 對不上時仍會退回姓名比對。
+  /// uid 相符直接算数（改名之后照样对得上）；uid 对不上时仍会退回姓名比对。
   ///
-  /// 刻意不把 uid 當成唯一權威：roster 裡存的 uid 可能已經過期 —— 例如同工
-  /// 原本沒有 email、admin 後來補上時會建立全新的 Auth 帳號並換掉 user 文件
-  /// id，既有 roster 的 personIdsByName 仍指向舊 id。那種情況下若因為
-  /// 「有 uid 但不相符」就跳過姓名比對，本人會在首頁看到「本季尚無排到服事」，
-  /// 但服事表分頁明明列著他。漏掉自己的服事比同名誤判嚴重得多。
+  /// 刻意不把 uid 当成唯一权威：roster 里存的 uid 可能已经过期 —— 例如同工
+  /// 原本没有 email、admin 后来补上时会建立全新的 Auth 帐号并换掉 user 文件
+  /// id，既有 roster 的 personIdsByName 仍指向旧 id。那种情况下若因为
+  /// 「有 uid 但不相符」就跳过姓名比对，本人会在首页看到「本季尚无排到服事」，
+  /// 但服事表分页明明列著他。漏掉自己的服事比同名误判严重得多。
   bool _isAssignedTo(
     RosterEntry duty,
     String normalizedId,
@@ -918,7 +961,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             () {
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('此功能即將推出！')));
+              ).showSnackBar(const SnackBar(content: Text('此功能即将推出！')));
             },
       ),
     );

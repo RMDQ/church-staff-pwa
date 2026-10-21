@@ -2,8 +2,8 @@ import 'package:web/web.dart' as web;
 
 const _key = 'church-app-reloaded-for';
 
-/// 同一份清單在這個分頁最多重載兩次：一次是正常的換版，第二次留給「第一次
-/// 重載後讀到的還是舊資料」這種情況。再多就是出錯了，寧可不重載。
+/// 同一份清单在这个分页最多重载两次：一次是正常的换版，第二次留给「第一次
+/// 重载后读到的还是旧资料」这种情况。再多就是出错了，宁可不重载。
 const _maxReloadsPerReason = 2;
 
 Future<bool> reloadAppOnce(String reason) async {
@@ -16,7 +16,7 @@ Future<bool> reloadAppOnce(String reason) async {
     if (count >= _maxReloadsPerReason) return false;
     web.window.sessionStorage.setItem(_key, '${count + 1}\n$reason');
   } catch (_) {
-    // 無痕模式讀不到 sessionStorage：寧可不重載，下次開 App 就是新清單。
+    // 无痕模式读不到 sessionStorage：宁可不重载，下次开 App 就是新清单。
     return false;
   }
   web.window.location.reload();

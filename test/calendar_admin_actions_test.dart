@@ -25,7 +25,7 @@ import 'support/signed_in_auth_repository.dart';
 
 User _user(UserRole role, Set<UserGroup> groups) => User(
   id: 'u1',
-  name: '測試者',
+  name: '测试者',
   email: 'a@b.c',
   username: 'tester',
   role: role,
@@ -43,7 +43,7 @@ class _Recorder {
         http.Response(
           jsonEncode({
             'id': 'evt-new',
-            'summary': '青年小組',
+            'summary': '青年小组',
             'start': {'date': '2026-08-20'},
             'end': {'date': '2026-08-21'},
           }),
@@ -71,7 +71,7 @@ class _Listing {
 }
 
 /// A listing with one all-day event on the 15th of the current month.
-_Listing _listingWithEventOn15th({String title = '既有活動'}) {
+_Listing _listingWithEventOn15th({String title = '既有活动'}) {
   final now = DateTime.now();
   return _Listing()
     ..events.add(
@@ -144,7 +144,7 @@ void main() {
     expect(find.byType(FloatingActionButton), findsNothing);
   });
 
-  // 權限看 group，不看 role：小組長沒有被授予就沒有入口。
+  // 权限看 group，不看 role：小组长没有被授予就没有入口。
   testWidgets('a leader with no group sees no add button', (tester) async {
     final recorder = _Recorder();
     await _pumpCalendar(tester, role: UserRole.leader, recorder: recorder);
@@ -152,7 +152,7 @@ void main() {
     expect(find.byType(FloatingActionButton), findsNothing);
   });
 
-  // 反過來：一般同工被授予行事曆 group 就看得到入口。
+  // 反过来：一般同工被授予行事历 group 就看得到入口。
   testWidgets('a staff member in calendar-editors gets an add button', (
     tester,
   ) async {
@@ -167,7 +167,7 @@ void main() {
     expect(find.byType(FloatingActionButton), findsOneWidget);
   });
 
-  // 兩個 group 是正交的：只有服事表權限的人碰不到行事曆。
+  // 两个 group 是正交的：只有服事表权限的人碰不到行事历。
   testWidgets('a roster editor alone gets no add button', (tester) async {
     final recorder = _Recorder();
     await _pumpCalendar(
@@ -198,8 +198,8 @@ void main() {
     await tester.tap(find.byType(DayCell).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('當天沒有活動'), findsOneWidget);
-    expect(find.text('新增活動'), findsOneWidget);
+    expect(find.text('当天没有活动'), findsOneWidget);
+    expect(find.text('新增活动'), findsOneWidget);
   });
 
   testWidgets('a member tapping an empty day gets no sheet', (tester) async {
@@ -209,7 +209,7 @@ void main() {
     await tester.tap(find.byType(DayCell).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('當天沒有活動'), findsNothing);
+    expect(find.text('当天没有活动'), findsNothing);
   });
 
   // A member's day sheet does open when the day has events, so the add button
@@ -227,8 +227,8 @@ void main() {
     await tester.tap(_dayCell(15));
     await tester.pumpAndSettle();
 
-    expect(find.text('當天活動 1 筆'), findsOneWidget);
-    expect(find.text('新增活動'), findsNothing);
+    expect(find.text('当天活动 1 笔'), findsOneWidget);
+    expect(find.text('新增活动'), findsNothing);
   });
 
   testWidgets('an admin sees the add button on a day that already has events', (
@@ -246,7 +246,7 @@ void main() {
     await tester.tap(_dayCell(15));
     await tester.pumpAndSettle();
 
-    expect(find.text('新增活動'), findsOneWidget);
+    expect(find.text('新增活动'), findsOneWidget);
   });
 
   testWidgets('a member opening an event gets no edit or delete', (
@@ -263,13 +263,13 @@ void main() {
 
     await tester.tap(_dayCell(15));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('既有活動').last);
+    await tester.tap(find.text('既有活动').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('編輯'), findsNothing);
-    expect(find.text('刪除'), findsNothing);
-    // 複製 writes a new event, so it is gated exactly like 編輯.
-    expect(find.text('複製'), findsNothing);
+    expect(find.text('编辑'), findsNothing);
+    expect(find.text('删除'), findsNothing);
+    // 复制 writes a new event, so it is gated exactly like 编辑.
+    expect(find.text('复制'), findsNothing);
   });
 
   testWidgets('an admin opening an event gets edit, copy and delete', (
@@ -286,12 +286,12 @@ void main() {
 
     await tester.tap(_dayCell(15));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('既有活動').last);
+    await tester.tap(find.text('既有活动').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('編輯'), findsOneWidget);
-    expect(find.text('複製'), findsOneWidget);
-    expect(find.text('刪除'), findsOneWidget);
+    expect(find.text('编辑'), findsOneWidget);
+    expect(find.text('复制'), findsOneWidget);
+    expect(find.text('删除'), findsOneWidget);
   });
 
   // The point of the copy: several runs of the same event that differ only in
@@ -311,23 +311,23 @@ void main() {
 
     await tester.tap(_dayCell(15));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('既有活動').last);
+    await tester.tap(find.text('既有活动').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('複製'));
+    await tester.tap(find.text('复制'));
     await tester.pumpAndSettle();
 
-    expect(find.text('複製活動'), findsOneWidget);
-    expect(find.widgetWithText(TextField, '既有活動'), findsOneWidget);
+    expect(find.text('复制活动'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '既有活动'), findsOneWidget);
     // The seeded event is all-day, and that carries over too.
     expect(find.byIcon(Icons.schedule), findsNothing);
 
-    await tester.tap(find.text('儲存'));
+    await tester.tap(find.text('储存'));
     await tester.pumpAndSettle();
 
     expect(recorder.requests.single.method, 'POST');
-    expect(recorder.lastBody['title'], '既有活動');
+    expect(recorder.lastBody['title'], '既有活动');
     expect(recorder.lastBody['allDay'], isTrue);
-    expect(find.text('已新增活動'), findsOneWidget);
+    expect(find.text('已新增活动'), findsOneWidget);
   });
 
   testWidgets('editing pre-fills the form and patches by id', (tester) async {
@@ -342,23 +342,23 @@ void main() {
 
     await tester.tap(_dayCell(15));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('既有活動').last);
+    await tester.tap(find.text('既有活动').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('編輯'));
+    await tester.tap(find.text('编辑'));
     await tester.pumpAndSettle();
 
-    expect(find.text('編輯活動'), findsOneWidget);
+    expect(find.text('编辑活动'), findsOneWidget);
     // The title arrives already filled in — nobody should retype it to fix a
     // date.
-    expect(find.widgetWithText(TextField, '既有活動'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '既有活动'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField).first, '改過的名字');
-    await tester.tap(find.text('儲存'));
+    await tester.enterText(find.byType(TextField).first, '改过的名字');
+    await tester.tap(find.text('储存'));
     await tester.pumpAndSettle();
 
     expect(recorder.requests.single.method, 'PATCH');
     expect(recorder.requests.single.url.pathSegments.last, 'seeded-event');
-    expect(recorder.lastBody['title'], '改過的名字');
+    expect(recorder.lastBody['title'], '改过的名字');
   });
 
   testWidgets('deleting asks first and sends nothing when refused', (
@@ -375,12 +375,12 @@ void main() {
 
     await tester.tap(_dayCell(15));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('既有活動').last);
+    await tester.tap(find.text('既有活动').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('刪除'));
+    await tester.tap(find.text('删除'));
     await tester.pumpAndSettle();
 
-    expect(find.text('刪除活動'), findsOneWidget);
+    expect(find.text('删除活动'), findsOneWidget);
     await tester.tap(find.text('取消'));
     await tester.pumpAndSettle();
 
@@ -404,7 +404,7 @@ void main() {
       listing: listing,
     );
 
-    expect(find.text('既有活動'), findsWidgets);
+    expect(find.text('既有活动'), findsWidgets);
     final now = DateTime.now();
     final thisMonth = DateTime.utc(now.year, now.month);
     int readsOfThisMonth() =>
@@ -413,17 +413,17 @@ void main() {
 
     await tester.tap(_dayCell(15));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('既有活動').last);
+    await tester.tap(find.text('既有活动').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('刪除'));
+    await tester.tap(find.text('删除'));
     await tester.pumpAndSettle();
     // The confirm dialog's own button, not the detail sheet's.
-    await tester.tap(find.widgetWithText(FilledButton, '刪除'));
+    await tester.tap(find.widgetWithText(FilledButton, '删除'));
     await tester.pumpAndSettle();
 
     expect(recorder.requests.single.method, 'DELETE');
-    expect(find.text('已刪除活動'), findsOneWidget);
-    expect(find.text('既有活動'), findsNothing);
+    expect(find.text('已删除活动'), findsOneWidget);
+    expect(find.text('既有活动'), findsNothing);
     // Read again despite the ten-minute freshness gate, so the device cache
     // stops holding the deleted event as well.
     expect(readsOfThisMonth(), readsBefore + 1);
@@ -436,17 +436,17 @@ void main() {
     await _pumpCalendar(tester, role: UserRole.admin, recorder: recorder);
     await _openAddForm(tester);
 
-    expect(find.text('新增活動'), findsOneWidget);
+    expect(find.text('新增活动'), findsOneWidget);
     // Timed by default — one time picker for the start, one for the end.
     expect(find.byIcon(Icons.schedule), findsNWidgets(2));
 
-    await tester.enterText(find.byType(TextField).first, '青年小組');
-    await tester.tap(find.text('儲存'));
+    await tester.enterText(find.byType(TextField).first, '青年小组');
+    await tester.tap(find.text('储存'));
     await tester.pumpAndSettle();
 
     expect(recorder.requests, hasLength(1));
     expect(recorder.requests.single.method, 'POST');
-    expect(recorder.lastBody['title'], '青年小組');
+    expect(recorder.lastBody['title'], '青年小组');
     expect(recorder.lastBody['allDay'], isFalse);
     // Same day, with the default evening window attached.
     expect(recorder.lastBody['start'], endsWith('T19:00:00+08:00'));
@@ -474,13 +474,13 @@ void main() {
     await _pumpCalendar(tester, role: UserRole.admin, recorder: recorder);
     await _openAddForm(tester);
 
-    await tester.tap(find.text('儲存'));
+    await tester.tap(find.text('储存'));
     await tester.pumpAndSettle();
 
-    expect(find.text('請填寫標題'), findsOneWidget);
+    expect(find.text('请填写标题'), findsOneWidget);
     expect(recorder.requests, isEmpty);
     // The sheet stays open so the user can fix it in place.
-    expect(find.text('新增活動'), findsOneWidget);
+    expect(find.text('新增活动'), findsOneWidget);
   });
 
   testWidgets('a rejected save keeps the sheet open and shows the reason', (
@@ -488,7 +488,7 @@ void main() {
   ) async {
     final recorder = _Recorder();
     recorder.respond = (_) => http.Response(
-      jsonEncode({'error': '沒有編輯行事曆的權限'}),
+      jsonEncode({'error': '没有编辑行事历的权限'}),
       403,
       headers: {'content-type': 'application/json; charset=utf-8'},
     );
@@ -496,12 +496,12 @@ void main() {
     await _pumpCalendar(tester, role: UserRole.admin, recorder: recorder);
     await _openAddForm(tester);
 
-    await tester.enterText(find.byType(TextField).first, '青年小組');
-    await tester.tap(find.text('儲存'));
+    await tester.enterText(find.byType(TextField).first, '青年小组');
+    await tester.tap(find.text('储存'));
     await tester.pumpAndSettle();
 
-    expect(find.text('沒有編輯行事曆的權限'), findsOneWidget);
-    expect(find.text('新增活動'), findsOneWidget);
+    expect(find.text('没有编辑行事历的权限'), findsOneWidget);
+    expect(find.text('新增活动'), findsOneWidget);
   });
 
   testWidgets('a successful save closes the sheet and confirms', (
@@ -511,12 +511,12 @@ void main() {
     await _pumpCalendar(tester, role: UserRole.admin, recorder: recorder);
     await _openAddForm(tester);
 
-    await tester.enterText(find.byType(TextField).first, '青年小組');
-    await tester.tap(find.text('儲存'));
+    await tester.enterText(find.byType(TextField).first, '青年小组');
+    await tester.tap(find.text('储存'));
     await tester.pumpAndSettle();
 
-    expect(find.text('新增活動'), findsNothing);
-    expect(find.text('已新增活動'), findsOneWidget);
+    expect(find.text('新增活动'), findsNothing);
+    expect(find.text('已新增活动'), findsOneWidget);
   });
 
   testWidgets('cancelling sends nothing', (tester) async {
@@ -524,11 +524,11 @@ void main() {
     await _pumpCalendar(tester, role: UserRole.admin, recorder: recorder);
     await _openAddForm(tester);
 
-    await tester.enterText(find.byType(TextField).first, '青年小組');
+    await tester.enterText(find.byType(TextField).first, '青年小组');
     await tester.tap(find.text('取消'));
     await tester.pumpAndSettle();
 
     expect(recorder.requests, isEmpty);
-    expect(find.text('新增活動'), findsNothing);
+    expect(find.text('新增活动'), findsNothing);
   });
 }

@@ -19,7 +19,7 @@ void setZone(String zone) {
 Map<String, dynamic> legacy() => {
   'date': Timestamp.fromDate(DateTime.utc(2026, 10, 2, 16)),
   'type': 'youth',
-  'serviceName': '歷史聚會名稱',
+  'serviceName': '历史聚会名称',
   'duties': [
     {
       'role': '招待',
@@ -56,14 +56,14 @@ void main() {
       setZone('America/Los_Angeles');
       final original = legacy();
       final roster = rosterFromFirestore(original, '20261003_youth');
-      final updated = roster.copyWith(specialEvents: ['活動']);
+      final updated = roster.copyWith(specialEvents: ['活动']);
       final stored = rosterToFirestore(updated);
       expect(stored['date'], original['date']);
       expect(stored['dateKey'], '2026-10-03');
       expect(stored['serviceName'], original['serviceName']);
       expect(stored['duties'], original['duties']);
-      expect(stored['specialEvents'], ['活動']);
-      expect(roster.serviceName, '歷史聚會名稱');
+      expect(stored['specialEvents'], ['活动']);
+      expect(roster.serviceName, '历史聚会名称');
       expect(roster.displayName, ServiceType.youth.serviceName);
     },
   );
@@ -87,7 +87,7 @@ void main() {
         id: '20260315_youth',
         date: DateTime.utc(2026, 3, 15),
         type: ServiceType.youth,
-        serviceName: '青年聚會',
+        serviceName: '青年聚会',
         duties: [],
       );
       final stored = rosterToFirestore(roster);
@@ -112,7 +112,7 @@ void main() {
       }, '20261003_archived');
       expect(roster.type.name, 'archived');
       expect(roster.type, isNot(ServiceType.sundayService));
-      expect(roster.displayName, '歷史聚會名稱');
+      expect(roster.displayName, '历史聚会名称');
       expect(rosterToFirestore(roster)['type'], 'archived');
     },
   );

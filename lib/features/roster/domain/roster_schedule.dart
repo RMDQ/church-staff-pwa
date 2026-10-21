@@ -3,7 +3,7 @@ import '../../../core/types/service_type.dart';
 import 'entities/service_roster.dart';
 import 'staff_directory.dart';
 
-/// 月份到最後一個月才顯示並產生下季，保留目前編輯頁的範圍。
+/// 月份到最后一个月才显示并产生下季，保留目前编辑页的范围。
 DateTime rosterQuarterEnd(DateTime now) {
   final startMonth = ((now.month - 1) ~/ 3) * 3 + 1;
   final endMonth = now.month == startMonth + 2
@@ -12,8 +12,8 @@ DateTime rosterQuarterEnd(DateTime now) {
   return DateTime.utc(now.year, endMonth + 1, 0);
 }
 
-/// 一種聚會每週一場；修改星期後，已排過的週次不補第二場，也不搬動原日期。
-/// 日期使用純年月日運算，不以 24 小時當成教會時區的一天。
+/// 一种聚会每周一场；修改星期后，已排过的周次不补第二场，也不搬动原日期。
+/// 日期使用纯年月日运算，不以 24 小时当成教会时区的一天。
 List<ServiceRoster> planQuarterRosters({
   required DateTime now,
   required List<ServiceType> types,
@@ -59,8 +59,8 @@ List<ServiceRoster> planQuarterRosters({
 String rosterDocumentId(ServiceType type, DateTime date) =>
     '${ChurchTime.dateKey(date).replaceAll('-', '')}_${type.name}';
 
-/// Transaction 必須讀相同的七個文件，不只讀目標日期；不同星期的客戶端才會
-/// 在同一週互相衝突並重試，而不是各自成功建立不同日期的服事表。
+/// Transaction 必须读相同的七个文件，不只读目标日期；不同星期的客户端才会
+/// 在同一周互相冲突并重试，而不是各自成功建立不同日期的服事表。
 List<String> rosterWeekDocumentIds(ServiceType type, DateTime date) {
   final monday = _weekStart(date);
   return [

@@ -10,17 +10,17 @@ void main() {
     test('parses a timed event', () {
       final event = calendarEventFromGoogleItem({
         'id': 'abc',
-        'summary': '禱告會',
-        'location': '教會 2F',
-        'description': '帶聖經',
+        'summary': '祷告会',
+        'location': '教会 2F',
+        'description': '带圣经',
         'start': {'dateTime': '2026-08-20T19:00:00+08:00'},
         'end': {'dateTime': '2026-08-20T21:00:00+08:00'},
       })!;
 
       expect(event.id, 'abc');
-      expect(event.title, '禱告會');
-      expect(event.location, '教會 2F');
-      expect(event.description, '帶聖經');
+      expect(event.title, '祷告会');
+      expect(event.location, '教会 2F');
+      expect(event.description, '带圣经');
       expect(event.isAllDay, isFalse);
       expect(
         event.startTime,
@@ -33,7 +33,7 @@ void main() {
     test('a single-day all-day event occupies exactly one day', () {
       final event = calendarEventFromGoogleItem({
         'id': 'all-day',
-        'summary': '特會',
+        'summary': '特会',
         'start': {'date': '2026-08-20'},
         'end': {'date': '2026-08-21'},
       })!;
@@ -49,7 +49,7 @@ void main() {
     test('a multi-day all-day event covers every day in between', () {
       final event = calendarEventFromGoogleItem({
         'id': 'camp',
-        'summary': '夏令營',
+        'summary': '夏令营',
         'start': {'date': '2026-08-20'},
         'end': {'date': '2026-08-23'},
       })!;
@@ -111,7 +111,7 @@ void main() {
         'start': {'date': '2026-08-20'},
         'end': {'date': '2026-08-21'},
       })!;
-      expect(event.title, '未命名活動');
+      expect(event.title, '未命名活动');
     });
 
     test(
@@ -134,7 +134,7 @@ void main() {
     // the layout code keys lanes off `identity`.
     test('id-less events get distinct synthetic ids', () {
       Map<String, dynamic> item() => {
-        'summary': '同名活動',
+        'summary': '同名活动',
         'start': {'date': '2026-08-20'},
         'end': {'date': '2026-08-21'},
       };
@@ -173,8 +173,8 @@ void main() {
     test('survives the SharedPreferences cache format', () {
       final event = calendarEventFromGoogleItem({
         'id': 'abc',
-        'summary': '特會',
-        'location': '教會',
+        'summary': '特会',
+        'location': '教会',
         'start': {'date': '2026-08-20'},
         'end': {'date': '2026-08-23'},
       })!;

@@ -1,12 +1,12 @@
 name: Deploy Flutter PWA
 on:
   push:
-    branches: [ main, dev ] # 當你 push 到 main 或 dev 時會觸發
-  workflow_dispatch: # 允許手動觸發
+    branches: [ main, dev ] # 当你 push 到 main 或 dev 时会触发
+  workflow_dispatch: # 允许手动触发
 
 env:
-  # 同時給 flutter-action 與 cache_sw.js 的 VENDOR_VERSION 使用。
-  # 改這個版本號 = 讓使用者重新下載 canvaskit 引擎，其餘 deploy 都不會。
+  # 同时给 flutter-action 与 cache_sw.js 的 VENDOR_VERSION 使用。
+  # 改这个版本号 = 让使用者重新下载 canvaskit 引擎，其余 deploy 都不会。
   FLUTTER_VERSION: '3.41.0'
 
 jobs:
@@ -30,11 +30,11 @@ jobs:
         run: npm test
         working-directory: firestore-tests
 
-  # functions/ 寫入 Google Calendar，是唯一一段跑在伺服器、拿得到 service
-  # account 憑證的程式碼。它跟前端在同一次 pages deploy 上去，所以這個 job
-  # 刻意「擋」build-and-deploy —— 跟 firestore-rules 不同，那份規則要另外
-  # firebase deploy，綁在一起只會平白拖慢前端部署。
-  # 沒有相依套件，所以不用 npm ci，也就沒有 lockfile 可以 cache。
+  # functions/ 写入 Google Calendar，是唯一一段跑在伺服器、拿得到 service
+  # account 凭证的程式码。它跟前端在同一次 pages deploy 上去，所以这个 job
+  # 刻意「挡」build-and-deploy —— 跟 firestore-rules 不同，那份规则要另外
+  # firebase deploy，绑在一起只会平白拖慢前端部署。
+  # 没有相依套件，所以不用 npm ci，也就没有 lockfile 可以 cache。
   functions-tests:
     runs-on: ubuntu-latest
     steps:
@@ -61,12 +61,12 @@ jobs:
         run: npm test
         working-directory: functions-tests
 
-  # web/cache_sw.js 決定每個檔案是從快取還是網路拿的，而它跟前端在同一次 pages
-  # deploy 上去 —— 所以跟 functions-tests 一樣擋 build-and-deploy。
-  # 這個 job 存在的理由：version.json 被改成 network-first 過兩次，兩次都讓個人頁
-  # 的「更新於」顯示伺服器的部署時間而不是這台裝置跑的版本，於是「他到底更新了
-  # 沒」變得無法從畫面判斷。壞掉的樣子很安靜，不測就看不出來。
-  # 沒有相依套件，所以不用 npm ci，也就沒有 lockfile 可以 cache。
+  # web/cache_sw.js 决定每个档案是从快取还是网路拿的，而它跟前端在同一次 pages
+  # deploy 上去 —— 所以跟 functions-tests 一样挡 build-and-deploy。
+  # 这个 job 存在的理由：version.json 被改成 network-first 过两次，两次都让个人页
+  # 的「更新于」显示伺服器的部署时间而不是这台装置跑的版本，于是「他到底更新了
+  # 没」变得无法从画面判断。坏掉的样子很安静，不测就看不出来。
+  # 没有相依套件，所以不用 npm ci，也就没有 lockfile 可以 cache。
   web-tests:
     runs-on: ubuntu-latest
     steps:
@@ -84,7 +84,7 @@ jobs:
     needs: [firestore-rules, functions-tests, web-tests]
     runs-on: ubuntu-latest
     steps:
-      # 1. 檢出程式碼
+      # 1. 检出程式码
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
@@ -125,9 +125,9 @@ jobs:
           fi
           node scripts/prepare-deployment.mjs --config .local/church.json --assets "$CHURCH_ASSETS_DIR" --out .local/deployment
 
-      # 2. 安裝 Flutter 環境 (GitHub 支援，Cloudflare 不支援)
-      # 版本固定：跟著 stable 浮動的話，某天 Flutter 發版就可能無預警 build 壞掉。
-      # 升級時手動改這個號碼，並在本機先跑過 flutter analyze / flutter test。
+      # 2. 安装 Flutter 环境 (GitHub 支援，Cloudflare 不支援)
+      # 版本固定：跟著 stable 浮动的话，某天 Flutter 发版就可能无预警 build 坏掉。
+      # 升级时手动改这个号码，并在本机先跑过 flutter analyze / flutter test。
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -138,19 +138,19 @@ jobs:
       # 3. 取得 Flutter 套件
       - run: flutter pub get
 
-      # 4. 品質關卡：analyze / test 沒過就不部署
+      # 4. 品质关卡：analyze / test 没过就不部署
       - name: Analyze
         run: flutter analyze
 
       - name: Test
         run: flutter test
-        # 用使用者手機的時區跑。行事曆月份邊界那組測試在 UTC 下新舊程式都會
-        # 過（UTC 午夜剛好就是本地午夜），只有 +8 才抓得到「1 號清早的活動
-        # 被歸到上個月」那種 bug。
+        # 用使用者手机的时区跑。行事历月份边界那组测试在 UTC 下新旧程式都会
+        # 过（UTC 午夜刚好就是本地午夜），只有 +8 才抓得到「1 号清早的活动
+        # 被归到上个月」那种 bug。
         env:
           TZ: Asia/Taipei
 
-      # 5. 編譯 Web (根據分支區分環境)
+      # 5. 编译 Web (根据分支区分环境)
       - name: Build Web
         env:
           # Secrets (sensitive)
@@ -170,10 +170,10 @@ jobs:
           if [ -z "$FCM_WEB_VAPID_KEY" ]; then
             echo "::warning::Missing FCM_WEB_VAPID_KEY secret. Web push token will not be generated."
           fi
-          # Firebase.initializeApp 少任何一個必填欄位，App 在瀏覽器裡就初始化
-          # 不了 —— 而且 build 會成功，要部署完打開才發現。只擋 API key 不夠。
-          # 這份清單刻意與 Dockerfile 的檢查一致：兩條部署路徑不能一邊擋、
-          # 一邊放行，否則自架版與 CI 版會編出行為不同的產物。
+          # Firebase.initializeApp 少任何一个必填栏位，App 在浏览器里就初始化
+          # 不了 —— 而且 build 会成功，要部署完打开才发现。只挡 API key 不够。
+          # 这份清单刻意与 Dockerfile 的检查一致：两条部署路径不能一边挡、
+          # 一边放行，否则自架版与 CI 版会编出行为不同的产物。
           for required in FIREBASE_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_PROJECT_ID \
                           FIREBASE_MESSAGING_SENDER_ID FIREBASE_APP_ID; do
             if [ -z "${!required}" ]; then
@@ -206,14 +206,14 @@ jobs:
             --dart-define=GOOGLE_CALENDAR_ID="$GOOGLE_CALENDAR_ID"
           )
           mkdir -p web
-          # 這裡刻意讀 runner 內建的環境變數，而不是用 GitHub 的表示式插值。
-          # 表示式是在 shell 啟動「之前」把值直接貼成腳本文字，分支名帶了 shell
-          # 特殊字元（workflow_dispatch 可以從任意分支觸發）就會被當成指令執行，
-          # 帶了引號也會把 JSON 寫壞。
+          # 这里刻意读 runner 内建的环境变数，而不是用 GitHub 的表示式插值。
+          # 表示式是在 shell 启动「之前」把值直接贴成脚本文字，分支名带了 shell
+          # 特殊字元（workflow_dispatch 可以从任意分支触发）就会被当成指令执行，
+          # 带了引号也会把 JSON 写坏。
           #
-          # 註：這段註解本身不能寫出表示式的雙大括號語法 —— GitHub 會掃描整個
-          # 檔案（包含 run: 區塊內部）去解析表示式，空的一組就是語法錯誤，
-          # 整份 workflow 會載入失敗、零個 job 執行。
+          # 注：这段注解本身不能写出表示式的双大括号语法 —— GitHub 会扫描整个
+          # 档案（包含 run: 区块内部）去解析表示式，空的一组就是语法错误，
+          # 整份 workflow 会载入失败、零个 job 执行。
           cat <<EOF > web/version.json
           {
             "version": "$GITHUB_SHA",
@@ -222,24 +222,24 @@ jobs:
             "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
           EOF
-          # --no-web-resources-cdn：把 CanvasKit 放進自己的 build/web/canvaskit/。
-          # 預設會從 www.gstatic.com 載入，那條路徑 service worker 不能快取
-          # （gstatic.com 在 never-cache 名單裡），cache_sw.js 的 vendor cache
-          # 也就永遠不會命中。改成自家來源後引擎才真的能離線與跨 deploy 重用。
+          # --no-web-resources-cdn：把 CanvasKit 放进自己的 build/web/canvaskit/。
+          # 预设会从 www.gstatic.com 载入，那条路径 service worker 不能快取
+          # （gstatic.com 在 never-cache 名单里），cache_sw.js 的 vendor cache
+          # 也就永远不会命中。改成自家来源后引擎才真的能离线与跨 deploy 重用。
           #
-          # 這裡刻意「不」加 --wasm。瓶頸雖然確實在 UI thread（執行 Dart 本身），
-          # 但 Flutter 的 wasm 版在 iOS 上根本跑不起來：Safari 18.2 起雖已支援
-          # WasmGC，WebKit 仍有一個 bug 擋住 Flutter 的 wasm 渲染器
+          # 这里刻意「不」加 --wasm。瓶颈虽然确实在 UI thread（执行 Dart 本身），
+          # 但 Flutter 的 wasm 版在 iOS 上根本跑不起来：Safari 18.2 起虽已支援
+          # WasmGC，WebKit 仍有一个 bug 挡住 Flutter 的 wasm 渲染器
           # （https://bugs.webkit.org/show_bug.cgi?id=267291），而 iOS 上所有
-          # 瀏覽器都被規定使用 WebKit，換 Chrome 也一樣。實測 HUD 顯示 iPhone
-          # 上落回 JS 版，證實了這點。我們的使用者以 iPhone 為主，加了只會讓
-          # artifact 變兩份、CI 變慢，卻換不到任何東西。
-          # 上游修好之後把 --wasm 加回來即可（?perf=1 的 HUD 會顯示 WASM/JS）。
+          # 浏览器都被规定使用 WebKit，换 Chrome 也一样。实测 HUD 显示 iPhone
+          # 上落回 JS 版，证实了这点。我们的使用者以 iPhone 为主，加了只会让
+          # artifact 变两份、CI 变慢，却换不到任何东西。
+          # 上游修好之后把 --wasm 加回来即可（?perf=1 的 HUD 会显示 WASM/JS）。
           flutter build web --release --base-href "/" --no-web-resources-cdn "${DART_DEFINES[@]}"
 
-      # 6. 與 installer 共用 PWA staging／cache／Firebase SW 收尾。
+      # 6. 与 installer 共用 PWA staging／cache／Firebase SW 收尾。
       # BUILD_VERSION 每次 deploy 失效 App cache；VENDOR_VERSION 只跟 Flutter
-      # 版本走，避免每次重抓 CanvasKit。工具遇到缺失／殘留 placeholder 會停止。
+      # 版本走，避免每次重抓 CanvasKit。工具遇到缺失／残留 placeholder 会停止。
       - name: Finalize web deployment
         run: |
           set -euo pipefail
@@ -256,9 +256,9 @@ jobs:
 
       # 8. 部署到 Cloudflare Pages
       # cloudflare/pages-action@v1 已被官方 deprecate（repo 已封存），
-      # 改用 wrangler-action 跑 `pages deploy`。API token 權限需求相同
+      # 改用 wrangler-action 跑 `pages deploy`。API token 权限需求相同
       # （Cloudflare Pages: Edit）。
-      # 關鍵：推送到 main 會更新 Production，推送到 dev 會產生 Preview 網址
+      # 关键：推送到 main 会更新 Production，推送到 dev 会产生 Preview 网址
       - name: Publish to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:

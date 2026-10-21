@@ -52,14 +52,14 @@ Future<void> showDayEventsSheet(
               ),
               const SizedBox(height: 4),
               Text(
-                '當天活動 ${events.length} 筆',
+                '当天活动 ${events.length} 笔',
                 style: TextStyle(fontSize: 13, color: colorScheme.primary),
               ),
               const SizedBox(height: 12),
               if (events.isEmpty)
                 const Padding(
                   padding: EdgeInsets.only(bottom: 12),
-                  child: Text('當天沒有活動'),
+                  child: Text('当天没有活动'),
                 )
               else
                 Flexible(
@@ -128,7 +128,7 @@ Future<void> showDayEventsSheet(
                       await onAddEvent(day);
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('新增活動'),
+                    label: const Text('新增活动'),
                   ),
                 ),
               ],
@@ -142,7 +142,7 @@ Future<void> showDayEventsSheet(
 
 String _formatEventTimeSummary(CalendarEvent event) {
   if (event.isAllDay) {
-    return event.spansMultipleDays ? '全天，多日活動' : '全天';
+    return event.spansMultipleDays ? '全天，多日活动' : '全天';
   }
 
   final sameDay = DateUtils.isSameDay(event.startTime, event.endTime);

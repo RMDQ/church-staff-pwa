@@ -8,12 +8,12 @@ class UserAdminProvider extends ChangeNotifier {
   final AuthRepository _repository;
   final SessionProvider _session;
 
-  // 同工選擇 dialog 每次開啟都要列全部使用者，避免重複打 Firestore。
-  // 任何 admin 寫操作（addUser/updateUser/deleteUser）或登出後會清掉。
+  // 同工选择 dialog 每次开启都要列全部使用者，避免重复打 Firestore。
+  // 任何 admin 写操作（addUser/updateUser/deleteUser）或登出后会清掉。
   List<User>? _cachedUsers;
 
   UserAdminProvider(this._repository, this._session) {
-    // 當 session currentUser 變成 null（登出），自動清掉 cache。
+    // 当 session currentUser 变成 null（登出），自动清掉 cache。
     _session.addListener(_onSessionChanged);
   }
 
@@ -32,17 +32,17 @@ class UserAdminProvider extends ChangeNotifier {
 
   /// 列出所有使用者。
   ///
-  /// 這裡放寬到 canEditRoster 而非 isAdmin：服事表編輯的人員選擇器要靠它列
-  /// 名單（roster_edit_screen、roster_card），拿不到名單就編不了服事表。
-  /// 綁 roster 而非「任何 group」是刻意的 —— 只有行事曆權限的人不需要名單。
-  /// 其餘的 add/update/delete 全部維持 isAdmin —— 讀名單跟改身分是兩件事。
+  /// 这里放宽到 canEditRoster 而非 isAdmin：服事表编辑的人员选择器要靠它列
+  /// 名单（roster_edit_screen、roster_card），拿不到名单就编不了服事表。
+  /// 绑 roster 而非「任何 group」是刻意的 —— 只有行事历权限的人不需要名单。
+  /// 其余的 add/update/delete 全部维持 isAdmin —— 读名单跟改身分是两件事。
   Future<List<User>> getUsers({bool forceRefresh = false}) async {
     if (!_session.canEditRoster) throw Exception('Permission denied');
     if (!forceRefresh && _cachedUsers != null) {
       return _cachedUsers!;
     }
     final users = await _repository.getUsers();
-    // 若 fetch 進行中 session 已切換（登出或換帳號），不寫入 cache 以免污染新 session。
+    // 若 fetch 进行中 session 已切换（登出或换帐号），不写入 cache 以免污染新 session。
     if (_session.currentUser == null || !_session.canEditRoster) {
       return users;
     }
@@ -77,15 +77,15 @@ class UserAdminProvider extends ChangeNotifier {
 
   Future<void> updateUser(User user, {String? password}) async {
     if (!_session.isAdmin) throw Exception('Permission denied');
-    // 唯一的管理員把自己降級，網站就沒有人能管了（規則也擋，見 firestore.rules）。
+    // 唯一的管理员把自己降级，网站就没有人能管了（规则也挡，见 firestore.rules）。
     if (user.id == _session.currentUser?.id && !user.isAdmin) {
       throw const AccountSafetyException(
-        '不能拿掉自己的管理員權限。要換人管理，請先把另一位同工設成管理員，再請他幫你改。',
+        '不能拿掉自己的管理员权限。要换人管理，请先把另一位同工设成管理员，再请他帮你改。',
       );
     }
     await _repository.updateUser(user, password: password);
 
-    // 若是管理員在修改自己的資料，通知 SessionProvider 更新 currentUser。
+    // 若是管理员在修改自己的资料，通知 SessionProvider 更新 currentUser。
     _session.refreshCurrentUser(user);
 
     _cachedUsers = null;
@@ -95,7 +95,7 @@ class UserAdminProvider extends ChangeNotifier {
   Future<void> deleteUser(String id) async {
     if (!_session.isAdmin) throw Exception('Permission denied');
     if (id == _session.currentUser?.id) {
-      throw const AccountSafetyException('不能刪除自己的帳號。要刪的話，請另一位管理員幫你刪。');
+      throw const AccountSafetyException('不能删除自己的帐号。要删的话，请另一位管理员帮你删。');
     }
     await _repository.deleteUser(id);
     _cachedUsers = null;
@@ -155,7 +155,7 @@ class UserAdminProvider extends ChangeNotifier {
   }
 }
 
-/// 會讓網站沒有管理員的操作。訊息直接給使用者看。
+/// 会让网站没有管理员的操作。讯息直接给使用者看。
 class AccountSafetyException implements Exception {
   const AccountSafetyException(this.message);
 

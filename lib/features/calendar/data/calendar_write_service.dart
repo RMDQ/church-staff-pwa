@@ -189,19 +189,19 @@ class CalendarEventDraft {
   /// Client-side validation, so an obvious mistake does not need a round trip.
   /// The server validates independently — this is convenience, not enforcement.
   String? validate() {
-    if (title.trim().isEmpty) return '請填寫標題';
+    if (title.trim().isEmpty) return '请填写标题';
     if (allDay) {
       if (ChurchTime.dateOnly(
         endDate,
       ).isBefore(ChurchTime.dateOnly(startDate))) {
-        return '結束日期不能早於開始日期';
+        return '结束日期不能早于开始日期';
       }
       return null;
     }
     try {
       final start = _atTime(startDate, startTime, startUtcOffset);
       final end = _atTime(endDate, endTime, endUtcOffset);
-      if (end.isBefore(start)) return '結束時間不能早於開始時間';
+      if (end.isBefore(start)) return '结束时间不能早于开始时间';
     } on FormatException catch (error) {
       return error.message;
     }
@@ -263,11 +263,11 @@ class CalendarWriteService {
     Map<String, dynamic>? body,
   }) async {
     if (!GoogleCalendarConfig.isEnabled) {
-      throw const CalendarWriteException('行事曆未啟用或設定不完整');
+      throw const CalendarWriteException('行事历未启用或设定不完整');
     }
     final token = await _idToken();
     if (token == null || token.isEmpty) {
-      throw const CalendarWriteException('請先登入');
+      throw const CalendarWriteException('请先登入');
     }
 
     final request = http.Request(method, uri)
@@ -282,11 +282,11 @@ class CalendarWriteService {
       final streamed = await _client.send(request).timeout(_timeout);
       response = await http.Response.fromStream(streamed).timeout(_timeout);
     } on TimeoutException {
-      throw const CalendarWriteException('操作逾時，請稍後再試');
+      throw const CalendarWriteException('操作逾时，请稍后再试');
     } catch (_) {
       // Offline is the common case here, and a write is not something to queue
       // silently — an event that appears an hour later is worse than a refusal.
-      throw const CalendarWriteException('連線失敗，請檢查網路後再試一次');
+      throw const CalendarWriteException('连线失败，请检查网路后再试一次');
     }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -311,11 +311,11 @@ class CalendarWriteService {
       // Fall through to the status-based message.
     }
     return switch (response.statusCode) {
-      401 => '請重新登入後再試一次',
-      403 => '沒有權限執行此操作',
-      404 => '這個活動已經不存在了',
-      >= 500 => '伺服器忙碌中，請稍後再試',
-      _ => '操作失敗，請稍後再試',
+      401 => '请重新登入后再试一次',
+      403 => '没有权限执行此操作',
+      404 => '这个活动已经不存在了',
+      >= 500 => '伺服器忙碌中，请稍后再试',
+      _ => '操作失败，请稍后再试',
     };
   }
 
@@ -325,10 +325,10 @@ class CalendarWriteService {
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       event = calendarEventFromGoogleItem(decoded as Map<String, dynamic>);
     } catch (_) {
-      throw const CalendarWriteException('已送出，但回應看不懂，請重新整理確認');
+      throw const CalendarWriteException('已送出，但回应看不懂，请重新整理确认');
     }
     if (event == null) {
-      throw const CalendarWriteException('已送出，但回應看不懂，請重新整理確認');
+      throw const CalendarWriteException('已送出，但回应看不懂，请重新整理确认');
     }
     return event;
   }

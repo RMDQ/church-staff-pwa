@@ -13,7 +13,7 @@ import 'package:church_staff_pwa/features/roster/presentation/write_failure.dart
 
 import 'support/in_memory_roster_repository.dart';
 
-/// 只記錄 cleanupUserMinistries 有沒有被叫到。其餘方法這個畫面用不到。
+/// 只记录 cleanupUserMinistries 有没有被叫到。其余方法这个画面用不到。
 class _RecordingUserAdmin extends ChangeNotifier implements UserAdminProvider {
   final List<Map<ServiceType, List<String>>> cleanups = [];
 
@@ -28,7 +28,7 @@ class _RecordingUserAdmin extends ChangeNotifier implements UserAdminProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-/// 樣板寫進去了，但改名同步到服事表時有一天沒寫成功。
+/// 样板写进去了，但改名同步到服事表时有一天没写成功。
 class _PartialRenameRosterProvider extends RosterProvider {
   _PartialRenameRosterProvider(super.repository);
 
@@ -79,37 +79,37 @@ Future<void> _openRoleSettings(
 
 void main() {
   group('writeFailureMessage', () {
-    test('一般失敗：動詞＋原因', () {
-      expect(writeFailureMessage('更新', Exception('x')), startsWith('更新失敗：'));
+    test('一般失败：动词＋原因', () {
+      expect(writeFailureMessage('更新', Exception('x')), startsWith('更新失败：'));
     });
 
-    test('部分失敗不說「失敗」，說幾天沒成功、幾天已完成，再接畫面的補充', () {
+    test('部分失败不说「失败」，说几天没成功、几天已完成，再接画面的补充', () {
       final message = writeFailureMessage(
-        '儲存',
+        '储存',
         PartialUpdateException(
           successCount: 2,
           failureCount: 1,
           failedRosters: const [],
           cause: Exception('x'),
         ),
-        partialNote: '設定本身已儲存',
+        partialNote: '设定本身已储存',
       );
-      expect(message, '有 1 天的服事表沒有儲存成功，其餘 2 天已完成。設定本身已儲存');
+      expect(message, '有 1 天的服事表没有储存成功，其余 2 天已完成。设定本身已储存');
     });
 
-    test('partialNote 只接在部分失敗後面', () {
+    test('partialNote 只接在部分失败后面', () {
       expect(
-        writeFailureMessage('儲存', Exception('x'), partialNote: '設定本身已儲存'),
-        isNot(contains('設定本身已儲存')),
+        writeFailureMessage('储存', Exception('x'), partialNote: '设定本身已储存'),
+        isNot(contains('设定本身已储存')),
       );
     });
   });
 
-  testWidgets('樣板寫進去、只有改名同步部分失敗：照樣清同工設定，留在這頁', (tester) async {
+  testWidgets('样板写进去、只有改名同步部分失败：照样清同工设定，留在这页', (tester) async {
     final rosterProvider = _PartialRenameRosterProvider(
       InMemoryRosterRepository(
         templates: {
-          for (final type in ServiceType.values) type: ['領會'],
+          for (final type in ServiceType.values) type: ['领会'],
         },
       ),
     );
@@ -122,15 +122,15 @@ void main() {
 
     expect(userAdmin.cleanups, hasLength(1));
     expect(find.byType(RoleSettingsScreen), findsOneWidget);
-    expect(find.textContaining('設定本身已儲存'), findsOneWidget);
+    expect(find.textContaining('设定本身已储存'), findsOneWidget);
   });
 
-  // 清同工設定是依「新樣板」刪掉不在裡面的服事。樣板沒寫進去還照清的話，
-  // 同工的服事被刪了，樣板卻還是舊的 —— 以前就是這樣。
-  testWidgets('樣板存檔失敗：不清同工設定、留在這頁；再存一次成功才清', (tester) async {
+  // 清同工设定是依「新样板」删掉不在里面的服事。样板没写进去还照清的话，
+  // 同工的服事被删了，样板却还是旧的 —— 以前就是这样。
+  testWidgets('样板存档失败：不清同工设定、留在这页；再存一次成功才清', (tester) async {
     final repository = InMemoryRosterRepository(
       templates: {
-        for (final type in ServiceType.values) type: ['領會'],
+        for (final type in ServiceType.values) type: ['领会'],
       },
     )..failTemplateWrite = StateError('permission-denied');
     final rosterProvider = RosterProvider(repository);
@@ -144,7 +144,7 @@ void main() {
 
     expect(userAdmin.cleanups, isEmpty);
     expect(find.byType(RoleSettingsScreen), findsOneWidget);
-    expect(find.textContaining('儲存失敗'), findsOneWidget);
+    expect(find.textContaining('储存失败'), findsOneWidget);
 
     repository.failTemplateWrite = null;
     await tester.tap(find.byIcon(Icons.check));
@@ -154,9 +154,9 @@ void main() {
     expect(find.byType(RoleSettingsScreen), findsNothing);
   });
 
-  // 聚會設定裡停用的聚會不再有分頁，但它的樣板要原封不動存回去：之後再開啟
-  // 時，服事項目都還在。
-  testWidgets('停用的聚會不出現分頁，存檔時樣板照樣保留', (tester) async {
+  // 聚会设定里停用的聚会不再有分页，但它的样板要原封不动存回去：之后再开启
+  // 时，服事项目都还在。
+  testWidgets('停用的聚会不出现分页，存档时样板照样保留', (tester) async {
     final previous = ChurchConfig.current;
     addTearDown(() => ChurchConfig.current = previous);
     final services = previous.services;
@@ -170,7 +170,7 @@ void main() {
 
     final repository = InMemoryRosterRepository(
       templates: {
-        for (final type in ServiceType.values) type: ['領會'],
+        for (final type in ServiceType.values) type: ['领会'],
       },
     );
     final rosterProvider = RosterProvider(repository);
@@ -184,7 +184,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.check));
     await tester.pumpAndSettle();
 
-    expect(repository.templates[disabled], ['領會']);
-    expect(userAdmin.cleanups.single[disabled], ['領會']);
+    expect(repository.templates[disabled], ['领会']);
+    expect(userAdmin.cleanups.single[disabled], ['领会']);
   });
 }

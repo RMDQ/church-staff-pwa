@@ -3,16 +3,16 @@ import { describe, test } from 'node:test';
 
 import { fakeRegistration, fakeWorker, loadAppUpdate } from './helpers.js';
 
-/// vm 裡建立的物件跟這裡不同 realm，deepEqual 會因為 prototype 不同而失敗，
-/// 所以只比訊息型別。
+/// vm 里建立的物件跟这里不同 realm，deepEqual 会因为 prototype 不同而失败，
+/// 所以只比讯息型别。
 const types = (worker) => worker.posted.map((message) => message.type);
 
-describe('換到新版的交接', () => {
-  // 這是「重整了還是舊版」的成因。新的 SW 在上一次造訪就裝好、停在 waiting，
-  // 這一次載入時 update() 抓到的檔案跟它一模一樣，updatefound 不會再觸發 ——
-  // 舊的流程只在那個事件裡送 SKIP_WAITING，於是沒有人送，舊 SW 繼續服務舊
-  // bundle，重整幾次都一樣。
-  test('上一次留下來停在 waiting 的 worker，這次載入就叫它讓位', async () => {
+describe('换到新版的交接', () => {
+  // 这是「重整了还是旧版」的成因。新的 SW 在上一次造访就装好、停在 waiting，
+  // 这一次载入时 update() 抓到的档案跟它一模一样，updatefound 不会再触发 ——
+  // 旧的流程只在那个事件里送 SKIP_WAITING，于是没有人送，旧 SW 继续服务旧
+  // bundle，重整几次都一样。
+  test('上一次留下来停在 waiting 的 worker，这次载入就叫它让位', async () => {
     const waiting = fakeWorker('installed');
     const sw = loadAppUpdate({ registration: fakeRegistration({ waiting }) });
 
@@ -21,8 +21,8 @@ describe('換到新版的交接', () => {
     assert.deepEqual(types(waiting), ['SKIP_WAITING']);
   });
 
-  test('worker 在監聽器掛上之前就 installed 也抓得到', async () => {
-    // statechange 已經發生過就不會再來一次，只靠監聽器會漏掉。
+  test('worker 在监听器挂上之前就 installed 也抓得到', async () => {
+    // statechange 已经发生过就不会再来一次，只靠监听器会漏掉。
     const installing = fakeWorker('installed');
     const sw = loadAppUpdate({ registration: fakeRegistration({ installing }) });
 
@@ -31,20 +31,20 @@ describe('換到新版的交接', () => {
     assert.deepEqual(types(installing), ['SKIP_WAITING']);
   });
 
-  test('之後才裝好的 worker，statechange 時讓位', async () => {
+  test('之后才装好的 worker，statechange 时让位', async () => {
     const registration = fakeRegistration();
     const sw = loadAppUpdate({ registration });
     await sw.load();
 
     const worker = fakeWorker('installing');
     registration.fireUpdateFound(worker);
-    assert.deepEqual(types(worker), [], '還在裝就先不要動');
+    assert.deepEqual(types(worker), [], '还在装就先不要动');
 
     worker.advanceTo('installed');
     assert.deepEqual(types(worker), ['SKIP_WAITING']);
   });
 
-  test('第一次安裝不介入：沒有東西要接手', async () => {
+  test('第一次安装不介入：没有东西要接手', async () => {
     const installing = fakeWorker('installed');
     const sw = loadAppUpdate({
       hasController: false,
@@ -66,8 +66,8 @@ describe('換到新版的交接', () => {
     assert.equal(sw.reloads.length, 1);
   });
 
-  test('第一次安裝的 controllerchange 不 reload', async () => {
-    // 那會讓第一次造訪的人看到「載入中」兩次。
+  test('第一次安装的 controllerchange 不 reload', async () => {
+    // 那会让第一次造访的人看到「载入中」两次。
     const sw = loadAppUpdate({ hasController: false });
     await sw.load();
 
@@ -77,10 +77,10 @@ describe('換到新版的交接', () => {
   });
 });
 
-describe('切回前景時檢查', () => {
-  // 裝成 App 的 PWA 從多工列切回來不算 navigation，瀏覽器不會自己檢查有沒有
-  // 新版 —— 可以好幾天都停在舊版。
-  test('切回前景會檢查一次', async () => {
+describe('切回前景时检查', () => {
+  // 装成 App 的 PWA 从多工列切回来不算 navigation，浏览器不会自己检查有没有
+  // 新版 —— 可以好几天都停在旧版。
+  test('切回前景会检查一次', async () => {
     const registration = fakeRegistration();
     const sw = loadAppUpdate({ registration });
     await sw.load();
@@ -91,7 +91,7 @@ describe('切回前景時檢查', () => {
     assert.equal(registration.updateCalls, before + 1);
   });
 
-  test('切到背景不檢查', async () => {
+  test('切到背景不检查', async () => {
     const registration = fakeRegistration();
     const sw = loadAppUpdate({ registration });
     await sw.load();
@@ -102,7 +102,7 @@ describe('切回前景時檢查', () => {
     assert.equal(registration.updateCalls, before);
   });
 
-  test('已經有 waiting 就直接讓位，不必再問伺服器', async () => {
+  test('已经有 waiting 就直接让位，不必再问伺服器', async () => {
     const waiting = fakeWorker('installed');
     const registration = fakeRegistration();
     const sw = loadAppUpdate({ registration });
@@ -116,7 +116,7 @@ describe('切回前景時檢查', () => {
     assert.equal(registration.updateCalls, before);
   });
 
-  test('離線時的背景檢查不會炸掉頁面', async () => {
+  test('离线时的背景检查不会炸掉页面', async () => {
     const registration = fakeRegistration();
     registration.onUpdate = () => {
       throw new Error('offline');
@@ -130,17 +130,17 @@ describe('切回前景時檢查', () => {
   });
 });
 
-describe('個人頁的「檢查更新」', () => {
-  test('沒有新版就回 latest', async () => {
+describe('个人页的「检查更新」', () => {
+  test('没有新版就回 latest', async () => {
     const registration = fakeRegistration();
     const sw = loadAppUpdate({ registration });
     await sw.load();
 
     assert.equal(await sw.checkForUpdate(), 'latest');
-    assert.ok(registration.updateCalls >= 1, '要真的去問過伺服器');
+    assert.ok(registration.updateCalls >= 1, '要真的去问过伺服器');
   });
 
-  test('問到新版就換過去', async () => {
+  test('问到新版就换过去', async () => {
     const registration = fakeRegistration();
     const waiting = fakeWorker('installed');
     registration.onUpdate = (reg) => {
@@ -153,7 +153,7 @@ describe('個人頁的「檢查更新」', () => {
     assert.deepEqual(types(waiting), ['SKIP_WAITING']);
   });
 
-  test('還在裝的時候按下去，也算正在更新', async () => {
+  test('还在装的时候按下去，也算正在更新', async () => {
     const registration = fakeRegistration();
     const installing = fakeWorker('installing');
     registration.onUpdate = (reg) => {
@@ -164,10 +164,10 @@ describe('個人頁的「檢查更新」', () => {
 
     assert.equal(await sw.checkForUpdate(), 'updating');
     installing.advanceTo('installed');
-    assert.deepEqual(types(installing), ['SKIP_WAITING'], '裝好之後接著讓位');
+    assert.deepEqual(types(installing), ['SKIP_WAITING'], '装好之后接著让位');
   });
 
-  test('已經有 waiting 時直接換，不必等伺服器回答', async () => {
+  test('已经有 waiting 时直接换，不必等伺服器回答', async () => {
     const waiting = fakeWorker('installed');
     const registration = fakeRegistration();
     const sw = loadAppUpdate({ registration });
@@ -179,7 +179,7 @@ describe('個人頁的「檢查更新」', () => {
     assert.equal(registration.updateCalls, before);
   });
 
-  test('離線時往上丟，不能靜靜回「已是最新」', async () => {
+  test('离线时往上丢，不能静静回「已是最新」', async () => {
     const registration = fakeRegistration();
     registration.onUpdate = () => {
       throw new Error('offline');
@@ -190,7 +190,7 @@ describe('個人頁的「檢查更新」', () => {
     await assert.rejects(() => sw.checkForUpdate(), /offline/);
   });
 
-  test('註冊失敗會往上丟', async () => {
+  test('注册失败会往上丢', async () => {
     const sw = loadAppUpdate({ registerError: new Error('SW blocked') });
     await sw.load();
 
@@ -198,8 +198,8 @@ describe('個人頁的「檢查更新」', () => {
   });
 });
 
-describe('註冊', () => {
-  test('load 時註冊快取 SW 與推播 SW', async () => {
+describe('注册', () => {
+  test('load 时注册快取 SW 与推播 SW', async () => {
     const sw = loadAppUpdate();
 
     await sw.load();
@@ -214,7 +214,7 @@ describe('註冊', () => {
     );
   });
 
-  test('只註冊一次，按幾次檢查更新都共用同一個 registration', async () => {
+  test('只注册一次，按几次检查更新都共用同一个 registration', async () => {
     const sw = loadAppUpdate();
     await sw.load();
 
@@ -227,8 +227,8 @@ describe('註冊', () => {
     assert.equal(cacheSwRegistrations.length, 1);
   });
 
-  test('沒有 serviceWorker 的瀏覽器不會掛上檢查更新的入口', async () => {
-    // 個人頁靠這個函式在不在決定要不要顯示按鈕。
+  test('没有 serviceWorker 的浏览器不会挂上检查更新的入口', async () => {
+    // 个人页靠这个函式在不在决定要不要显示按钮。
     const sw = loadAppUpdate({ noServiceWorker: true });
 
     assert.equal(sw.hasCheckForUpdate(), false);

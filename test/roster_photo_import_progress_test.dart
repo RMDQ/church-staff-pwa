@@ -8,8 +8,8 @@ void main() {
   group('photoImportProgressText', () {
     test('within the usual time, says how long and that retries happen', () {
       final text = photoImportProgressText(const Duration(seconds: 12));
-      expect(text, contains('已經 12 秒'));
-      expect(text, contains('一分鐘左右'));
+      expect(text, contains('已经 12 秒'));
+      expect(text, contains('一分钟左右'));
       expect(text, isNot(contains('比平常久')));
     });
 
@@ -26,7 +26,7 @@ void main() {
         RosterImportService.timeout + const Duration(seconds: 3),
       );
       expect(text, isNot(contains('-')));
-      expect(text, contains('快要逾時'));
+      expect(text, contains('快要逾时'));
     });
   });
 
@@ -50,13 +50,13 @@ void main() {
         .widget<Text>(find.byKey(const ValueKey('photo-import-progress')))
         .data!;
 
-    expect(shown(), contains('已經 0 秒'));
+    expect(shown(), contains('已经 0 秒'));
     // Stopwatch is real time, not fake async, so drive both: the timer fires
     // on the fake clock, the text reads whatever really elapsed. Only assert
     // that the text changed, not to which second.
     await tester.runAsync(() => Future.delayed(const Duration(seconds: 1)));
     await tester.pump(const Duration(seconds: 1));
-    expect(shown(), isNot(contains('已經 0 秒')));
+    expect(shown(), isNot(contains('已经 0 秒')));
 
     show.value = false;
     await tester.pump();

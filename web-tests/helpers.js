@@ -150,14 +150,14 @@ export function loadServiceWorker({ hasActiveWorker = true } = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// web/app_update.js —— SW 註冊與換版交接。
+// web/app_update.js —— SW 注册与换版交接。
 //
-// 同樣在 vm 裡跑真正的檔案，把 navigator.serviceWorker / window / document 換
-// 成可以驅動的假物件：測試要能製造「有 worker 停在 waiting」「statechange 早
-// 於監聽器」這類時序，真的瀏覽器裡等不出來。
+// 同样在 vm 里跑真正的档案，把 navigator.serviceWorker / window / document 换
+// 成可以驱动的假物件：测试要能制造「有 worker 停在 waiting」「statechange 早
+// 于监听器」这类时序，真的浏览器里等不出来。
 // ---------------------------------------------------------------------------
 
-/// 一個假的 ServiceWorker。`posted` 收到的就是 SKIP_WAITING 那類訊息。
+/// 一个假的 ServiceWorker。`posted` 收到的就是 SKIP_WAITING 那类讯息。
 export function fakeWorker(state = 'installing') {
   const listeners = [];
   return {
@@ -169,7 +169,7 @@ export function fakeWorker(state = 'installing') {
     addEventListener(type, handler) {
       if (type === 'statechange') listeners.push(handler);
     },
-    /// 推進狀態並發出 statechange，跟瀏覽器一樣。
+    /// 推进状态并发出 statechange，跟浏览器一样。
     advanceTo(next) {
       this.state = next;
       for (const handler of [...listeners]) handler();
@@ -177,14 +177,14 @@ export function fakeWorker(state = 'installing') {
   };
 }
 
-/// 一個假的 ServiceWorkerRegistration。
+/// 一个假的 ServiceWorkerRegistration。
 export function fakeRegistration({ waiting = null, installing = null } = {}) {
   const listeners = [];
   return {
     waiting,
     installing,
     updateCalls: 0,
-    /// 讓 update() 在被呼叫時做點事（例如放一顆 waiting 進來、或丟錯）。
+    /// 让 update() 在被呼叫时做点事（例如放一颗 waiting 进来、或丢错）。
     onUpdate: null,
     addEventListener(type, handler) {
       if (type === 'updatefound') listeners.push(handler);
@@ -193,7 +193,7 @@ export function fakeRegistration({ waiting = null, installing = null } = {}) {
       this.updateCalls += 1;
       if (this.onUpdate) await this.onUpdate(this);
     },
-    /// 瀏覽器找到新版本時會做的事：擺上 installing 再發 updatefound。
+    /// 浏览器找到新版本时会做的事：摆上 installing 再发 updatefound。
     fireUpdateFound(worker) {
       this.installing = worker;
       for (const handler of [...listeners]) handler();
@@ -201,10 +201,10 @@ export function fakeRegistration({ waiting = null, installing = null } = {}) {
   };
 }
 
-/// 載入 web/app_update.js。
+/// 载入 web/app_update.js。
 ///
-/// [hasController] 對應 `navigator.serviceWorker.controller`：false 是第一次
-/// 安裝（不該介入，也不該 reload），true 是升級。
+/// [hasController] 对应 `navigator.serviceWorker.controller`：false 是第一次
+/// 安装（不该介入，也不该 reload），true 是升级。
 export function loadAppUpdate({
   hasController = true,
   registration = fakeRegistration(),
@@ -234,7 +234,7 @@ export function loadAppUpdate({
     },
   };
 
-  // 舊瀏覽器（或關掉 SW 的環境）：整段程式碼要安靜地什麼都不做。
+  // 旧浏览器（或关掉 SW 的环境）：整段程式码要安静地什么都不做。
   const navigator = noServiceWorker ? {} : { serviceWorker };
 
   const context = {
@@ -257,7 +257,7 @@ export function loadAppUpdate({
     registration,
     registerCalls,
     reloads,
-    /// 瀏覽器發出 load，也就是註冊真正發生的時候。
+    /// 浏览器发出 load，也就是注册真正发生的时候。
     async load() {
       windowListeners.load?.();
       await flush();
@@ -271,14 +271,14 @@ export function loadAppUpdate({
       documentListeners.visibilitychange?.();
       await flush();
     },
-    /// 個人頁「檢查更新」按鈕呼叫的那個函式。
+    /// 个人页「检查更新」按钮呼叫的那个函式。
     checkForUpdate: () => context.window.churchAppCheckForUpdate(),
     hasCheckForUpdate: () => typeof context.window.churchAppCheckForUpdate === 'function',
   };
 }
 
-/// 讓已經排進 queue 的 then/await 跑完。跑幾輪是因為註冊流程是好幾層
-/// promise 串起來的，只讓一輪會停在半路。
+/// 让已经排进 queue 的 then/await 跑完。跑几轮是因为注册流程是好几层
+/// promise 串起来的，只让一轮会停在半路。
 export async function flush(rounds = 5) {
   for (let i = 0; i < rounds; i += 1) {
     await new Promise((resolve) => setImmediate(resolve));

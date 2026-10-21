@@ -185,6 +185,39 @@ service cloud.firestore {
             && request.resource.data.dateKey.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'));
     }
 
+    // Self-registration requests. Someone who has just created a sign-in account
+    // but is not yet approved has no users/{uid} doc, so they are not an active
+    // member and can read nothing else. This collection holds only their request.
+    // Approval is an admin creating users/{uid} (the admin-only create above)
+    // and then deleting this request; rejection is just the delete.
+    match /signup_requests/{uid} {
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && !exists(/databases/$(database)/documents/users/$(uid))
+        && request.resource.data.keys().hasOnly(['name', 'email', 'phone', 'consentAt', 'consentVersion', 'status', 'createdAt'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 100
+        && (!('phone' in request.resource.data) || request.resource.data.phone is string)
+        && request.resource.data.consentAt is timestamp
+        && request.resource.data.consentVersion is string
+        && request.resource.data.createdAt == request.time;
+
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow delete: if isAdmin();
+      allow update: if false;
+    }
+
+    // Check-ins are written only by functions/api/checkin.js, which decides the
+    // time, the distance and the status on the server. No client may write them.
+    // A member reads their own records; admin and leader reads come with the
+    // attendance screen.
+    match /checkins/{checkinId} {
+      allow read: if isSelf(resource.data.uid);
+      allow create, update, delete: if false;
+    }
+
     match /rosters/{rosterId} {
       allow read: if isActiveUser();
 

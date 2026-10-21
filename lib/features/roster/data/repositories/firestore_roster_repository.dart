@@ -20,16 +20,16 @@ class FirestoreRosterRepository implements RosterRepository {
   DocumentReference get _eventOptionsDoc =>
       _firestore.collection('settings').doc('event_options');
 
-  // 不放在 settings/ 底下：那裡只有 admin 能寫，而同工排序是各崇拜的編輯
-  // 者在選人視窗裡拖出來的。一個崇拜一份文件，rules 才能照文件 id 判斷是
-  // 不是他的牧區（見 firestore.rules 的 staff_orders）。
+  // 不放在 settings/ 底下：那里只有 admin 能写，而同工排序是各崇拜的编辑
+  // 者在选人视窗里拖出来的。一个崇拜一份文件，rules 才能照文件 id 判断是
+  // 不是他的牧区（见 firestore.rules 的 staff_orders）。
   CollectionReference get _staffOrdersCollection =>
       _firestore.collection('staff_orders');
 
   @override
   Future<List<ServiceRoster>> getUpcomingRosters() async {
-    // 純讀路徑。不執行任何 backfill 寫入。
-    // backfill 已移至 ensureQuarterRosters()，只由 admin 在進入編輯畫面時觸發。
+    // 纯读路径。不执行任何 backfill 写入。
+    // backfill 已移至 ensureQuarterRosters()，只由 admin 在进入编辑画面时触发。
     try {
       final now = ChurchTime.now();
       final fetchFrom = ChurchTime.dateOnly(
@@ -44,9 +44,9 @@ class FirestoreRosterRepository implements RosterRepository {
 
       return _filterAndSortRosters(snapshot.docs, now);
     } catch (e, st) {
-      // 一定要往上丟：吞掉錯誤回傳空 list 的話，permission-denied 或離線
-      // 在畫面上會變成「此類別目前沒有服事資訊」，使用者看不到錯誤也沒有
-      // 重試鈕。要不要降級成 cache 資料由 RosterProvider 決定。
+      // 一定要往上丢：吞掉错误回传空 list 的话，permission-denied 或离线
+      // 在画面上会变成「此类别目前没有服事资讯」，使用者看不到错误也没有
+      // 重试钮。要不要降级成 cache 资料由 RosterProvider 决定。
       log('Get rosters failed', error: e, stackTrace: st);
       rethrow;
     }
@@ -54,9 +54,9 @@ class FirestoreRosterRepository implements RosterRepository {
 
   @override
   Future<List<ServiceRoster>> getUpcomingRostersFromCache() async {
-    // 從 IndexedDB 讀取。不打網路，約 50-150ms。
-    // 若 cache 尚未建立（首次開啟），SDK 丟 unavailable / failed-precondition，
-    // catch 後回傳空 list，讓呼叫端降級到 server fetch。
+    // 从 IndexedDB 读取。不打网路，约 50-150ms。
+    // 若 cache 尚未建立（首次开启），SDK 丢 unavailable / failed-precondition，
+    // catch 后回传空 list，让呼叫端降级到 server fetch。
     try {
       final now = ChurchTime.now();
       final fetchFrom = ChurchTime.dateOnly(
@@ -72,7 +72,7 @@ class FirestoreRosterRepository implements RosterRepository {
       return _filterAndSortRosters(snapshot.docs, now);
     } on FirebaseException catch (e) {
       if (e.code == 'unavailable' || e.code == 'failed-precondition') {
-        // cache-miss 或持久化尚未就緒：視為空
+        // cache-miss 或持久化尚未就绪：视为空
         return const [];
       }
       rethrow;
@@ -81,15 +81,15 @@ class FirestoreRosterRepository implements RosterRepository {
 
   @override
   Future<void> ensureQuarterRosters(List<ServiceType> allowedTypes) async {
-    // 確保本季 + 下季的預定 roster 都已存在於 Firestore（缺的補寫）。
-    // 只補 allowedTypes 涵蓋的聚會別 —— 其餘的呼叫者無權寫，混進同一個 batch
-    // 會讓整批被 rules 拒絕。真正的強制點仍在 firestore.rules。
+    // 确保本季 + 下季的预定 roster 都已存在于 Firestore（缺的补写）。
+    // 只补 allowedTypes 涵盖的聚会别 —— 其余的呼叫者无权写，混进同一个 batch
+    // 会让整批被 rules 拒绝。真正的强制点仍在 firestore.rules。
     if (allowedTypes.isEmpty) return;
     try {
       final templates = await getServiceTemplates();
       final now = ChurchTime.now();
       final quarterStartMonth = ((now.month - 1) ~/ 3) * 3 + 1;
-      // 包含跨季的同一週與 UTC 偏移，避免更換星期後在同一週產生第二場。
+      // 包含跨季的同一周与 UTC 偏移，避免更换星期后在同一周产生第二场。
       final fetchFrom = DateTime.utc(
         now.year,
         quarterStartMonth,
@@ -108,8 +108,8 @@ class FirestoreRosterRepository implements RosterRepository {
         templates: templates,
         existing: existing,
       );
-      // 每個候選週的七個日期都在 transaction 內讀取，避免兩個使用不同星期
-      // 設定的客戶端同時建表。每批最多 140 個讀取、20 個寫入；先全部讀再寫。
+      // 每个候选周的七个日期都在 transaction 内读取，避免两个使用不同星期
+      // 设定的客户端同时建表。每批最多 140 个读取、20 个写入；先全部读再写。
       for (var start = 0; start < missing.length; start += 20) {
         final chunk = missing.skip(start).take(20).toList();
         final weeks = [
@@ -143,8 +143,8 @@ class FirestoreRosterRepository implements RosterRepository {
     }
   }
 
-  /// 共用的 snapshot → filter → sort 邏輯（供 getUpcomingRosters 與
-  /// getUpcomingRostersFromCache 兩個讀路徑重用）。
+  /// 共用的 snapshot → filter → sort 逻辑（供 getUpcomingRosters 与
+  /// getUpcomingRostersFromCache 两个读路径重用）。
   List<ServiceRoster> _filterAndSortRosters(
     List<QueryDocumentSnapshot<Object?>> docs,
     DateTime now,
@@ -173,11 +173,11 @@ class FirestoreRosterRepository implements RosterRepository {
   @override
   Future<void> updateRoster(ServiceRoster roster) async {
     try {
-      // 確保將 id 寫入 document id
+      // 确保将 id 写入 document id
       await _rostersCollection.doc(roster.id).set(rosterToFirestore(roster));
     } catch (e, st) {
       log('Update roster failed', error: e, stackTrace: st);
-      throw Exception('更新服事表失敗: $e');
+      throw Exception('更新服事表失败: $e');
     }
   }
 
@@ -192,9 +192,9 @@ class FirestoreRosterRepository implements RosterRepository {
       await batch.commit();
     } catch (e, st) {
       log('Update rosters atomically failed', error: e, stackTrace: st);
-      // 刻意不像 updateRoster 那樣包成 Exception('更新服事表失敗: $e')：包過之後
-      // mapErrorToUserMessage 認不出 FirebaseException 的 code，permission-denied
-      // 會變成「操作失敗，請稍後再試」，使用者不知道是權限問題還是網路問題。
+      // 刻意不像 updateRoster 那样包成 Exception('更新服事表失败: $e')：包过之后
+      // mapErrorToUserMessage 认不出 FirebaseException 的 code，permission-denied
+      // 会变成「操作失败，请稍后再试」，使用者不知道是权限问题还是网路问题。
       rethrow;
     }
   }
@@ -204,7 +204,7 @@ class FirestoreRosterRepository implements RosterRepository {
     try {
       final doc = await _templatesDoc.get();
       if (!doc.exists) {
-        // 如果沒有設定，預設為空，讓使用者自行設定
+        // 如果没有设定，预设为空，让使用者自行设定
         return {for (final type in ServiceType.values) type: []};
       }
 
@@ -230,7 +230,7 @@ class FirestoreRosterRepository implements RosterRepository {
       await _templatesDoc.set(data, SetOptions(merge: true));
     } catch (e, st) {
       log('Update service templates failed', error: e, stackTrace: st);
-      throw Exception('更新樣板失敗: $e');
+      throw Exception('更新样板失败: $e');
     }
   }
 
@@ -276,7 +276,7 @@ class FirestoreRosterRepository implements RosterRepository {
       await _eventOptionsDoc.set(data, SetOptions(merge: true));
     } catch (e, st) {
       log('Update event options failed', error: e, stackTrace: st);
-      throw Exception('更新事件選項失敗: $e');
+      throw Exception('更新事件选项失败: $e');
     }
   }
 
@@ -325,9 +325,9 @@ class FirestoreRosterRepository implements RosterRepository {
   ) async {
     if (changes.isEmpty) return;
     try {
-      // merge 寫入巢狀 map 只動提到的 key：別人剛改過的其他服事項目不會被
-      // 這台裝置手上那份舊的蓋回去。用 set 而不是 update，文件還不存在時
-      // 才建得出來；key 不經過欄位路徑解析，服事項目名稱有「.」也沒關係。
+      // merge 写入巢状 map 只动提到的 key：别人刚改过的其他服事项目不会被
+      // 这台装置手上那份旧的盖回去。用 set 而不是 update，文件还不存在时
+      // 才建得出来；key 不经过栏位路径解析，服事项目名称有「.」也没关系。
       await _staffOrdersCollection.doc(type.name).set({
         'roles': {
           for (final entry in changes.entries)
@@ -336,8 +336,8 @@ class FirestoreRosterRepository implements RosterRepository {
       }, SetOptions(merge: true));
     } catch (e, st) {
       log('Update staff order failed', error: e, stackTrace: st);
-      // 不包成 Exception：包過之後 mapErrorToUserMessage 認不出
-      // permission-denied（見 updateRostersAtomically）。
+      // 不包成 Exception：包过之后 mapErrorToUserMessage 认不出
+      // permission-denied（见 updateRostersAtomically）。
       rethrow;
     }
   }

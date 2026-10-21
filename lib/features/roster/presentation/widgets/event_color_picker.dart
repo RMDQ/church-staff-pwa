@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/event_option.dart';
 
-/// 活動標籤的選色：[eventColorPalette] 排成每排 [columns] 個的格子。
+/// 活动标签的选色：[eventColorPalette] 排成每排 [columns] 个的格子。
 ///
-/// 用固定的格子而不是 Wrap：Wrap 一排放幾個看螢幕寬度，十個顏色會排成
-/// 7+3 或 8+2，一邊長一邊短。色盤照「上排亮色、下排同色系深色」排好了，
-/// 格子才對得上。活動設定頁與單次活動的視窗共用這一個，兩邊才長得一樣。
+/// 用固定的格子而不是 Wrap：Wrap 一排放几个看萤幕宽度，十个颜色会排成
+/// 7+3 或 8+2，一边长一边短。色盘照「上排亮色、下排同色系深色」排好了，
+/// 格子才对得上。活动设定页与单次活动的视窗共用这一个，两边才长得一样。
 class EventColorPicker extends StatelessWidget {
   const EventColorPicker({
     super.key,

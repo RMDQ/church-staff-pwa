@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// 共用空狀態元件：顯示圖示 + 標題訊息 + 可選的輔助說明 / 行動按鈕。
+/// 共用空状态元件：显示图示 + 标题讯息 + 可选的辅助说明 / 行动按钮。
 ///
-/// 設計考量：年長使用者看到完全空白的畫面容易以為「壞了」或「網路斷了」。
-/// 加上友善的視覺與下一步指引，比一行純文字更能降低焦慮。
+/// 设计考量：年长使用者看到完全空白的画面容易以为「坏了」或「网路断了」。
+/// 加上友善的视觉与下一步指引，比一行纯文字更能降低焦虑。
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String message;

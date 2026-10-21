@@ -11,12 +11,12 @@ import 'package:provider/provider.dart';
 
 import 'support/in_memory_roster_repository.dart';
 
-/// 服事列在兩個模式各自該有的高度。
+/// 服事列在两个模式各自该有的高度。
 ///
-/// 編輯模式撐到 48（刪除鈕的觸控目標，給長輩按的，不能縮）；檢視模式沒有按
-/// 鈕，列高跟著文字走 —— 這個畫面是拿來讀的，一頁看得到幾天比每列多 25px 留
-/// 白重要。切換模式的位移是靠錨定日期修的（見 roster_scroll_anchor_test），
-/// 不靠兩邊列高一樣。
+/// 编辑模式撑到 48（删除钮的触控目标，给长辈按的，不能缩）；检视模式没有按
+/// 钮，列高跟著文字走 —— 这个画面是拿来读的，一页看得到几天比每列多 25px 留
+/// 白重要。切换模式的位移是靠锚定日期修的（见 roster_scroll_anchor_test），
+/// 不靠两边列高一样。
 
 ServiceRoster _roster() => ServiceRoster(
   id: 'r1',
@@ -24,14 +24,14 @@ ServiceRoster _roster() => ServiceRoster(
   type: ServiceType.sundayService,
   serviceName: '主日崇拜',
   duties: [
-    RosterEntry(role: '敬拜主領', people: const ['美玉']),
-    RosterEntry(role: '司琴', people: const ['王小明', '李大華']),
-    RosterEntry(role: '招待', people: const ['王小明', '李大華', '陳美麗']),
-    RosterEntry(role: '音控', people: const ['王小明', '李大華', '陳美麗', '張志豪']),
+    RosterEntry(role: '敬拜主领', people: const ['美玉']),
+    RosterEntry(role: '司琴', people: const ['王小明', '李大华']),
+    RosterEntry(role: '招待', people: const ['王小明', '李大华', '陈美丽']),
+    RosterEntry(role: '音控', people: const ['王小明', '李大华', '陈美丽', '张志豪']),
   ],
 );
 
-/// 掛一張卡片，回傳每一列服事的高度。
+/// 挂一张卡片，回传每一列服事的高度。
 Future<List<double>> _rowHeights(
   WidgetTester tester, {
   required bool editMode,
@@ -72,9 +72,9 @@ Future<List<double>> _rowHeights(
       .toList();
 }
 
-/// 掛一張卡片，回傳某一個服事項目那一列「人名欄」的實際尺寸。
+/// 挂一张卡片，回传某一个服事项目那一列「人名栏」的实际尺寸。
 ///
-/// 人名不再是一整個 Text（見 [DutyRow]：一個名字一段，才不會從名字中間斷
+/// 人名不再是一整个 Text（见 [DutyRow]：一个名字一段，才不会从名字中间断
 /// 行），所以量的是包住那些段落的 Wrap。
 Future<Size> _peopleColumnSize(
   WidgetTester tester, {
@@ -93,38 +93,38 @@ Future<Size> _peopleColumnSize(
 void main() {
   setUpAll(() async => initializeDateFormatting('zh_TW'));
 
-  testWidgets('編輯模式的服事列撐到按鈕的觸控目標', (tester) async {
+  testWidgets('编辑模式的服事列撑到按钮的触控目标', (tester) async {
     final editHeights = await _rowHeights(tester, editMode: true);
 
     expect(editHeights, hasLength(4));
     expect(
       editHeights.every((h) => h >= kDutyRowMinHeight),
       isTrue,
-      reason: '列高低於 $kDutyRowMinHeight 的話刪除鈕就不好按了：$editHeights',
+      reason: '列高低于 $kDutyRowMinHeight 的话删除钮就不好按了：$editHeights',
     );
   });
 
-  testWidgets('檢視模式的服事列跟著文字高度走', (tester) async {
+  testWidgets('检视模式的服事列跟著文字高度走', (tester) async {
     final viewHeights = await _rowHeights(tester, editMode: false);
     final editHeights = await _rowHeights(tester, editMode: true);
 
     expect(viewHeights, hasLength(4));
-    // 前三列的名字都排得下一行，列高就該是一行文字的高度，不是 48。
+    // 前三列的名字都排得下一行，列高就该是一行文字的高度，不是 48。
     for (final height in viewHeights.take(3)) {
       expect(
         height,
         lessThan(kDutyRowMinHeight),
-        reason: '檢視模式又被撐高了（$viewHeights），一頁看得到的天數會變少',
+        reason: '检视模式又被撑高了（$viewHeights），一页看得到的天数会变少',
       );
     }
-    // 第四列（音控，四個名字）會換行，本來就比一行高 —— 但仍不該吃到那個下限
+    // 第四列（音控，四个名字）会换行，本来就比一行高 —— 但仍不该吃到那个下限
     // 才叫「跟著文字走」。
     expect(viewHeights[3], lessThan(editHeights[3]));
   });
 
-  // ⇄ 曾經直接掛在服事列上，名字欄因此只剩 142px，三個三字名字會被擠成兩行。
-  // 交換入口移進編輯視窗之後，名字欄拿回那 44px。
-  testWidgets('三個名字在編輯模式也排得下一行', (tester) async {
+  // ⇄ 曾经直接挂在服事列上，名字栏因此只剩 142px，三个三字名字会被挤成两行。
+  // 交换入口移进编辑视窗之后，名字栏拿回那 44px。
+  testWidgets('三个名字在编辑模式也排得下一行', (tester) async {
     final viewSize = await _peopleColumnSize(
       tester,
       editMode: false,
@@ -136,45 +136,45 @@ void main() {
       role: '招待',
     );
 
-    // 只比對兩邊相等不夠 —— 兩邊一起換行也會相等。拿單一名字那列當「一行」
-    // 的基準，兩邊都必須是那個高度。
+    // 只比对两边相等不够 —— 两边一起换行也会相等。拿单一名字那列当「一行」
+    // 的基准，两边都必须是那个高度。
     final oneLine = await _peopleColumnSize(
       tester,
       editMode: true,
-      role: '敬拜主領',
+      role: '敬拜主领',
     );
     expect(
       editSize.height,
       oneLine.height,
-      reason: '編輯模式的名字換行了：$editSize（一行應為 ${oneLine.height}）',
+      reason: '编辑模式的名字换行了：$editSize（一行应为 ${oneLine.height}）',
     );
     expect(
       viewSize.height,
       oneLine.height,
-      reason: '檢視模式的名字換行了：$viewSize（一行應為 ${oneLine.height}）',
+      reason: '检视模式的名字换行了：$viewSize（一行应为 ${oneLine.height}）',
     );
   });
 
-  // 欄寬不夠時中文預設會從任何一個字之間斷開，「陳美麗」被切成「陳美／麗」。
-  // 一個名字一段就只剩名字之間可以斷。
-  testWidgets('名字多到得換行時，不會從名字中間斷開', (tester) async {
+  // 栏宽不够时中文预设会从任何一个字之间断开，「陈美丽」被切成「陈美／丽」。
+  // 一个名字一段就只剩名字之间可以断。
+  testWidgets('名字多到得换行时，不会从名字中间断开', (tester) async {
     await _rowHeights(tester, editMode: true);
 
-    // 每個名字各自是一段（最後一個之外都帶著頓號），所以不可能被切開。
+    // 每个名字各自是一段（最后一个之外都带著顿号），所以不可能被切开。
     expect(find.text('王小明、'), findsWidgets);
-    expect(find.text('李大華、'), findsWidgets);
-    expect(find.text('陳美麗'), findsWidgets);
+    expect(find.text('李大华、'), findsWidgets);
+    expect(find.text('陈美丽'), findsWidgets);
 
     final wide = await _peopleColumnSize(tester, editMode: true, role: '音控');
     final oneLine = await _peopleColumnSize(
       tester,
       editMode: true,
-      role: '敬拜主領',
+      role: '敬拜主领',
     );
     expect(
       wide.height,
       greaterThan(oneLine.height),
-      reason: '四個名字在編輯模式的欄寬下本來就該換行，這條測試才有意義',
+      reason: '四个名字在编辑模式的栏宽下本来就该换行，这条测试才有意义',
     );
   });
 }

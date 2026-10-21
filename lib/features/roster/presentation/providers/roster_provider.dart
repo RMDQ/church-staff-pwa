@@ -16,64 +16,64 @@ import '../../../../core/widgets/text_warmup.dart';
 class RosterProvider with ChangeNotifier {
   final RosterRepository _repository;
 
-  List<ServiceRoster> _allRosters = []; // 儲存所有原始資料
+  List<ServiceRoster> _allRosters = []; // 储存所有原始资料
   Map<ServiceType, List<String>> _templates = {};
 
-  /// 樣板是否真的從伺服器讀回來過。
+  /// 样板是否真的从伺服器读回来过。
   ///
-  /// 不能用 `_templates.isEmpty` 或 `templates[type] == null` 代替：讀取失敗、
-  /// 尚未讀取、與「這個類別本來就沒設定角色」在資料上長得一樣，但對匯入來說
-  /// 意義完全不同 —— 前兩者會讓匯入排出錯誤的順序。
+  /// 不能用 `_templates.isEmpty` 或 `templates[type] == null` 代替：读取失败、
+  /// 尚未读取、与「这个类别本来就没设定角色」在资料上长得一样，但对汇入来说
+  /// 意义完全不同 —— 前两者会让汇入排出错误的顺序。
   bool _templatesLoaded = false;
   Map<ServiceType, List<EventOption>> _eventOptionsByType = {};
 
-  // 同工排序（見 [StaffOrderBook]）。學的那份只在從伺服器／快取讀進來時
-  // 重算，不在本機每次寫入後重算：寫入前已經照排序排好了，重算只會得到一
-  // 樣的東西，而且交換寫到一半的狀態不該回頭影響排序。
+  // 同工排序（见 [StaffOrderBook]）。学的那份只在从伺服器／快取读进来时
+  // 重算，不在本机每次写入后重算：写入前已经照排序排好了，重算只会得到一
+  // 样的东西，而且交换写到一半的状态不该回头影响排序。
   StaffOrderBook _staffOrders = StaffOrderBook();
   bool _isLoading = false;
   bool _isEditMode = false;
   String? _error;
 
-  // 追蹤上一次 session userId，用來判斷帳號是否真的換了。
+  // 追踪上一次 session userId，用来判断帐号是否真的换了。
   String? _lastSessionUserId;
 
-  // Fetch generation counter：每次 session 變動或主動觸發 fetch 時遞增。
-  // fetch 完成後比對 token，若不一致代表已過期，直接 drop 結果。
+  // Fetch generation counter：每次 session 变动或主动触发 fetch 时递增。
+  // fetch 完成后比对 token，若不一致代表已过期，直接 drop 结果。
   int _fetchToken = 0;
 
-  // ── 衍生資料快取 ────────────────────────────────────────────────────────
-  // UI 每次 rebuild 都會問「這個牧區有哪些 roster」「這個事件是什麼顏色」。
-  // 現算的話等於每個 frame 都掃一次全部資料，所以算一次存起來，
-  // 只在 _allRosters / _eventOptionsByType 真的變動時丟掉。
-  // 一律透過 _replaceRosters / _replaceRosterAt / _replaceEventOptions
-  // 改資料，才不會有人漏掉 invalidate。
+  // ── 衍生资料快取 ────────────────────────────────────────────────────────
+  // UI 每次 rebuild 都会问「这个牧区有哪些 roster」「这个事件是什么颜色」。
+  // 现算的话等于每个 frame 都扫一次全部资料，所以算一次存起来，
+  // 只在 _allRosters / _eventOptionsByType 真的变动时丢掉。
+  // 一律透过 _replaceRosters / _replaceRosterAt / _replaceEventOptions
+  // 改资料，才不会有人漏掉 invalidate。
   Map<ServiceType, List<ServiceRoster>>? _rostersByType;
   Map<String, int>? _eventColorIndex;
   List<String>? _displayStrings;
 
-  // 事件選項的版本號。UI 想知道「顏色定義有沒有換過」時可以 select 這個值 ——
-  // eventOptionsByType 每次呼叫都會產生新的 Map，拿來做相等比較永遠會是 true。
+  // 事件选项的版本号。UI 想知道「颜色定义有没有换过」时可以 select 这个值 ——
+  // eventOptionsByType 每次呼叫都会产生新的 Map，拿来做相等比较永远会是 true。
   int _eventOptionsRevision = 0;
 
-  /// [now] 只給測試用：刪除服事項目時「今天以後」的界線要固定得住。
+  /// [now] 只给测试用：删除服事项目时「今天以后」的界线要固定得住。
   RosterProvider(this._repository, {DateTime Function()? now})
     : _now = now ?? ChurchTime.now;
 
   final DateTime Function() _now;
 
-  /// 事件選項的版本號，每次選項被替換就 +1。
-  /// widget 用 `context.select((p) => p.eventOptionsRevision)` 訂閱顏色變動。
+  /// 事件选项的版本号，每次选项被替换就 +1。
+  /// widget 用 `context.select((p) => p.eventOptionsRevision)` 订阅颜色变动。
   int get eventOptionsRevision => _eventOptionsRevision;
 
-  /// 換掉整份 roster 清單。
+  /// 换掉整份 roster 清单。
   ///
-  /// [rosters] 的 identity 本身就是「資料換過了」的訊號 —— 消費端（例如首頁
-  /// 的本季服事 memo）用 `identical()` 判斷要不要重算，所以任何內容變動都
-  /// **必須**換成新的 List instance，不能就地改寫。
+  /// [rosters] 的 identity 本身就是「资料换过了」的讯号 —— 消费端（例如首页
+  /// 的本季服事 memo）用 `identical()` 判断要不要重算，所以任何内容变动都
+  /// **必须**换成新的 List instance，不能就地改写。
   ///
-  /// 每張都照同工排序排好才放進來 —— 畫面、首頁、寫回去的資料看到的都是排
-  /// 好的順序，不必各自再排。[relearn] 給「從外面讀進來」的資料用，見
+  /// 每张都照同工排序排好才放进来 —— 画面、首页、写回去的资料看到的都是排
+  /// 好的顺序，不必各自再排。[relearn] 给「从外面读进来」的资料用，见
   /// [_staffOrders]。
   void _replaceRosters(List<ServiceRoster> rosters, {bool relearn = false}) {
     if (relearn) _staffOrders = _staffOrders.relearnedFrom(rosters);
@@ -82,12 +82,12 @@ class RosterProvider with ChangeNotifier {
     _displayStrings = null;
   }
 
-  /// [type] 這個崇拜實際採用的同工排序。
+  /// [type] 这个崇拜实际采用的同工排序。
   StaffOrder staffOrderFor(ServiceType type) => _staffOrders.effectiveFor(type);
 
-  /// 換掉單筆 roster。刻意複製一份新 List 而不是 `_allRosters[index] = ...` ——
-  /// 就地改寫會讓 `rosters` 的 identity 不變，靠 identity 判斷是否失效的
-  /// 消費端就會繼續用舊的計算結果。
+  /// 换掉单笔 roster。刻意复制一份新 List 而不是 `_allRosters[index] = ...` ——
+  /// 就地改写会让 `rosters` 的 identity 不变，靠 identity 判断是否失效的
+  /// 消费端就会继续用旧的计算结果。
   void _replaceRosterAt(int index, ServiceRoster roster) {
     final updated = List<ServiceRoster>.of(_allRosters);
     updated[index] = _staffOrders.sort(roster);
@@ -103,7 +103,7 @@ class RosterProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isEditMode => _isEditMode;
 
-  /// 載入失敗的訊息。寫入失敗不會出現在這裡 —— 寫入一律往上丟，見
+  /// 载入失败的讯息。写入失败不会出现在这里 —— 写入一律往上丢，见
   /// [updateRoster]。
   String? get error => _error;
   Map<ServiceType, List<String>> get templates => _templates;
@@ -116,9 +116,9 @@ class RosterProvider with ChangeNotifier {
   List<EventOption> eventOptionsFor(ServiceType type) =>
       List.unmodifiable(_eventOptionsByType[type] ?? const <EventOption>[]);
 
-  /// 事件名稱 → 顏色。每張卡片的每個事件標籤在每次 rebuild 都會問一次，
-  /// 所以用一份攤平的索引，不要每次都線性掃過所有 ServiceType 的清單。
-  /// 同名事件以本 type 的定義優先，其次才是其他 type（維持原本語意）。
+  /// 事件名称 → 颜色。每张卡片的每个事件标签在每次 rebuild 都会问一次，
+  /// 所以用一份摊平的索引，不要每次都线性扫过所有 ServiceType 的清单。
+  /// 同名事件以本 type 的定义优先，其次才是其他 type（维持原本语意）。
   int eventColorFor(ServiceType type, String name) {
     final own = _eventOptionsByType[type];
     if (own != null) {
@@ -129,10 +129,10 @@ class RosterProvider with ChangeNotifier {
     return _colorIndex[name] ?? fallbackEventColor;
   }
 
-  /// 這一天的這個活動畫什麼顏色：這張服事表自己指定的 → 活動清單 → 灰色。
+  /// 这一天的这个活动画什么颜色：这张服事表自己指定的 → 活动清单 → 灰色。
   ///
-  /// 優先序只寫在這裡。以前每個畫活動標籤的地方各自串一次
-  /// `customEventColors[event] ?? eventColorFor(...)`，檢視與編輯各一份。
+  /// 优先序只写在这里。以前每个画活动标签的地方各自串一次
+  /// `customEventColors[event] ?? eventColorFor(...)`，检视与编辑各一份。
   int eventColorOf(ServiceRoster roster, String event) =>
       roster.customEventColors[event] ?? eventColorFor(roster.type, event);
 
@@ -150,16 +150,16 @@ class RosterProvider with ChangeNotifier {
     return index;
   }
 
-  // ── 捲動位置錨點 ────────────────────────────────────────────────────────
-  // 檢視與編輯是兩棵不同的 widget 樹，切換的當下舊清單整個被拆掉，只有
-  // provider 活得夠久，所以「切之前看到哪」存在這裡。
+  // ── 卷动位置锚点 ────────────────────────────────────────────────────────
+  // 检视与编辑是两棵不同的 widget 树，切换的当下旧清单整个被拆掉，只有
+  // provider 活得够久，所以「切之前看到哪」存在这里。
   //
-  // 刻意不 notifyListeners：這是純 UI 的暫存狀態，通知出去只會讓畫面上每張
-  // 卡片為了一個沒人顯示的數字白白重建一次。
+  // 刻意不 notifyListeners：这是纯 UI 的暂存状态，通知出去只会让画面上每张
+  // 卡片为了一个没人显示的数字白白重建一次。
   final Map<ServiceType, ScrollAnchor> _scrollAnchors = {};
   final Map<ServiceType, ScrollAnchor? Function()> _anchorCaptures = {};
 
-  /// 清單掛上時登記自己的取樣函式，[captureScrollAnchors] 會逐一呼叫。
+  /// 清单挂上时登记自己的取样函式，[captureScrollAnchors] 会逐一呼叫。
   void registerScrollAnchorCapture(
     ServiceType type,
     ScrollAnchor? Function() capture,
@@ -167,12 +167,12 @@ class RosterProvider with ChangeNotifier {
     _anchorCaptures[type] = capture;
   }
 
-  /// 卸載時撤銷登記。比對是不是同一個清單才移除：切換模式時新清單會先登記、
-  /// 舊清單才 dispose，直接 remove 會把剛登記好的新清單一起拔掉。
+  /// 卸载时撤销登记。比对是不是同一个清单才移除：切换模式时新清单会先登记、
+  /// 旧清单才 dispose，直接 remove 会把刚登记好的新清单一起拔掉。
   ///
   /// 用 `==` 不是 `identical`：Dart 的 tear-off 每次取值都是新物件，
-  /// `identical(a.cap, a.cap)` 恆為 false，改用 `==` 才問得到「同一個 State 的
-  /// 同一個方法」（同 receiver 才相等）。
+  /// `identical(a.cap, a.cap)` 恒为 false，改用 `==` 才问得到「同一个 State 的
+  /// 同一个方法」（同 receiver 才相等）。
   void unregisterScrollAnchorCapture(
     ServiceType type,
     ScrollAnchor? Function() capture,
@@ -184,7 +184,7 @@ class RosterProvider with ChangeNotifier {
 
   ScrollAnchor? scrollAnchorFor(ServiceType type) => _scrollAnchors[type];
 
-  /// 在切換模式前呼叫：把目前每個分頁頂端的日期記下來。
+  /// 在切换模式前呼叫：把目前每个分页顶端的日期记下来。
   void captureScrollAnchors() {
     for (final entry in _anchorCaptures.entries) {
       final anchor = entry.value();
@@ -197,13 +197,13 @@ class RosterProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// 由 ChangeNotifierProxyProvider 在 SessionProvider.currentUser 變動時呼叫。
-  /// 當 userId 真的改變（含登出 → null 或切換帳號），清掉全部 cache 並重抓資料。
+  /// 由 ChangeNotifierProxyProvider 在 SessionProvider.currentUser 变动时呼叫。
+  /// 当 userId 真的改变（含登出 → null 或切换帐号），清掉全部 cache 并重抓资料。
   void onSessionChanged(String? userId) {
     if (userId == _lastSessionUserId) return;
     _lastSessionUserId = userId;
 
-    _fetchToken++; // 讓進行中的 fetch 過期
+    _fetchToken++; // 让进行中的 fetch 过期
     _replaceRosters([]);
     _templates = {};
     _templatesLoaded = false;
@@ -211,21 +211,21 @@ class RosterProvider with ChangeNotifier {
     _staffOrders = StaffOrderBook();
     _error = null;
     _isEditMode = false;
-    // 換人＝換整份資料，舊的日期錨點指到的卡片可能根本不存在了。
+    // 换人＝换整份资料，旧的日期锚点指到的卡片可能根本不存在了。
     _scrollAnchors.clear();
 
     if (userId != null) {
-      // 有新使用者，重抓資料。
+      // 有新使用者，重抓资料。
       fetchInitialData();
     } else {
-      // 登出，僅清除並通知 UI。
+      // 登出，仅清除并通知 UI。
       notifyListeners();
     }
   }
 
-  /// 取得特定類別的服事表。分組結果會快取 — UI 每次 rebuild 都會對三個
-  /// ServiceType 各問一次，現算等於每個 frame 掃三遍全部 roster 並配置三個
-  /// 新 List（也讓 ListView 每次都拿到不同的 list instance）。
+  /// 取得特定类别的服事表。分组结果会快取 — UI 每次 rebuild 都会对三个
+  /// ServiceType 各问一次，现算等于每个 frame 扫三遍全部 roster 并配置三个
+  /// 新 List（也让 ListView 每次都拿到不同的 list instance）。
   List<ServiceRoster> getRostersByType(ServiceType type) {
     final grouped = _rostersByType ??= _groupByType(_allRosters);
     return grouped[type] ?? const <ServiceRoster>[];
@@ -243,13 +243,13 @@ class RosterProvider with ChangeNotifier {
     return grouped;
   }
 
-  // 為了相容性，如果有人直接 call rosters (雖然目前沒人用)，回傳全部
+  // 为了相容性，如果有人直接 call rosters (虽然目前没人用)，回传全部
   List<ServiceRoster> get rosters => _allRosters;
 
-  /// 服事表會顯示出來的所有不重複字串，給 [TextWarmup] 預熱用。
+  /// 服事表会显示出来的所有不重复字串，给 [TextWarmup] 预热用。
   ///
-  /// 是「字串」不是「字元」：引擎的排版快取以整個字串為 key，只預熱字元只
-  /// 會把字型抓下來，每個名字第一次排版的成本還是會落在捲動途中。
+  /// 是「字串」不是「字元」：引擎的排版快取以整个字串为 key，只预热字元只
+  /// 会把字型抓下来，每个名字第一次排版的成本还是会落在卷动途中。
   List<String> get displayStrings {
     final cached = _displayStrings;
     if (cached != null) return cached;
@@ -271,60 +271,60 @@ class RosterProvider with ChangeNotifier {
   Future<void> fetchInitialData() async {
     final token = ++_fetchToken;
 
-    // Phase 1: cache-first — 從 IndexedDB 讀取（~50-150ms），有資料就先渲染。
-    // isLoading 維持 true，但 UI 改成「isLoading && rosters.isEmpty」才顯示
-    // spinner，所以有 stale data 時畫面不再卡白。
+    // Phase 1: cache-first — 从 IndexedDB 读取（~50-150ms），有资料就先渲染。
+    // isLoading 维持 true，但 UI 改成「isLoading && rosters.isEmpty」才显示
+    // spinner，所以有 stale data 时画面不再卡白。
     try {
       final cached = await _repository.getUpcomingRostersFromCache();
-      if (token != _fetchToken) return; // stale token，丟棄
+      if (token != _fetchToken) return; // stale token，丢弃
       if (cached.isNotEmpty) {
         _replaceRosters(cached, relearn: true);
         notifyListeners(); // 先渲染 stale data
       }
     } catch (e, st) {
-      log('讀取 roster cache 失敗（不影響後續 server fetch）', error: e, stackTrace: st);
-      // cache 失敗不影響繼續走 server，silent
+      log('读取 roster cache 失败（不影响后续 server fetch）', error: e, stackTrace: st);
+      // cache 失败不影响继续走 server，silent
     }
 
-    // Phase 2: server fetch — 拿到最新資料後覆蓋。
+    // Phase 2: server fetch — 拿到最新资料后覆盖。
     _isLoading = true;
     _error = null;
     notifyListeners();
 
-    // 三個請求同時發，但只有 roster 是必要的：服事表沒有 templates /
-    // event options 一樣能顯示（那兩份只影響編輯用的選單與標籤顏色）。
-    // 全部塞進同一個 Future.wait 的話，任何一份 settings 讀取失敗都會把
-    // 已經成功抓到的 roster 一起丟掉，畫面變成「載入失敗」。
+    // 三个请求同时发，但只有 roster 是必要的：服事表没有 templates /
+    // event options 一样能显示（那两份只影响编辑用的选单与标签颜色）。
+    // 全部塞进同一个 Future.wait 的话，任何一份 settings 读取失败都会把
+    // 已经成功抓到的 roster 一起丢掉，画面变成「载入失败」。
     final rostersFuture = _repository.getUpcomingRosters();
     final templatesFuture = _optional(
       _repository.getServiceTemplates(),
-      '載入服事項目樣板失敗（不影響服事表顯示）',
+      '载入服事项目样板失败（不影响服事表显示）',
     );
     final eventOptionsFuture = _optional(
       _repository.getEventOptions(),
-      '載入事件選項失敗（不影響服事表顯示）',
+      '载入事件选项失败（不影响服事表显示）',
     );
-    // 讀不到就照學出來的順序排，一樣能看。
+    // 读不到就照学出来的顺序排，一样能看。
     final staffOrdersFuture = _optional(
       _repository.getStaffOrders(),
-      '載入同工排序失敗（改用服事表上的順序）',
+      '载入同工排序失败（改用服事表上的顺序）',
     );
 
     try {
       final rosters = await rostersFuture;
-      if (token != _fetchToken) return; // stale fetch，丟棄結果
+      if (token != _fetchToken) return; // stale fetch，丢弃结果
       _replaceRosters(rosters, relearn: true);
     } catch (e, st) {
-      if (token != _fetchToken) return; // stale fetch，丟棄錯誤
-      log('載入服事表資料失敗', error: e, stackTrace: st);
-      // 若 Phase 1 已拿到 cache 資料，就不設 _error（讓 UI 顯示 stale data 而非錯誤）
+      if (token != _fetchToken) return; // stale fetch，丢弃错误
+      log('载入服事表资料失败', error: e, stackTrace: st);
+      // 若 Phase 1 已拿到 cache 资料，就不设 _error（让 UI 显示 stale data 而非错误）
       if (_allRosters.isEmpty) {
-        _error = '載入失敗:${mapErrorToUserMessage(e)}';
+        _error = '载入失败:${mapErrorToUserMessage(e)}';
       } else {
-        log('Server fetch 失敗，UI 繼續顯示 cache 資料', error: e, stackTrace: st);
+        log('Server fetch 失败，UI 继续显示 cache 资料', error: e, stackTrace: st);
       }
     } finally {
-      // settings 失敗時保留上一次的值，不覆蓋成空的。
+      // settings 失败时保留上一次的值，不覆盖成空的。
       final templates = await templatesFuture;
       final eventOptions = await eventOptionsFuture;
       final staffOrders = await staffOrdersFuture;
@@ -344,8 +344,8 @@ class RosterProvider with ChangeNotifier {
     }
   }
 
-  /// 把「有了更好、沒有也能動」的請求包成永遠不會 reject 的 future：
-  /// 失敗時 log 後回傳 null，讓呼叫端保留既有的值。
+  /// 把「有了更好、没有也能动」的请求包成永远不会 reject 的 future：
+  /// 失败时 log 后回传 null，让呼叫端保留既有的值。
   static Future<T?> _optional<T>(Future<T> future, String failureMessage) {
     return future.then<T?>((value) => value).catchError((
       Object e,
@@ -359,7 +359,7 @@ class RosterProvider with ChangeNotifier {
   Future<void> fetchRosters() async {
     final token = ++_fetchToken;
 
-    // Phase 1: cache-first — 先顯示 stale data 避免白屏。
+    // Phase 1: cache-first — 先显示 stale data 避免白屏。
     try {
       final cached = await _repository.getUpcomingRostersFromCache();
       if (token != _fetchToken) return;
@@ -368,7 +368,7 @@ class RosterProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e, st) {
-      log('讀取 roster cache 失敗（不影響後續 server fetch）', error: e, stackTrace: st);
+      log('读取 roster cache 失败（不影响后续 server fetch）', error: e, stackTrace: st);
     }
 
     // Phase 2: server fetch。
@@ -378,15 +378,15 @@ class RosterProvider with ChangeNotifier {
 
     try {
       final rosters = await _repository.getUpcomingRosters();
-      if (token != _fetchToken) return; // stale fetch，丟棄結果
+      if (token != _fetchToken) return; // stale fetch，丢弃结果
       _replaceRosters(rosters, relearn: true);
     } catch (e, st) {
-      if (token != _fetchToken) return; // stale fetch，丟棄錯誤
-      log('載入服事表失敗', error: e, stackTrace: st);
+      if (token != _fetchToken) return; // stale fetch，丢弃错误
+      log('载入服事表失败', error: e, stackTrace: st);
       if (_allRosters.isEmpty) {
-        _error = '載入失敗:${mapErrorToUserMessage(e)}';
+        _error = '载入失败:${mapErrorToUserMessage(e)}';
       } else {
-        log('Server fetch 失敗，UI 繼續顯示 cache 資料', error: e, stackTrace: st);
+        log('Server fetch 失败，UI 继续显示 cache 资料', error: e, stackTrace: st);
       }
     } finally {
       if (token == _fetchToken) {
@@ -396,40 +396,40 @@ class RosterProvider with ChangeNotifier {
     }
   }
 
-  /// 只有具編輯權的人（admin / 負責人）才可呼叫。確保本季 + 下季、[allowedTypes]
-  /// 範圍內的預定 roster 都已存在於 Firestore。
+  /// 只有具编辑权的人（admin / 负责人）才可呼叫。确保本季 + 下季、[allowedTypes]
+  /// 范围内的预定 roster 都已存在于 Firestore。
   ///
-  /// [allowedTypes] 要傳呼叫者「改得動」的聚會別（[User.allowedRosterTypes]），
-  /// 不是畫面上顯示的全部：多一個他無權寫的聚會別，整個 batch 都會被 rules 拒。
-  /// 背景執行，失敗僅 log，不影響 UI。完成後觸發 fetchInitialData 讓新建的 roster 出現。
+  /// [allowedTypes] 要传呼叫者「改得动」的聚会别（[User.allowedRosterTypes]），
+  /// 不是画面上显示的全部：多一个他无权写的聚会别，整个 batch 都会被 rules 拒。
+  /// 背景执行，失败仅 log，不影响 UI。完成后触发 fetchInitialData 让新建的 roster 出现。
   Future<void> ensureQuarterRostersForEditor(
     List<ServiceType> allowedTypes,
   ) async {
     try {
       await _repository.ensureQuarterRosters(allowedTypes);
     } catch (e, st) {
-      log('ensureQuarterRosters 失敗', error: e, stackTrace: st);
-      // 靜默失敗，不 disrupt UI。
+      log('ensureQuarterRosters 失败', error: e, stackTrace: st);
+      // 静默失败，不 disrupt UI。
     }
-    // backfill 成功與否都要重抓 —— backfill 只是「補齊缺的 roster」，
-    // 它失敗不代表現有資料讀不到。放在 try 裡的話，backfill 一拋例外就會
-    // 連重抓一起跳過，進編輯模式時畫面停在舊資料且毫無提示。
+    // backfill 成功与否都要重抓 —— backfill 只是「补齐缺的 roster」，
+    // 它失败不代表现有资料读不到。放在 try 里的话，backfill 一抛例外就会
+    // 连重抓一起跳过，进编辑模式时画面停在旧资料且毫无提示。
     await fetchInitialData();
   }
 
-  /// 寫一張服事表。
+  /// 写一张服事表。
   ///
-  /// 這個 provider 的寫入失敗**一律往上丟**，由呼叫端就地顯示；[error] 只留
-  /// 給載入失敗。以前這裡把錯誤吞進 [error]，而編輯頁一看到 [error] 就把整頁
-  /// 換成錯誤畫面 —— 改錯一格，整本服事表從畫面上消失。例外只有服事項目
-  /// 改名或刪除時順帶同步同工排序那一步（見 [_syncStaffOrderRoles]）。
+  /// 这个 provider 的写入失败**一律往上丢**，由呼叫端就地显示；[error] 只留
+  /// 给载入失败。以前这里把错误吞进 [error]，而编辑页一看到 [error] 就把整页
+  /// 换成错误画面 —— 改错一格，整本服事表从画面上消失。例外只有服事项目
+  /// 改名或删除时顺带同步同工排序那一步（见 [_syncStaffOrderRoles]）。
   ///
-  /// 寫進去之前先照同工排序排好：存起來的就是畫面上的順序，不會因為下次
-  /// 重新學排序時學到一份沒排好的資料。
+  /// 写进去之前先照同工排序排好：存起来的就是画面上的顺序，不会因为下次
+  /// 重新学排序时学到一份没排好的资料。
   ///
-  /// [ranking] 是選人視窗裡拖過的順序，先存它再存這一天 —— 反過來的話這一天
-  /// 會照舊的排序排。排序存失敗就往上丟，這一天也不寫：跟匯入一樣，失敗時
-  /// 什麼都沒動，重按一次就好。
+  /// [ranking] 是选人视窗里拖过的顺序，先存它再存这一天 —— 反过来的话这一天
+  /// 会照旧的排序排。排序存失败就往上丢，这一天也不写：跟汇入一样，失败时
+  /// 什么都没动，重按一次就好。
   Future<void> updateRoster(
     ServiceRoster roster, {
     StaffRanking? ranking,
@@ -439,7 +439,7 @@ class RosterProvider with ChangeNotifier {
     try {
       await _repository.updateRoster(roster);
     } catch (e, st) {
-      log('更新 roster 失敗', error: e, stackTrace: st);
+      log('更新 roster 失败', error: e, stackTrace: st);
       rethrow;
     }
     final index = _allRosters.indexWhere((r) => r.id == roster.id);
@@ -449,16 +449,16 @@ class RosterProvider with ChangeNotifier {
     }
   }
 
-  /// 把 [duty] 裡的 [from] 換成 [to]，其他人與既有順序都不動。
+  /// 把 [duty] 里的 [from] 换成 [to]，其他人与既有顺序都不动。
   ///
-  /// [toId] 是 [to] 在對方那筆 duty 上記的 uid（可能沒有，例如「外請講員」這種
-  /// 名單外的自訂名字）。要一起搬過來，否則推播就找不到這個人了。
+  /// [toId] 是 [to] 在对方那笔 duty 上记的 uid（可能没有，例如「外请讲员」这种
+  /// 名单外的自订名字）。要一起搬过来，否则推播就找不到这个人了。
   ///
-  /// 兩個邊界：
-  ///   - 換進來的人本來就在這一天：不要留下兩個同名，直接把重複的那個吃掉。
-  ///     UI 已經先濾掉這種選項，這裡是第二道防線。
-  ///   - 換成「待定」而這一天還有別人：只把 [from] 拿掉，不補佔位符；全空了
-  ///     才補一個回去。
+  /// 两个边界：
+  ///   - 换进来的人本来就在这一天：不要留下两个同名，直接把重复的那个吃掉。
+  ///     UI 已经先滤掉这种选项，这里是第二道防线。
+  ///   - 换成「待定」而这一天还有别人：只把 [from] 拿掉，不补占位符；全空了
+  ///     才补一个回去。
   @visibleForTesting
   static RosterEntry replaceDutyPerson(
     RosterEntry duty,
@@ -479,9 +479,9 @@ class RosterProvider with ChangeNotifier {
       return result;
     }
 
-    // 沒有人的 duty 在 UI 上顯示成一個「待定」（見 _SwapDutyDialog），所以這裡
-    // 也要把空清單當成 ['待定']，否則以待定為交換對象時 from 找不到對應項目，
-    // 換過來的人會直接消失。
+    // 没有人的 duty 在 UI 上显示成一个「待定」（见 _SwapDutyDialog），所以这里
+    // 也要把空清单当成 ['待定']，否则以待定为交换对象时 from 找不到对应项目，
+    // 换过来的人会直接消失。
     final currentPeople = duty.people.isEmpty
         ? const [placeholderPerson]
         : duty.people;
@@ -495,19 +495,19 @@ class RosterProvider with ChangeNotifier {
     if (trimmedToId != null && trimmedToId.isNotEmpty && people.contains(to)) {
       personIdsByName[to] = trimmedToId;
     }
-    // 名字都不在這一天了，uid 留著只會在下次交換時被誤搬。
+    // 名字都不在这一天了，uid 留著只会在下次交换时被误搬。
     personIdsByName.removeWhere((name, _) => !people.contains(name));
 
     return duty.copyWith(people: people, personIdsByName: personIdsByName);
   }
 
-  /// 把兩張服事表上同一個服事項目的兩個人對調。
+  /// 把两张服事表上同一个服事项目的两个人对调。
   ///
-  /// 走 repository 的 batch 而不是兩次 [updateRoster]：交換的兩筆缺一不可，
-  /// 一邊成功一邊失敗會留下一個人被排兩天、另一個人的那天空著，而且畫面上
-  /// 兩邊看起來都換好了。
+  /// 走 repository 的 batch 而不是两次 [updateRoster]：交换的两笔缺一不可，
+  /// 一边成功一边失败会留下一个人被排两天、另一个人的那天空著，而且画面上
+  /// 两边看起来都换好了。
   ///
-  /// 失敗往上丟（見 [updateRoster]），呼叫端的 sheet 就地顯示錯誤讓人重試。
+  /// 失败往上丢（见 [updateRoster]），呼叫端的 sheet 就地显示错误让人重试。
   Future<void> swapDutyPeople({
     required String sourceRosterId,
     required int sourceDutyIndex,
@@ -519,10 +519,10 @@ class RosterProvider with ChangeNotifier {
     final sourceIndex = _allRosters.indexWhere((r) => r.id == sourceRosterId);
     final targetIndex = _allRosters.indexWhere((r) => r.id == targetRosterId);
     if (sourceIndex < 0 || targetIndex < 0) {
-      throw StateError('找不到要交換的服事表，請重新整理後再試');
+      throw StateError('找不到要交换的服事表，请重新整理后再试');
     }
     if (sourceIndex == targetIndex) {
-      throw ArgumentError('同一天的服事不需要交換');
+      throw ArgumentError('同一天的服事不需要交换');
     }
 
     final source = _allRosters[sourceIndex];
@@ -531,7 +531,7 @@ class RosterProvider with ChangeNotifier {
         sourceDutyIndex >= source.duties.length ||
         targetDutyIndex < 0 ||
         targetDutyIndex >= target.duties.length) {
-      throw StateError('服事項目已變動，請重新整理後再試');
+      throw StateError('服事项目已变动，请重新整理后再试');
     }
 
     final sourceDuty = source.duties[sourceDutyIndex];
@@ -552,8 +552,8 @@ class RosterProvider with ChangeNotifier {
       toId: sourceDuty.personIdsByName[sourcePerson],
     );
 
-    // 換進來的人就地頂替，位置交給同工排序決定：主要同工換到別天還是排第
-    // 一個，不會因為頂替的是第二個位置就跟著排第二。
+    // 换进来的人就地顶替，位置交给同工排序决定：主要同工换到别天还是排第
+    // 一个，不会因为顶替的是第二个位置就跟著排第二。
     final newSource = _staffOrders.sort(
       source.copyWith(duties: newSourceDuties),
     );
@@ -600,8 +600,8 @@ class RosterProvider with ChangeNotifier {
 
     final successes = results.where((r) => r.error == null).toList();
     if (successes.isNotEmpty) {
-      // 一次算出新清單再換上去，不要逐筆呼叫 _replaceRosterAt（那會為每筆
-      // 成功的寫入各複製一份完整清單）。
+      // 一次算出新清单再换上去，不要逐笔呼叫 _replaceRosterAt（那会为每笔
+      // 成功的写入各复制一份完整清单）。
       final successById = {for (final r in successes) r.roster.id: r.roster};
       _replaceRosters(
         _allRosters.map((roster) => successById[roster.id] ?? roster).toList(),
@@ -621,24 +621,24 @@ class RosterProvider with ChangeNotifier {
     }
   }
 
-  /// 寫入服事項目樣板，並把改名的服事同步到現有的服事表。
+  /// 写入服事项目样板，并把改名的服事同步到现有的服事表。
   ///
-  /// 失敗往上丟（見 [updateRoster]）。樣板寫成功、但有幾天的服事表沒改到名
-  /// 時丟 [PartialUpdateException] —— 再存一次就會補上，改過的那幾天已經沒有
-  /// 舊名字可以換了。
-  /// 寫入服事項目樣板，並把改名與刪除同步到服事表和同工排序。
+  /// 失败往上丢（见 [updateRoster]）。样板写成功、但有几天的服事表没改到名
+  /// 时丢 [PartialUpdateException] —— 再存一次就会补上，改过的那几天已经没有
+  /// 旧名字可以换了。
+  /// 写入服事项目样板，并把改名与删除同步到服事表和同工排序。
   ///
-  /// 改名套到每一張載入的服事表。刪除只套到今天以後的：已經過去的那幾週
-  /// 是紀錄，當時確實排了這一項。以前刪除完全不同步，樣板少了一項，每一
-  /// 週的服事表卻還掛著它，只能一週一週手動刪。
+  /// 改名套到每一张载入的服事表。删除只套到今天以后的：已经过去的那几周
+  /// 是纪录，当时确实排了这一项。以前删除完全不同步，样板少了一项，每一
+  /// 周的服事表却还挂著它，只能一周一周手动删。
   ///
-  /// [renamedRolesByType] 的 key 是改名前的名字，那些不算刪除。
+  /// [renamedRolesByType] 的 key 是改名前的名字，那些不算删除。
   Future<void> updateTemplates(
     Map<ServiceType, List<String>> newTemplates, {
     Map<ServiceType, Map<String, String>> renamedRolesByType = const {},
   }) async {
     try {
-      // 樣板還沒載入過就不知道少了哪幾項，這時不刪任何東西。
+      // 样板还没载入过就不知道少了哪几项，这时不删任何东西。
       final removedRolesByType = _templatesLoaded
           ? _removedRoles(_templates, newTemplates, renamedRolesByType)
           : const <ServiceType, Set<String>>{};
@@ -683,19 +683,19 @@ class RosterProvider with ChangeNotifier {
 
         await _syncStaffOrderRoles(renamedRolesByType, removedRolesByType);
 
-        // 走 updateRosters 而不是 Future.wait：後者一筆失敗就整批當作沒
-        // 寫，成功的那幾天在畫面上還是舊名字。
+        // 走 updateRosters 而不是 Future.wait：后者一笔失败就整批当作没
+        // 写，成功的那几天在画面上还是旧名字。
         await updateRosters(updatedRosters);
       }
 
       notifyListeners();
     } catch (e, st) {
-      log('更新服事表樣板失敗', error: e, stackTrace: st);
+      log('更新服事表样板失败', error: e, stackTrace: st);
       rethrow;
     }
   }
 
-  /// [before] 有、[after] 沒有、也不是改名前的名字的服事項目。
+  /// [before] 有、[after] 没有、也不是改名前的名字的服事项目。
   static Map<ServiceType, Set<String>> _removedRoles(
     Map<ServiceType, List<String>> before,
     Map<ServiceType, List<String>> after,
@@ -714,12 +714,12 @@ class RosterProvider with ChangeNotifier {
     return result;
   }
 
-  /// 服事項目改名時把存下來的同工排序搬到新名字，刪掉的項目連排序一起刪。
+  /// 服事项目改名时把存下来的同工排序搬到新名字，删掉的项目连排序一起删。
   ///
-  /// 失敗只記 log、不往上丟 —— 這個 provider 寫入失敗一律往上丟的唯一例外：
-  /// 樣板已經寫進去了，這時報失敗會讓人以為改名沒成功。排序沒搬到的後果只
-  /// 是那一項退回從服事表學的順序，而服事表本來就照舊的排序存，學回來的是
-  /// 同一份；沒刪到的只是留一筆沒人用的排序。
+  /// 失败只记 log、不往上丢 —— 这个 provider 写入失败一律往上丢的唯一例外：
+  /// 样板已经写进去了，这时报失败会让人以为改名没成功。排序没搬到的后果只
+  /// 是那一项退回从服事表学的顺序，而服事表本来就照旧的排序存，学回来的是
+  /// 同一份；没删到的只是留一笔没人用的排序。
   Future<void> _syncStaffOrderRoles(
     Map<ServiceType, Map<String, String>> renamedRolesByType,
     Map<ServiceType, Set<String>> removedRolesByType,
@@ -740,13 +740,13 @@ class RosterProvider with ChangeNotifier {
               }),
         );
       } catch (e, st) {
-        log('同工排序同步失敗（該項退回服事表上的順序）', error: e, stackTrace: st);
+        log('同工排序同步失败（该项退回服事表上的顺序）', error: e, stackTrace: st);
       }
     }
   }
 
-  /// 把 [type] 存著的排序改成 [next]。只寫有變的服事項目（見
-  /// [StaffOrder.changesTo]），沒變就不寫。失敗往上丟，本機什麼都不動。
+  /// 把 [type] 存著的排序改成 [next]。只写有变的服事项目（见
+  /// [StaffOrder.changesTo]），没变就不写。失败往上丢，本机什么都不动。
   Future<void> _writeStaffOrder(ServiceType type, StaffOrder next) async {
     final changes = _staffOrders.storedFor(type).changesTo(next);
     if (changes.isEmpty) return;
@@ -756,24 +756,24 @@ class RosterProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// 在選人視窗拖過順序之後，把那個服事項目的排序換成 [ranking]。
+  /// 在选人视窗拖过顺序之后，把那个服事项目的排序换成 [ranking]。
   ///
-  /// 換掉的是整個崇拜的這一項，不是這一天：畫面上每一天的這一項都會照新
-  /// 順序重排。失敗往上丟（見 [updateRoster]）。
+  /// 换掉的是整个崇拜的这一项，不是这一天：画面上每一天的这一项都会照新
+  /// 顺序重排。失败往上丢（见 [updateRoster]）。
   Future<void> updateStaffRanking(ServiceType type, StaffRanking ranking) =>
       _writeStaffOrder(
         type,
         _staffOrders.storedFor(type).withRanking(ranking.role, ranking.names),
       );
 
-  /// 寫一次匯入：先把圖片上學到的排序併進存著的那份，再寫服事表。
+  /// 写一次汇入：先把图片上学到的排序并进存著的那份，再写服事表。
   ///
-  /// 順序不能反：服事表寫入時照排序重排，排序還是舊的就會把圖片上的順序打
-  /// 亂。圖片是負責人排好發出來的，比之前在這裡拖過的順序新，所以圖片上的
-  /// 人照圖片排；這次沒出現的人留在原位（見 [StaffOrder.mergedWith]）。
+  /// 顺序不能反：服事表写入时照排序重排，排序还是旧的就会把图片上的顺序打
+  /// 乱。图片是负责人排好发出来的，比之前在这里拖过的顺序新，所以图片上的
+  /// 人照图片排；这次没出现的人留在原位（见 [StaffOrder.mergedWith]）。
   ///
-  /// 排序寫失敗時原樣往上丟，一張服事表都還沒動；服事表寫失敗時丟
-  /// [PartialUpdateException]（見 [updateRosters]）。
+  /// 排序写失败时原样往上丢，一张服事表都还没动；服事表写失败时丢
+  /// [PartialUpdateException]（见 [updateRosters]）。
   Future<void> applyRosterImport(
     ServiceType type,
     RosterImportReady ready,
@@ -785,23 +785,23 @@ class RosterProvider with ChangeNotifier {
     await updateRosters(ready.updates);
   }
 
-  /// 把一個活動加進 [type] 的活動清單，顏色自動挑（見 [pickEventColor]）。
+  /// 把一个活动加进 [type] 的活动清单，颜色自动挑（见 [pickEventColor]）。
   ///
-  /// 給匯入結果上的「加入活動清單」用。失敗往上丟，那顆按鈕在自己那一列
-  /// 顯示失敗。
+  /// 给汇入结果上的「加入活动清单」用。失败往上丢，那颗按钮在自己那一列
+  /// 显示失败。
   ///
-  /// 已經有同名的就什麼都不寫，直接回那一筆 —— 重按、或兩個崇拜的匯入先後
-  /// 按到同一個活動，都不該多出一筆重複的。
+  /// 已经有同名的就什么都不写，直接回那一笔 —— 重按、或两个崇拜的汇入先后
+  /// 按到同一个活动，都不该多出一笔重复的。
   ///
-  /// 先讀一份最新的再寫，而不是用這台裝置上的快取：活動清單是整份文件寫回
-  /// 去的，拿快取來寫，另一台裝置在這段期間改的活動設定會被靜靜蓋掉。剩下
-  /// 的空窗只有讀與寫之間那一下。
+  /// 先读一份最新的再写，而不是用这台装置上的快取：活动清单是整份文件写回
+  /// 去的，拿快取来写，另一台装置在这段期间改的活动设定会被静静盖掉。剩下
+  /// 的空窗只有读与写之间那一下。
   Future<EventOption> addEventOption(ServiceType type, String name) async {
     final options = Map.of(await _repository.getEventOptions());
     final list = List<EventOption>.from(options[type] ?? const []);
     for (final option in list) {
       if (option.name == name) {
-        // 別台裝置剛加過。什麼都不寫，但這台的快取也跟上，顏色才會出來。
+        // 别台装置刚加过。什么都不写，但这台的快取也跟上，颜色才会出来。
         _replaceEventOptions(options);
         notifyListeners();
         return option;
@@ -815,9 +815,9 @@ class RosterProvider with ChangeNotifier {
     return added;
   }
 
-  /// 寫入活動清單，並把改名的活動（連同自訂顏色）同步到現有的服事表。
+  /// 写入活动清单，并把改名的活动（连同自订颜色）同步到现有的服事表。
   ///
-  /// 失敗往上丟，部分失敗的語意同 [updateTemplates]。
+  /// 失败往上丢，部分失败的语意同 [updateTemplates]。
   Future<void> updateEventOptions(
     Map<ServiceType, List<EventOption>> options, {
     Map<ServiceType, Map<String, String>> renamedEventsByType = const {},
@@ -877,7 +877,7 @@ class RosterProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e, st) {
-      log('更新事件選項失敗', error: e, stackTrace: st);
+      log('更新事件选项失败', error: e, stackTrace: st);
       rethrow;
     }
   }
@@ -899,5 +899,5 @@ class PartialUpdateException implements Exception {
   });
 
   @override
-  String toString() => '$successCount 筆寫入成功，$failureCount 筆失敗（首個錯誤：$cause）';
+  String toString() => '$successCount 笔写入成功，$failureCount 笔失败（首个错误：$cause）';
 }

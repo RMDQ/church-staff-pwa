@@ -25,34 +25,34 @@ Future<String> _errorFor(http.Response response) async {
   } on RosterImportException catch (e) {
     return e.message;
   }
-  fail('應該要丟 RosterImportException');
+  fail('应该要丢 RosterImportException');
 }
 
 void main() {
   setUp(() => setTestChurchConfig(photoImport: true));
-  group('RosterImportService 的錯誤訊息', () {
-    test('API 自己寫的訊息原樣顯示，不加狀態碼', () async {
+  group('RosterImportService 的错误讯息', () {
+    test('API 自己写的讯息原样显示，不加状态码', () async {
       final message = await _errorFor(
         http.Response(
-          jsonEncode({'error': 'Gemini 免費版現在太多人用，過幾分鐘再試一次'}),
+          jsonEncode({'error': 'Gemini 免费版现在太多人用，过几分钟再试一次'}),
           503,
           headers: {'content-type': 'application/json; charset=utf-8'},
         ),
       );
-      expect(message, 'Gemini 免費版現在太多人用，過幾分鐘再試一次');
+      expect(message, 'Gemini 免费版现在太多人用，过几分钟再试一次');
     });
 
-    test('不是 API 產生的回應會帶上狀態碼，跟上面那句分得出來', () async {
-      // Cloudflare 因為 CPU 超時砍掉 worker 時回的就是這種：503、HTML。
+    test('不是 API 产生的回应会带上状态码，跟上面那句分得出来', () async {
+      // Cloudflare 因为 CPU 超时砍掉 worker 时回的就是这种：503、HTML。
       final message = await _errorFor(
         http.Response('<html>Worker exceeded resource limits</html>', 503),
       );
       expect(message, contains('（503）'));
-      expect(message, isNot('Gemini 免費版現在太多人用，過幾分鐘再試一次'));
+      expect(message, isNot('Gemini 免费版现在太多人用，过几分钟再试一次'));
     });
   });
 
-  test('成功時回排版過的 JSON，填得回匯入框', () async {
+  test('成功时回排版过的 JSON，填得回汇入框', () async {
     final service = _service((request) async {
       final body = jsonDecode(request.body) as Map<String, dynamic>;
       expect(body['type'], 'youth');

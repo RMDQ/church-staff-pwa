@@ -8,11 +8,11 @@ class AppVersionInfo {
 
   final DateTime generatedAt;
 
-  /// release.json 的版本號，例如 2026.9.1。只有安裝精靈 build 的網站才有。
+  /// release.json 的版本号，例如 2026.9.1。只有安装精灵 build 的网站才有。
   final String? release;
 
-  /// 'installer'：這個網站是安裝精靈裝的，只能靠精靈更新，不會跟著 Git 自動
-  /// 部署。管理員才需要被告知有新版本（見 ReleaseCheckService）。
+  /// 'installer'：这个网站是安装精灵装的，只能靠精灵更新，不会跟著 Git 自动
+  /// 部署。管理员才需要被告知有新版本（见 ReleaseCheckService）。
   final String? channel;
 
   bool get isInstallerSite => channel == 'installer';
@@ -21,14 +21,14 @@ class AppVersionInfo {
 class AppVersionService {
   const AppVersionService();
 
-  /// 個人頁「更新於」要回答的是「我手上這個 App 是哪一版」，不是「伺服器現在
-  /// 是哪一版」——後者對使用者沒有意義，而且會在「舊 bundle ＋ 新伺服器」時
-  /// 顯示成已更新。
+  /// 个人页「更新于」要回答的是「我手上这个 App 是哪一版」，不是「伺服器现在
+  /// 是哪一版」——后者对使用者没有意义，而且会在「旧 bundle ＋ 新伺服器」时
+  /// 显示成已更新。
   ///
-  /// 所以這裡刻意不加 `?t=` 也不送 `cache-control: no-cache`：`version.json`
-  /// 跟著 bundle 一起進 service worker 那個以 build SHA 為名的快取
+  /// 所以这里刻意不加 `?t=` 也不送 `cache-control: no-cache`：`version.json`
+  /// 跟著 bundle 一起进 service worker 那个以 build SHA 为名的快取
   /// （`web/cache_sw.js` 走 cache-first），拿到的就是正在跑的那一版。加了
-  /// cache-bust 等於繞過快取去問伺服器，那行字就又變回伺服器的版本。
+  /// cache-bust 等于绕过快取去问伺服器，那行字就又变回伺服器的版本。
   Future<AppVersionInfo?> fetchVersionInfo() async {
     final candidates = [
       Uri.base.resolve('version.json'),

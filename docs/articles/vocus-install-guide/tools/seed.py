@@ -37,10 +37,10 @@ pw = secrets.token_urlsafe(12)
 open("staff-pass", "w").write(pw)
 people = {}
 for name, email, role, zones in [
-    ("王大衛", "admin@example.test", "admin", ["sundayService", "youth"]),
-    ("陳美恩", "meien@example.test", "member", ["sundayService", "youth"]),
-    ("林以諾", "enoch@example.test", "member", ["sundayService"]),
-    ("張恩惠", "grace@example.test", "member", ["youth"]),
+    ("王大卫", "admin@example.test", "admin", ["sundayService", "youth"]),
+    ("陈美恩", "meien@example.test", "member", ["sundayService", "youth"]),
+    ("林以诺", "enoch@example.test", "member", ["sundayService"]),
+    ("张恩惠", "grace@example.test", "member", ["youth"]),
 ]:
     uid = post(AUTH, {"email": email, "password": pw, "returnSecureToken": True})["localId"]
     people[name] = uid
@@ -50,7 +50,7 @@ for name, email, role, zones in [
         "zoneTypes": zones, "groups": [],
     })
 
-put("settings/roster_templates", {"sundayService": ["領會", "司琴", "讀經", "招待"], "youth": ["領會", "司琴", "音控"], "children": ["老師"]})
+put("settings/roster_templates", {"sundayService": ["领会", "司琴", "读经", "招待"], "youth": ["领会", "司琴", "音控"], "children": ["老师"]})
 
 
 def roster(day, type_, service_name, duties):
@@ -64,16 +64,16 @@ def roster(day, type_, service_name, duties):
 
 
 for day, duties in [
-    ("2026-10-04", [("領會", ["王大衛"]), ("司琴", ["陳美恩"]), ("讀經", ["林以諾"]), ("招待", ["張恩惠"])]),
-    ("2026-10-11", [("領會", ["林以諾"]), ("司琴", ["王大衛"]), ("讀經", ["張恩惠"]), ("招待", ["陳美恩"])]),
-    ("2026-10-18", [("領會", ["王大衛"]), ("司琴", ["張恩惠"]), ("讀經", ["陳美恩"]), ("招待", ["林以諾"])]),
-    ("2026-10-25", [("領會", ["陳美恩"]), ("司琴", ["王大衛"]), ("讀經", ["林以諾"]), ("招待", ["張恩惠"])]),
-    ("2026-11-01", [("領會", ["林以諾"]), ("司琴", ["陳美恩"]), ("讀經", ["王大衛"]), ("招待", ["陳美恩"])]),
+    ("2026-10-04", [("领会", ["王大卫"]), ("司琴", ["陈美恩"]), ("读经", ["林以诺"]), ("招待", ["张恩惠"])]),
+    ("2026-10-11", [("领会", ["林以诺"]), ("司琴", ["王大卫"]), ("读经", ["张恩惠"]), ("招待", ["陈美恩"])]),
+    ("2026-10-18", [("领会", ["王大卫"]), ("司琴", ["张恩惠"]), ("读经", ["陈美恩"]), ("招待", ["林以诺"])]),
+    ("2026-10-25", [("领会", ["陈美恩"]), ("司琴", ["王大卫"]), ("读经", ["林以诺"]), ("招待", ["张恩惠"])]),
+    ("2026-11-01", [("领会", ["林以诺"]), ("司琴", ["陈美恩"]), ("读经", ["王大卫"]), ("招待", ["陈美恩"])]),
 ]:
     roster(day, "sundayService", "主日崇拜", duties)
 for day, duties in [
-    ("2026-10-10", [("領會", ["張恩惠"]), ("司琴", ["陳美恩"]), ("音控", ["王大衛"])]),
-    ("2026-10-24", [("領會", ["陳美恩"]), ("司琴", ["張恩惠"]), ("音控", ["王大衛"])]),
+    ("2026-10-10", [("领会", ["张恩惠"]), ("司琴", ["陈美恩"]), ("音控", ["王大卫"])]),
+    ("2026-10-24", [("领会", ["陈美恩"]), ("司琴", ["张恩惠"]), ("音控", ["王大卫"])]),
 ]:
     roster(day, "youth", "青年崇拜", duties)
 print("seeded", len(people), "users")

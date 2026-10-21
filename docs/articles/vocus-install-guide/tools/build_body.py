@@ -16,10 +16,10 @@ def close():
     if lst: out.append(f'</{lst}>'); lst=None
 while i<len(src):
     l=src[i]
-    m=re.match(r'【插入圖 (\d\d)｜([^】]+)】',l)
+    m=re.match(r'【插入图 (\d\d)｜([^】]+)】',l)
     if m:
         close(); cap=''
-        if i+1<len(src) and src[i+1].startswith('圖說：'): cap=src[i+1][3:]; i+=1
+        if i+1<len(src) and src[i+1].startswith('图说：'): cap=src[i+1][3:]; i+=1
         caps[m[2]]=re.sub(r'\*\*(.+?)\*\*',r'\1',cap)
         out.append(f'<p>@@IMG:{m[2]}@@</p>')
     elif l.startswith('# '): close(); title=l[2:]

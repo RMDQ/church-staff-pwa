@@ -1,41 +1,41 @@
 'use strict';
 
-// Service worker 註冊與「換到新版」的交接流程。
+// Service worker 注册与「换到新版」的交接流程。
 //
-// 為什麼不寫在 index.html 裡（原本是）：這段程式碼決定「這台裝置能不能換到新
-// 版」，一旦自己被舊快取服務，卡住的裝置就再也救不回來。獨立成檔之後可以列進
-// cache_sw.js 的 NETWORK_FIRST_PATHS，永遠拿得到最新的一份；順便也才測得到
+// 为什么不写在 index.html 里（原本是）：这段程式码决定「这台装置能不能换到新
+// 版」，一旦自己被旧快取服务，卡住的装置就再也救不回来。独立成档之后可以列进
+// cache_sw.js 的 NETWORK_FIRST_PATHS，永远拿得到最新的一份；顺便也才测得到
 // （web-tests/app_update.test.js）。
 //
-// 交接流程本身：新的 SW 裝好之後會停在 waiting，要有人送 SKIP_WAITING 才會
-// activate；activate 會觸發 controllerchange，那時整頁 reload 一次，使用者就
-// 換到新的 bundle 了。
+// 交接流程本身：新的 SW 装好之后会停在 waiting，要有人送 SKIP_WAITING 才会
+// activate；activate 会触发 controllerchange，那时整页 reload 一次，使用者就
+// 换到新的 bundle 了。
 //
-// 踩過的坑，每一條都對應底下一段程式碼：
+// 踩过的坑，每一条都对应底下一段程式码：
 //
-//   1. 只在 updatefound 裡送 SKIP_WAITING 是不夠的。新的 SW 若在「上一次造訪」
-//      就已經裝好、停在 waiting（頁面在交接完成前被關掉），這一次載入時
-//      update() 抓到的檔案跟等待中那顆一模一樣，updatefound 不會再觸發 ——
-//      沒有人送 SKIP_WAITING，舊 SW 就永遠繼續服務舊 bundle，重整幾次都一樣。
-//      所以註冊後要先看 registration.waiting。
+//   1. 只在 updatefound 里送 SKIP_WAITING 是不够的。新的 SW 若在「上一次造访」
+//      就已经装好、停在 waiting（页面在交接完成前被关掉），这一次载入时
+//      update() 抓到的档案跟等待中那颗一模一样，updatefound 不会再触发 ——
+//      没有人送 SKIP_WAITING，旧 SW 就永远继续服务旧 bundle，重整几次都一样。
+//      所以注册后要先看 registration.waiting。
 //
-//   2. statechange 可能已經錯過。監聽器是在 updatefound 之後才掛上去的，worker
-//      若在那之前就到達 installed，那個事件就再也不會來。掛的同時也要檢查一次
-//      當下的 state。
+//   2. statechange 可能已经错过。监听器是在 updatefound 之后才挂上去的，worker
+//      若在那之前就到达 installed，那个事件就再也不会来。挂的同时也要检查一次
+//      当下的 state。
 //
-//   3. PWA 從背景切回來不算一次 navigation，瀏覽器不會自己去檢查 SW 有沒有更
-//      新。裝在桌面的 App 可以好幾天不重新載入 —— visibilitychange 時補一次
+//   3. PWA 从背景切回来不算一次 navigation，浏览器不会自己去检查 SW 有没有更
+//      新。装在桌面的 App 可以好几天不重新载入 —— visibilitychange 时补一次
 //      update()。
 
 (function () {
   if (!('serviceWorker' in navigator)) {
-    // 個人頁的「檢查更新」按鈕靠這個函式存在與否決定顯不顯示。
+    // 个人页的「检查更新」按钮靠这个函式存在与否决定显不显示。
     return;
   }
 
-  // 第一次裝 SW 時 controller 會從 null 變成新 SW，那也會觸發 controllerchange。
-  // 無條件 reload 的話，使用者第一次造訪會看到「載入中」兩次。只有已經有
-  // controller 的「升級」情境才 reload。
+  // 第一次装 SW 时 controller 会从 null 变成新 SW，那也会触发 controllerchange。
+  // 无条件 reload 的话，使用者第一次造访会看到「载入中」两次。只有已经有
+  // controller 的「升级」情境才 reload。
   var hadInitialController = !!navigator.serviceWorker.controller;
   var reloading = false;
 
@@ -44,22 +44,22 @@
       hadInitialController = true;
       return;
     }
-    // controllerchange 在某些瀏覽器上會連續來兩次，reload 兩次會讓畫面閃兩下。
+    // controllerchange 在某些浏览器上会连续来两次，reload 两次会让画面闪两下。
     if (reloading) return;
     reloading = true;
     window.location.reload();
   });
 
-  /// 有 worker 停在 waiting 就叫它讓位。回傳有沒有真的送出訊息。
+  /// 有 worker 停在 waiting 就叫它让位。回传有没有真的送出讯息。
   function activateWaiting(registration) {
     if (!registration || !registration.waiting) return false;
-    // 首次安裝不必介入（會自然 activate），這裡一定是升級：有 waiting 就代表
-    // 已經有另一個 SW 在控制頁面。
+    // 首次安装不必介入（会自然 activate），这里一定是升级：有 waiting 就代表
+    // 已经有另一个 SW 在控制页面。
     registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     return true;
   }
 
-  /// 盯著正在安裝的 worker，裝好就叫它讓位。
+  /// 盯著正在安装的 worker，装好就叫它让位。
   function activateWhenInstalled(worker) {
     if (!worker) return;
 
@@ -70,7 +70,7 @@
     }
 
     worker.addEventListener('statechange', maybeSkip);
-    // 掛上監聽器之前就可能已經 installed 了 —— 那個 statechange 不會再來。
+    // 挂上监听器之前就可能已经 installed 了 —— 那个 statechange 不会再来。
     maybeSkip();
   }
 
@@ -82,7 +82,7 @@
     });
   }
 
-  // 註冊只做一次，之後所有人（visibilitychange、檢查更新按鈕）共用同一個
+  // 注册只做一次，之后所有人（visibilitychange、检查更新按钮）共用同一个
   // registration。
   var registrationPromise = null;
 
@@ -96,7 +96,7 @@
         })
         .catch(function (error) {
           console.error('Cache SW registration failed:', error);
-          // 失敗不要記下來，下次（例如按了檢查更新）可以重試。
+          // 失败不要记下来，下次（例如按了检查更新）可以重试。
           registrationPromise = null;
           throw error;
         });
@@ -104,16 +104,16 @@
     return registrationPromise;
   }
 
-  /// 檢查有沒有新版，有就換過去（換完會 reload）。
+  /// 检查有没有新版，有就换过去（换完会 reload）。
   ///
-  /// 回傳 'updating'（找到新版，正在換）或 'latest'（已經是最新）。網路不通時
-  /// reject，呼叫端要把錯誤說出來 —— 靜靜地回「已是最新」是騙人的。
+  /// 回传 'updating'（找到新版，正在换）或 'latest'（已经是最新）。网路不通时
+  /// reject，呼叫端要把错误说出来 —— 静静地回「已是最新」是骗人的。
   ///
-  /// 個人頁的「檢查更新」按鈕呼叫這個（見 AppUpdateService）。
+  /// 个人页的「检查更新」按钮呼叫这个（见 AppUpdateService）。
   window.churchAppCheckForUpdate = function () {
     return ensureRegistration()
       .then(function (registration) {
-        // 上一次留下來的 waiting，按鈕按下去就該把它換上。
+        // 上一次留下来的 waiting，按钮按下去就该把它换上。
         if (activateWaiting(registration)) return 'updating';
         return registration.update().then(function () {
           if (activateWaiting(registration)) return 'updating';
@@ -128,10 +128,10 @@
 
   window.addEventListener('load', function () {
     ensureRegistration().catch(function () {
-      // ensureRegistration 已經印過了。
+      // ensureRegistration 已经印过了。
     });
 
-    // Firebase Cloud Messaging 推播 SW 走自己的 scope，跟更新流程無關。
+    // Firebase Cloud Messaging 推播 SW 走自己的 scope，跟更新流程无关。
     navigator.serviceWorker
       .register('firebase-messaging-sw.js', {
         scope: 'firebase-cloud-messaging-push-scope',
@@ -141,8 +141,8 @@
       });
   });
 
-  // 切回前景時檢查一次。裝成 App 的 PWA 從多工列切回來不算 navigation，
-  // 瀏覽器不會自己檢查，可以好幾天都停在舊版。
+  // 切回前景时检查一次。装成 App 的 PWA 从多工列切回来不算 navigation，
+  // 浏览器不会自己检查，可以好几天都停在旧版。
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState !== 'visible') return;
     ensureRegistration()
@@ -151,7 +151,7 @@
         return registration.update();
       })
       .catch(function () {
-        // 離線時 update() 會失敗，這是背景檢查，不吵使用者。
+        // 离线时 update() 会失败，这是背景检查，不吵使用者。
       });
   });
 })();

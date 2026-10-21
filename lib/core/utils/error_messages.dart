@@ -2,62 +2,62 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// 將任意例外轉換為對非技術使用者友善的繁中訊息。
+/// 将任意例外转换为对非技术使用者友善的繁中讯息。
 ///
-/// 呼叫端應另外以 [dart:developer] 的 [log] 記錄原始 error 與 stackTrace，
-/// 保留完整資訊供未來串接 Sentry 使用。
+/// 呼叫端应另外以 [dart:developer] 的 [log] 记录原始 error 与 stackTrace，
+/// 保留完整资讯供未来串接 Sentry 使用。
 String mapErrorToUserMessage(Object? error) {
-  // 1. FirebaseAuthException（登入/Auth 相關）
+  // 1. FirebaseAuthException（登入/Auth 相关）
   if (error is FirebaseAuthException) {
     return switch (error.code) {
-      'user-not-found' || 'invalid-credential' || 'wrong-password' => '帳號或密碼錯誤',
-      'user-disabled' => '帳號已被停用，請聯絡管理員',
-      'email-already-in-use' => '此電子郵件已被註冊',
-      'weak-password' => '密碼強度不足，至少 6 個字元',
-      'invalid-email' => '電子郵件格式錯誤',
-      'network-request-failed' => '網路連線失敗，請檢查網路',
-      'too-many-requests' => '登入嘗試次數過多，請稍後再試',
-      _ => '登入失敗，請稍後再試',
+      'user-not-found' || 'invalid-credential' || 'wrong-password' => '帐号或密码错误',
+      'user-disabled' => '帐号已被停用，请联络管理员',
+      'email-already-in-use' => '此电子邮件已被注册',
+      'weak-password' => '密码强度不足，至少 6 个字元',
+      'invalid-email' => '电子邮件格式错误',
+      'network-request-failed' => '网路连线失败，请检查网路',
+      'too-many-requests' => '登入尝试次数过多，请稍后再试',
+      _ => '登入失败，请稍后再试',
     };
   }
 
   // 2. FirebaseException（Firestore、Storage 等）
   if (error is FirebaseException) {
     return switch (error.code) {
-      'permission-denied' => '沒有權限執行此操作，請聯絡管理員',
-      'unavailable' || 'deadline-exceeded' => '網路不穩，請稍後再試',
-      'not-found' => '資料不存在',
-      'already-exists' => '資料已存在',
-      'failed-precondition' => '操作條件不符，請重新整理頁面',
-      _ => '資料處理失敗，請稍後再試',
+      'permission-denied' => '没有权限执行此操作，请联络管理员',
+      'unavailable' || 'deadline-exceeded' => '网路不稳，请稍后再试',
+      'not-found' => '资料不存在',
+      'already-exists' => '资料已存在',
+      'failed-precondition' => '操作条件不符，请重新整理页面',
+      _ => '资料处理失败，请稍后再试',
     };
   }
 
   // 3. TimeoutException
   if (error is TimeoutException) {
-    return '操作逾時，請稍後再試';
+    return '操作逾时，请稍后再试';
   }
 
   // 4. 其他所有例外
-  return '操作失敗，請稍後再試';
+  return '操作失败，请稍后再试';
 }
 
-/// 寄重設密碼信失敗時給使用者看的訊息；回傳 null 代表「當作寄出了」。
+/// 寄重设密码信失败时给使用者看的讯息；回传 null 代表「当作寄出了」。
 ///
-/// user-not-found 刻意當成功：畫面一律說「如果這個 Email 有帳號就會收到
-/// 信」，不讓登入頁變成查誰有帳號的工具。開了 email enumeration
-/// protection 的專案本來就不會回這個錯，這裡是給沒開的專案用的。
+/// user-not-found 刻意当成功：画面一律说「如果这个 Email 有帐号就会收到
+/// 信」，不让登入页变成查谁有帐号的工具。开了 email enumeration
+/// protection 的专案本来就不会回这个错，这里是给没开的专案用的。
 String? mapPasswordResetErrorToUserMessage(Object? error) {
   if (error is FirebaseAuthException) {
     return switch (error.code) {
       'user-not-found' => null,
-      'invalid-email' || 'missing-email' => '電子郵件格式錯誤',
-      'user-disabled' => '帳號已被停用，請聯絡管理員',
-      'network-request-failed' => '網路連線失敗，請檢查網路',
-      'too-many-requests' => '寄送次數過多，請稍後再試',
-      _ => '無法寄出重設信，請稍後再試',
+      'invalid-email' || 'missing-email' => '电子邮件格式错误',
+      'user-disabled' => '帐号已被停用，请联络管理员',
+      'network-request-failed' => '网路连线失败，请检查网路',
+      'too-many-requests' => '寄送次数过多，请稍后再试',
+      _ => '无法寄出重设信，请稍后再试',
     };
   }
-  if (error is TimeoutException) return '操作逾時，請稍後再試';
-  return '無法寄出重設信，請稍後再試';
+  if (error is TimeoutException) return '操作逾时，请稍后再试';
+  return '无法寄出重设信，请稍后再试';
 }

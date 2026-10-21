@@ -10,11 +10,11 @@ import 'package:church_staff_pwa/features/auth/presentation/providers/user_admin
 // ── Fake AuthRepository ────────────────────────────────────────────────────
 
 class _FakeAuthRepository implements AuthRepository {
-  /// `_makeSession` 在建構後直接賦值，所以 constructor 不宣告此欄位。
+  /// `_makeSession` 在建构后直接赋值，所以 constructor 不宣告此栏位。
   User? currentUserResult;
   List<User> usersToReturn;
 
-  /// 若不為 null，下一次 getUsers 呼叫完成前先阻塞（由 Completer 控制）。
+  /// 若不为 null，下一次 getUsers 呼叫完成前先阻塞（由 Completer 控制）。
   Completer<void>? getUsersBlocker;
 
   int getUsersCallCount = 0;
@@ -62,7 +62,7 @@ class _FakeAuthRepository implements AuthRepository {
   Future<void> deleteUser(String id) async {}
 }
 
-// ── 測試用 User helper ──────────────────────────────────────────────────────
+// ── 测试用 User helper ──────────────────────────────────────────────────────
 
 const _adminUser = User(
   id: 'uid-admin',
@@ -80,7 +80,7 @@ const _staffUser = User(
   role: UserRole.staff,
 );
 
-// ── 輔助：建立已登入的 SessionProvider ────────────────────────────────────
+// ── 辅助：建立已登入的 SessionProvider ────────────────────────────────────
 
 Future<SessionProvider> _makeSession(
   _FakeAuthRepository repo, {
@@ -88,8 +88,8 @@ Future<SessionProvider> _makeSession(
 }) async {
   repo.currentUserResult = currentUser;
   final session = SessionProvider(repo);
-  // _restoreSession 現在有兩個連續 async hop（getCachedUser + getCurrentUser），
-  // 需要 pump 多個 microtask cycle 直到 isRestoring 變 false。
+  // _restoreSession 现在有两个连续 async hop（getCachedUser + getCurrentUser），
+  // 需要 pump 多个 microtask cycle 直到 isRestoring 变 false。
   for (var i = 0; i < 10 && session.isRestoring; i++) {
     await Future.microtask(() {});
   }
@@ -104,7 +104,7 @@ void main() {
     late SessionProvider session;
     late UserAdminProvider provider;
 
-    // 每個測試都用已登入的 admin session
+    // 每个测试都用已登入的 admin session
     setUp(() async {
       repo = _FakeAuthRepository(usersToReturn: [_adminUser, _staffUser]);
       session = await _makeSession(repo, currentUser: _adminUser);
@@ -116,16 +116,16 @@ void main() {
       session.dispose();
     });
 
-    // ── 不能讓網站沒有管理員 ─────────────────────────────────────────────
+    // ── 不能让网站没有管理员 ─────────────────────────────────────────────
 
-    test('管理員不能刪除自己', () async {
+    test('管理员不能删除自己', () async {
       await expectLater(
         provider.deleteUser(_adminUser.id),
         throwsA(isA<AccountSafetyException>()),
       );
     });
 
-    test('管理員不能把自己降成非管理員，但可以改自己的其他資料', () async {
+    test('管理员不能把自己降成非管理员，但可以改自己的其他资料', () async {
       await expectLater(
         provider.updateUser(_adminUser.copyWith(role: UserRole.staff)),
         throwsA(isA<AccountSafetyException>()),
@@ -133,7 +133,7 @@ void main() {
       await provider.updateUser(_adminUser.copyWith(name: '新名字'));
     });
 
-    test('管理員可以把另一位管理員降級或刪除（只擋自己）', () async {
+    test('管理员可以把另一位管理员降级或删除（只挡自己）', () async {
       const otherAdmin = User(
         id: 'uid-admin-2',
         name: 'Second Admin',
@@ -145,7 +145,7 @@ void main() {
       await provider.deleteUser(otherAdmin.id);
     });
 
-    test('管理員可以刪除別人、調整別人的角色', () async {
+    test('管理员可以删除别人、调整别人的角色', () async {
       await provider.deleteUser(_staffUser.id);
       await provider.updateUser(_staffUser.copyWith(role: UserRole.admin));
     });
@@ -159,7 +159,7 @@ void main() {
       expect(repo.getUsersCallCount, 1);
     });
 
-    test('cache hit：第二次 getUsers() 回傳相同結果', () async {
+    test('cache hit：第二次 getUsers() 回传相同结果', () async {
       final first = await provider.getUsers();
       final second = await provider.getUsers();
 
@@ -168,20 +168,20 @@ void main() {
 
     // ── cache invalidation on session logout ──────────────────────────────
 
-    test('登出後 cache 被清空，下次 getUsers 重新 fetch', () async {
+    test('登出后 cache 被清空，下次 getUsers 重新 fetch', () async {
       await provider.getUsers();
       expect(repo.getUsersCallCount, 1);
 
-      // 模擬登出：SessionProvider.logout() 會把 currentUser 設 null，
-      // 並觸發 listeners（包括 _onSessionChanged）。
+      // 模拟登出：SessionProvider.logout() 会把 currentUser 设 null，
+      // 并触发 listeners（包括 _onSessionChanged）。
       await session.logout();
 
-      // cache 應已清空 → 再次 getUsers 會先拋 Permission denied（非 admin 了）
-      // 此處只驗證 call count（登出後呼叫會丟例外，所以不應再 call repository）
-      expect(repo.getUsersCallCount, 1); // 沒有多一次
+      // cache 应已清空 → 再次 getUsers 会先抛 Permission denied（非 admin 了）
+      // 此处只验证 call count（登出后呼叫会丢例外，所以不应再 call repository）
+      expect(repo.getUsersCallCount, 1); // 没有多一次
     });
 
-    test('登出後呼叫 getUsers 拋 Permission denied', () async {
+    test('登出后呼叫 getUsers 抛 Permission denied', () async {
       await session.logout();
 
       expect(
@@ -198,7 +198,7 @@ void main() {
 
     // ── cache invalidation after addUser ─────────────────────────────────
 
-    test('addUser 後 cache 清空，下次 getUsers 重新 fetch', () async {
+    test('addUser 后 cache 清空，下次 getUsers 重新 fetch', () async {
       await provider.getUsers();
       expect(repo.getUsersCallCount, 1);
 
@@ -223,7 +223,7 @@ void main() {
 
     // ── cache invalidation after updateUser ──────────────────────────────
 
-    test('updateUser 後 cache 清空，下次 getUsers 重新 fetch', () async {
+    test('updateUser 后 cache 清空，下次 getUsers 重新 fetch', () async {
       await provider.getUsers();
       expect(repo.getUsersCallCount, 1);
 
@@ -235,7 +235,7 @@ void main() {
 
     // ── cache invalidation after deleteUser ──────────────────────────────
 
-    test('deleteUser 後 cache 清空，下次 getUsers 重新 fetch', () async {
+    test('deleteUser 后 cache 清空，下次 getUsers 重新 fetch', () async {
       await provider.getUsers();
       expect(repo.getUsersCallCount, 1);
 
@@ -247,7 +247,7 @@ void main() {
 
     // ── refreshCurrentUser echo on self-update ────────────────────────────
 
-    test('updateUser 更新自己時 SessionProvider.currentUser 同步更新', () async {
+    test('updateUser 更新自己时 SessionProvider.currentUser 同步更新', () async {
       expect(session.currentUser?.name, 'Admin User');
 
       final updatedAdmin = _adminUser.copyWith(name: 'Admin Updated');
@@ -256,47 +256,47 @@ void main() {
       expect(session.currentUser?.name, 'Admin Updated');
     });
 
-    test('updateUser 更新他人時 SessionProvider.currentUser 不變', () async {
+    test('updateUser 更新他人时 SessionProvider.currentUser 不变', () async {
       await provider.updateUser(_staffUser.copyWith(name: 'Staff Updated'));
 
-      // admin 自己的資料不應被動到
+      // admin 自己的资料不应被动到
       expect(session.currentUser?.id, _adminUser.id);
       expect(session.currentUser?.name, 'Admin User');
     });
 
     // ── post-await session-change guard ───────────────────────────────────
 
-    test('getUsers await 期間 session 登出，cache 不被寫入舊資料', () async {
-      // 用 Completer 讓 getUsers 在 repository 這邊卡住
+    test('getUsers await 期间 session 登出，cache 不被写入旧资料', () async {
+      // 用 Completer 让 getUsers 在 repository 这边卡住
       final blocker = Completer<void>();
       repo.getUsersBlocker = blocker;
 
-      // 開始 getUsers，但不 await
+      // 开始 getUsers，但不 await
       final future = provider.getUsers();
 
-      // 趁 getUsers 還在等 repository 時，模擬登出
-      // session.logout() 會將 currentUser 設為 null，觸發 _onSessionChanged
+      // 趁 getUsers 还在等 repository 时，模拟登出
+      // session.logout() 会将 currentUser 设为 null，触发 _onSessionChanged
       await session.logout();
 
       // 放行 repository
       blocker.complete();
 
-      // getUsers 完成，因為 session 已是 null / 非 admin，
-      // provider 的防衛條件應讓此次結果不寫入 cache
+      // getUsers 完成，因为 session 已是 null / 非 admin，
+      // provider 的防卫条件应让此次结果不写入 cache
       final result = await future;
-      expect(result, isNotEmpty); // raw list 仍回傳（getUsers 實作行為）
+      expect(result, isNotEmpty); // raw list 仍回传（getUsers 实作行为）
 
-      // 建立全新的 admin session 來驗證：若 cache 被寫入了，
-      // 新一輪的 provider 在登入後第一次 getUsers 應該命中 cache（call count=0）；
-      // 若正確沒有寫入，則新 provider 第一次 getUsers 必須 fetch（call count=1）。
+      // 建立全新的 admin session 来验证：若 cache 被写入了，
+      // 新一轮的 provider 在登入后第一次 getUsers 应该命中 cache（call count=0）；
+      // 若正确没有写入，则新 provider 第一次 getUsers 必须 fetch（call count=1）。
       //
-      // 此處使用完全獨立的 repo2/session2/provider2，避免上面已登出的 session 干擾。
+      // 此处使用完全独立的 repo2/session2/provider2，避免上面已登出的 session 干扰。
       final repo2 = _FakeAuthRepository(usersToReturn: [_adminUser]);
       final session2 = await _makeSession(repo2, currentUser: _adminUser);
       final provider2 = UserAdminProvider(repo2, session2);
 
       await provider2.getUsers();
-      expect(repo2.getUsersCallCount, 1); // 必須重新 fetch，不能用舊 cache
+      expect(repo2.getUsersCallCount, 1); // 必须重新 fetch，不能用旧 cache
 
       provider2.dispose();
       session2.dispose();

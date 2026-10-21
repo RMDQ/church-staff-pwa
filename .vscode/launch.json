@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "church-staff-pwa (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "-d",
+        "chrome",
+        "--dart-define-from-file=.local/deployment/dart-defines.json",
+        "--dart-define-from-file=.local/firebase-web.json"
+      ]
+    }
+  ]
+}

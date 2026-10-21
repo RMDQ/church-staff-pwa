@@ -14,18 +14,18 @@ class GroupSettingsProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  // 追蹤上一次 session userId，用來判斷帳號是否真的換了。
+  // 追踪上一次 session userId，用来判断帐号是否真的换了。
   String? _lastSessionUserId;
 
-  // Fetch generation counter：每次 session 變動時遞增，讓過期 fetch 的結果被丟棄。
+  // Fetch generation counter：每次 session 变动时递增，让过期 fetch 的结果被丢弃。
   int _fetchToken = 0;
 
   GroupSettingsProvider(this._repository);
 
-  /// 故意回傳 raw reference（不做 defensive copy），讓消費端可以用 `identical()`
-  /// 廉價偵測「templates 是否真的換過一份」— 例如 user_management_screen 用這個
-  /// 判斷要不要重新排序。改成 `Map.from(_templates)` 會讓 identical 永遠 false，
-  /// 默默退化使用端的優化。
+  /// 故意回传 raw reference（不做 defensive copy），让消费端可以用 `identical()`
+  /// 廉价侦测「templates 是否真的换过一份」— 例如 user_management_screen 用这个
+  /// 判断要不要重新排序。改成 `Map.from(_templates)` 会让 identical 永远 false，
+  /// 默默退化使用端的优化。
   Map<ServiceType, List<String>> get templates => _templates;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -38,14 +38,14 @@ class GroupSettingsProvider extends ChangeNotifier {
 
     try {
       final result = await _repository.getSmallGroupTemplates();
-      if (token != _fetchToken) return; // stale fetch，丟棄結果
+      if (token != _fetchToken) return; // stale fetch，丢弃结果
       _templates = result.isEmpty
           ? {for (final type in ServiceType.values) type: []}
           : result;
     } catch (e, st) {
-      if (token != _fetchToken) return; // stale fetch，丟棄錯誤
-      log('載入小組設定失敗', error: e, stackTrace: st);
-      _error = '載入失敗:${mapErrorToUserMessage(e)}';
+      if (token != _fetchToken) return; // stale fetch，丢弃错误
+      log('载入小组设定失败', error: e, stackTrace: st);
+      _error = '载入失败:${mapErrorToUserMessage(e)}';
     } finally {
       if (token == _fetchToken) {
         _isLoading = false;
@@ -54,13 +54,13 @@ class GroupSettingsProvider extends ChangeNotifier {
     }
   }
 
-  /// 由 ChangeNotifierProxyProvider 在 SessionProvider.currentUser 變動時呼叫。
-  /// 當 userId 真的改變，清掉 cache 並重抓資料。
+  /// 由 ChangeNotifierProxyProvider 在 SessionProvider.currentUser 变动时呼叫。
+  /// 当 userId 真的改变，清掉 cache 并重抓资料。
   void onSessionChanged(String? userId) {
     if (userId == _lastSessionUserId) return;
     _lastSessionUserId = userId;
 
-    _fetchToken++; // 讓進行中的 fetch 過期
+    _fetchToken++; // 让进行中的 fetch 过期
     _templates = {for (final type in ServiceType.values) type: []};
     _error = null;
 
@@ -79,8 +79,8 @@ class GroupSettingsProvider extends ChangeNotifier {
       _templates = Map.from(newTemplates);
       notifyListeners();
     } catch (e, st) {
-      log('更新小組設定失敗', error: e, stackTrace: st);
-      _error = '更新失敗:${mapErrorToUserMessage(e)}';
+      log('更新小组设定失败', error: e, stackTrace: st);
+      _error = '更新失败:${mapErrorToUserMessage(e)}';
       notifyListeners();
     }
   }

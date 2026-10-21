@@ -129,8 +129,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     if (!GoogleCalendarConfig.isEnabled) {
       return Scaffold(
-        appBar: AppBar(title: const Text('行事曆')),
-        body: const Center(child: Text('行事曆未啟用或設定不完整')),
+        appBar: AppBar(title: const Text('行事历')),
+        body: const Center(child: Text('行事历未启用或设定不完整')),
       );
     }
     final viewportWidth = MediaQuery.sizeOf(context).width;
@@ -143,11 +143,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('行事曆'), centerTitle: true, elevation: 0),
+      appBar: AppBar(title: const Text('行事历'), centerTitle: true, elevation: 0),
       floatingActionButton: canEdit
           ? FloatingActionButton(
               onPressed: () => _addEvent(_selectedDay.value ?? _focusedMonth),
-              tooltip: '新增活動',
+              tooltip: '新增活动',
               child: const Icon(Icons.add),
             )
           : null,
@@ -202,7 +202,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: maxContentWidth),
               child: SingleChildScrollView(
-                // Tight at the top on purpose: the AppBar already says 行事曆,
+                // Tight at the top on purpose: the AppBar already says 行事历,
                 // so the month header does not need to be pushed away from it.
                 padding: const EdgeInsets.fromLTRB(6, 6, 6, 16),
                 child: Column(
@@ -257,7 +257,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       children: [
         _MonthArrow(
           icon: Icons.chevron_left,
-          tooltip: '上個月',
+          tooltip: '上个月',
           onPressed: () => _changeMonth(-1),
         ),
         Expanded(
@@ -274,7 +274,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         _MonthArrow(
           icon: Icons.chevron_right,
-          tooltip: '下個月',
+          tooltip: '下个月',
           onPressed: () => _changeMonth(1),
         ),
       ],
@@ -473,7 +473,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 _selectedDay.value = dateOnly;
                 // For a member an empty day has nothing to show, so tapping it
                 // only moves the selection. For an editor the empty sheet is
-                // the way in to "新增活動" on that exact day.
+                // the way in to "新增活动" on that exact day.
                 if (hasEvents || canEdit) {
                   await _showSelectedDayEventsSheet(dateOnly);
                 }
@@ -541,7 +541,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   // ---------------------------------------------------------------------------
 
   Future<void> _addEvent(DateTime day) =>
-      _createEvent(heading: '新增活動', initial: CalendarEventDraft.forDay(day));
+      _createEvent(heading: '新增活动', initial: CalendarEventDraft.forDay(day));
 
   /// Same event again, at a different time.
   ///
@@ -551,7 +551,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   /// each one is where the typos come from, so this opens the *add* form with
   /// everything already filled in and leaves the user only the time to change.
   Future<void> _duplicateEvent(CalendarEvent event) => _createEvent(
-    heading: '複製活動',
+    heading: '复制活动',
     initial: CalendarEventDraft.fromEvent(event),
   );
 
@@ -569,21 +569,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _months.applyWrite(added: created);
       },
     );
-    if (saved) _showMessage('已新增活動');
+    if (saved) _showMessage('已新增活动');
   }
 
   Future<void> _editEvent(CalendarEvent event) async {
     if (!mounted) return;
     final saved = await showEventFormSheet(
       context,
-      heading: '編輯活動',
+      heading: '编辑活动',
       initial: CalendarEventDraft.fromEvent(event),
       onSubmit: (draft) async {
         final updated = await _writeService.update(event.id, draft);
         _months.applyWrite(removed: event, added: updated);
       },
     );
-    if (saved) _showMessage('已更新活動');
+    if (saved) _showMessage('已更新活动');
   }
 
   Future<void> _deleteEvent(CalendarEvent event) async {
@@ -594,14 +594,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
       await _writeService.delete(event.id);
     } catch (error) {
       _showMessage(
-        error is CalendarWriteException ? error.message : '刪除失敗，請稍後再試',
+        error is CalendarWriteException ? error.message : '删除失败，请稍后再试',
         isError: true,
       );
       return;
     }
 
     _months.applyWrite(removed: event);
-    _showMessage('已刪除活動');
+    _showMessage('已删除活动');
   }
 
   void _showMessage(String message, {bool isError = false}) {
@@ -618,9 +618,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   /// The month's bars, recomputed only when its event list is replaced.
   ///
-  /// 每月的 segment 佈局是 O(事件數 × 42) 的計算，而 PageView 同時有 3 頁在
-  /// 樹上，任何一次 setState 都會讓三頁重算。[CalendarMonthStore] 每次
-  /// 改動都換一份新 List，所以 identical() 就能判斷事件有沒有變。
+  /// 每月的 segment 布局是 O(事件数 × 42) 的计算，而 PageView 同时有 3 页在
+  /// 树上，任何一次 setState 都会让三页重算。[CalendarMonthStore] 每次
+  /// 改动都换一份新 List，所以 identical() 就能判断事件有没有变。
   MonthEventLayout _layoutForMonth(DateTime month) {
     final events = _months.eventsForMonth(month) ?? const <CalendarEvent>[];
     final cached = _layoutCache[month];

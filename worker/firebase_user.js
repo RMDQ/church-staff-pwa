@@ -26,7 +26,7 @@ export function requireEnv(env, key) {
     // Deliberately not naming the variable to the client — the operator finds
     // it in the Cloudflare log line below.
     console.error(`missing environment variable ${key}`);
-    throw new HttpError(500, '伺服器設定不完整，請聯絡管理員');
+    throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
   return value.trim();
 }
@@ -51,18 +51,34 @@ export function base64UrlToBytes(value) {
 /// escape its path segment — hence the `/` rejection below.
 export function uidFromIdToken(token) {
   const parts = token.split('.');
-  if (parts.length !== 3) throw new HttpError(401, '登入狀態無效，請重新登入');
+  if (parts.length !== 3) throw new HttpError(401, '登入状态无效，请重新登入');
   let payload;
   try {
     payload = JSON.parse(new TextDecoder().decode(base64UrlToBytes(parts[1])));
   } catch {
-    throw new HttpError(401, '登入狀態無效，請重新登入');
+    throw new HttpError(401, '登入状态无效，请重新登入');
   }
   const uid = payload?.sub ?? payload?.user_id;
   if (typeof uid !== 'string' || uid === '' || uid.includes('/')) {
-    throw new HttpError(401, '登入狀態無效，請重新登入');
+    throw new HttpError(401, '登入状态无效，请重新登入');
   }
   return uid;
+}
+
+/// Whether the caller has verified their email address.
+///
+/// Read from the token's own claim, so only call this after identifyCaller()
+/// has had Firestore verify the token's signature with the caller's own token.
+/// Without that, the claim could be a forgery.
+export function emailVerifiedFromIdToken(token) {
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(base64UrlToBytes(parts[1])));
+    return payload?.email_verified === true;
+  } catch {
+    return false;
+  }
 }
 
 /// The caller's bearer token, or a 401.
@@ -72,9 +88,9 @@ export function uidFromIdToken(token) {
 /// so firestore.rules stays the single arbiter.
 export function bearerToken(request) {
   const header = request.headers.get('Authorization') ?? '';
-  if (!header.startsWith('Bearer ')) throw new HttpError(401, '請先登入');
+  if (!header.startsWith('Bearer ')) throw new HttpError(401, '请先登入');
   const token = header.slice('Bearer '.length).trim();
-  if (token === '') throw new HttpError(401, '請先登入');
+  if (token === '') throw new HttpError(401, '请先登入');
   return token;
 }
 
@@ -115,16 +131,16 @@ export async function identifyCaller(request, env, fetchImpl = fetch) {
   const response = await fetchAsCaller(fetchImpl, url, token);
 
   if (response.status === 401 || response.status === 403) {
-    throw new HttpError(401, '登入狀態已過期，請重新登入');
+    throw new HttpError(401, '登入状态已过期，请重新登入');
   }
   // A member removed from the app keeps a valid Firebase Auth token but has no
   // users/{uid} doc — same reasoning as isActiveUser() in firestore.rules.
   if (response.status === 404) {
-    throw new HttpError(403, '這個帳號沒有權限');
+    throw new HttpError(403, '这个帐号没有权限');
   }
   if (!response.ok) {
     console.error('firestore role lookup failed', response.status);
-    throw new HttpError(502, '無法確認權限，請稍後再試');
+    throw new HttpError(502, '无法确认权限，请稍后再试');
   }
 
   const fields = (await response.json())?.fields;
@@ -163,11 +179,11 @@ export async function readDocument(env, path, token, fetchImpl = fetch) {
   const response = await fetchAsCaller(fetchImpl, url, token);
   if (response.status === 404) return null;
   if (response.status === 401 || response.status === 403) {
-    throw new HttpError(401, '登入狀態已過期，請重新登入');
+    throw new HttpError(401, '登入状态已过期，请重新登入');
   }
   if (!response.ok) {
     console.error('firestore read failed', path, response.status);
-    throw new HttpError(502, '讀取設定失敗，請稍後再試');
+    throw new HttpError(502, '读取设定失败，请稍后再试');
   }
   return response.json();
 }
@@ -193,11 +209,11 @@ export async function listDocuments(env, collection, token, { mask = [], fetchIm
     const url = `${base}?pageSize=300${masks}${pageToken}`;
     const response = await fetchAsCaller(fetchImpl, url, token);
     if (response.status === 401 || response.status === 403) {
-      throw new HttpError(401, '登入狀態已過期，請重新登入');
+      throw new HttpError(401, '登入状态已过期，请重新登入');
     }
     if (!response.ok) {
       console.error('firestore list failed', collection, response.status);
-      throw new HttpError(502, '讀取名單失敗，請稍後再試');
+      throw new HttpError(502, '读取名单失败，请稍后再试');
     }
     const body = await response.json();
     documents.push(...(body.documents ?? []));
@@ -205,7 +221,7 @@ export async function listDocuments(env, collection, token, { mask = [], fetchIm
     pageToken = `&pageToken=${encodeURIComponent(body.nextPageToken)}`;
   }
   console.error('firestore list did not terminate', collection);
-  throw new HttpError(502, '讀取名單失敗，請稍後再試');
+  throw new HttpError(502, '读取名单失败，请稍后再试');
 }
 
 async function fetchAsCaller(fetchImpl, url, token) {
@@ -219,7 +235,7 @@ async function fetchAsCaller(fetchImpl, url, token) {
   } catch (error) {
     if (error instanceof HttpError) throw error;
     console.error('firestore request failed', url, error);
-    throw new HttpError(502, '無法連上伺服器，請稍後再試');
+    throw new HttpError(502, '无法连上伺服器，请稍后再试');
   } finally {
     clearTimeout(timer);
   }

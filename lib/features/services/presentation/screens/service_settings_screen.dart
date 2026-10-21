@@ -11,10 +11,10 @@ const _weekdayNames = ['一', '二', '三', '四', '五', '六', '日'];
 
 String weekdayLabel(int weekday) => '星期${_weekdayNames[weekday - 1]}';
 
-/// 管理員設定每週固定的聚會：新增、改名、改星期、調順序、停用。
+/// 管理员设定每周固定的聚会：新增、改名、改星期、调顺序、停用。
 ///
-/// 不能刪除，只能停用：服事表、同工的牧區、服事項目樣板都用聚會 ID 對應，
-/// 刪掉 ID 就對不回去了。
+/// 不能删除，只能停用：服事表、同工的牧区、服事项目样板都用聚会 ID 对应，
+/// 删掉 ID 就对不回去了。
 class ServiceSettingsScreen extends StatefulWidget {
   const ServiceSettingsScreen({super.key});
 
@@ -41,7 +41,7 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
       ).any((i) => _services[i] != _original[i]);
 
   static String _newId() {
-    // 字母開頭、只有英數：符合部署設定與 rules 對聚會 ID 的要求。
+    // 字母开头、只有英数：符合部署设定与 rules 对聚会 ID 的要求。
     final random = Random().nextInt(1 << 20).toRadixString(36);
     return 'svc${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}$random';
   }
@@ -71,7 +71,7 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
 
   Future<void> _save() async {
     if (!_services.any((service) => service.enabled)) {
-      _showMessage('至少要有一個聚會是開啟的。');
+      _showMessage('至少要有一个聚会是开启的。');
       return;
     }
     if (!_hasUnsavedChanges) {
@@ -82,15 +82,15 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
-      // 網頁版存好會整頁重新載入，換成新的分頁；其他平台直接回上一頁。
+      // 网页版存好会整页重新载入，换成新的分页；其他平台直接回上一页。
       await context.read<ServiceCatalogProvider>().save(_services);
       if (!mounted) return;
-      messenger.showSnackBar(const SnackBar(content: Text('已儲存聚會設定')));
+      messenger.showSnackBar(const SnackBar(content: Text('已保存聚会设置')));
       navigator.pop();
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _showMessage('儲存失敗：${mapErrorToUserMessage(e)}');
+      _showMessage('保存失败：${mapErrorToUserMessage(e)}');
     }
   }
 
@@ -104,16 +104,16 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
     final discard = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('還沒儲存'),
-        content: const Text('剛才的變更還沒儲存。要儲存的話，請按右上角 ✓。'),
+        title: const Text('未保存'),
+        content: const Text('刚才的更改尚未保存。如需保存，请点击右上角 ✓。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('繼續編輯'),
+            child: const Text('继续编辑'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('不儲存，離開'),
+            child: const Text('放弃修改'),
           ),
         ],
       ),
@@ -131,10 +131,10 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('聚會設定'),
+          title: const Text('聚会设置'),
           actions: [
             IconButton(
-              tooltip: '儲存',
+              tooltip: '保存',
               icon: _saving
                   ? const SizedBox(
                       width: 20,
@@ -152,10 +152,10 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: Text(
-                '每週固定的聚會。改完按右上角 ✓ 儲存，所有人的 App 下次打開就會換成新的設定。\n'
-                '・改星期：已經排好的日期不會搬動，從下一個還沒排的那週開始用新的星期。\n'
-                '・停用：不再出現在服事表分頁，也不再產生新的日期；舊資料都會保留，之後可以再開啟。\n'
-                '・按住右邊的把手可以調整順序（服事表分頁的順序）。',
+                '每周固定的聚会。修改后点击右上角 ✓ 保存，所有人的 App 下次打开就会切换为新设置。\n'
+                '・改星期：已经排好的日期不会变动，从下一个尚未排班的周开始采用新的星期。\n'
+                '・停用：不再出现在服事表标签页，也不再生成新的日期；历史数据均会保留，后续可重新开启。\n'
+                '・按住右侧手柄可调整顺序（服事表标签页的显示顺序）。',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -178,8 +178,8 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
                     title: Text('${service.label}｜${service.name}'),
                     subtitle: Text(
                       service.enabled
-                          ? '每週${weekdayLabel(service.weekday)}'
-                          : '已停用（原本每週${weekdayLabel(service.weekday)}）',
+                          ? '每周${weekdayLabel(service.weekday)}'
+                          : '已停用（原本每周${weekdayLabel(service.weekday)}）',
                     ),
                     onTap: () => _edit(index: index),
                     trailing: Row(
@@ -207,11 +207,11 @@ class _ServiceSettingsScreenState extends State<ServiceSettingsScreen> {
               top: false,
               child: ListTile(
                 leading: const Icon(Icons.add),
-                title: const Text('新增聚會'),
+                title: const Text('新增聚会'),
                 enabled: _services.length < 20,
                 subtitle: _services.length < 20
                     ? null
-                    : const Text('最多 20 種聚會'),
+                    : const Text('最多 20 种聚会'),
                 onTap: () => _edit(),
               ),
             ),
@@ -270,18 +270,18 @@ class _ServiceDialogState extends State<_ServiceDialog> {
 
   String? _text(String? value, {required int max, bool unique = false}) {
     final text = value?.trim() ?? '';
-    if (text.isEmpty) return '請填寫';
-    if (text.length > max) return '最多 $max 個字';
-    if (RegExp(r'[\x00-\x1f\x7f]').hasMatch(text)) return '不能有特殊字元';
-    if (unique && widget.otherLabels.contains(text)) return '已經有同樣簡稱的聚會';
+    if (text.isEmpty) return '请填写';
+    if (text.length > max) return '最多 $max 个字符';
+    if (RegExp(r'[\x00-\x1f\x7f]').hasMatch(text)) return '不能包含特殊字符';
+    if (unique && widget.otherLabels.contains(text)) return '已有相同简称的聚会';
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.initial == null ? '新增聚會' : '修改聚會'),
-      // 預設寬度會把「例如「主日」「禱告會」」這種說明截斷。
+      title: Text(widget.initial == null ? '新增聚会' : '修改聚会'),
+      // 预设宽度会把「例如「主日」「祷告会」」这种说明截断。
       content: SizedBox(
         width: 360,
         child: Form(
@@ -293,8 +293,8 @@ class _ServiceDialogState extends State<_ServiceDialog> {
                 controller: _label,
                 autofocus: widget.initial == null,
                 decoration: const InputDecoration(
-                  labelText: '簡稱',
-                  helperText: '顯示在服事表分頁上，例如「主日」「禱告會」',
+                  labelText: '简称',
+                  helperText: '显示在服事表标签页上，例如「主日」「祷告会」',
                   helperMaxLines: 2,
                 ),
                 validator: (value) => _text(value, max: 20, unique: true),
@@ -303,15 +303,15 @@ class _ServiceDialogState extends State<_ServiceDialog> {
               TextFormField(
                 controller: _name,
                 decoration: const InputDecoration(
-                  labelText: '完整名稱',
-                  helperText: '例如「主日崇拜」「週三禱告會」',
+                  labelText: '完整名称',
+                  helperText: '例如「主日崇拜」「周五聚会」',
                 ),
                 validator: (value) => _text(value, max: 80),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
                 initialValue: _weekday,
-                decoration: const InputDecoration(labelText: '每週'),
+                decoration: const InputDecoration(labelText: '每周'),
                 items: [
                   for (var day = 1; day <= 7; day++)
                     DropdownMenuItem(
@@ -331,7 +331,7 @@ class _ServiceDialogState extends State<_ServiceDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('取消'),
         ),
-        FilledButton(onPressed: _submit, child: const Text('確定')),
+        FilledButton(onPressed: _submit, child: const Text('确定')),
       ],
     );
   }

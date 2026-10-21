@@ -6,7 +6,7 @@ import 'package:church_staff_pwa/core/config/google_calendar_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 ChurchConfig testChurchConfig({
-  String appName = '測試教會',
+  String appName = '测试教会',
   String timeZone = 'Asia/Taipei',
   bool calendar = false,
   bool photoImport = false,

@@ -1,26 +1,26 @@
-// 事件新增成功後通知 n8n，由 n8n 發 LINE 群組訊息。
+// 事件新增成功后通知 n8n，由 n8n 发 LINE 群组讯息。
 //
-// 為什麼不在這裡直接打 LINE Messaging API：channel access token 和訊息排版
-// 都已經在 n8n 裡（那邊還有一條「LINE 群組訊息 → 建事件 → 回覆」的流程）。
-// 從這裡再接一次 LINE，等於把同一段排版邏輯養在兩個系統，改一邊忘了另一邊
-// 是遲早的事。這裡只負責把「發生了什麼」講清楚，長什麼樣交給 n8n。
+// 为什么不在这里直接打 LINE Messaging API：channel access token 和讯息排版
+// 都已经在 n8n 里（那边还有一条「LINE 群组讯息 → 建事件 → 回复」的流程）。
+// 从这里再接一次 LINE，等于把同一段排版逻辑养在两个系统，改一边忘了另一边
+// 是迟早的事。这里只负责把「发生了什么」讲清楚，长什么样交给 n8n。
 //
-// 只有新增會通知。編輯和刪除沒接，是因為目前群組只想知道有新聚集；真要加的話
-// 編輯可以照抄下面的用法（PATCH 的回應就是完整事件），刪除則要在刪掉之前先
-// GET 一次才拿得到標題 —— Google 的 DELETE 回 204 空 body。
+// 只有新增会通知。编辑和删除没接，是因为目前群组只想知道有新聚集；真要加的话
+// 编辑可以照抄下面的用法（PATCH 的回应就是完整事件），删除则要在删掉之前先
+// GET 一次才拿得到标题 —— Google 的 DELETE 回 204 空 body。
 
-/// 通知是附帶效果，不該讓使用者為它多等。比對外的 Google 呼叫更短。
+/// 通知是附带效果，不该让使用者为它多等。比对外的 Google 呼叫更短。
 import { churchConfig } from './church_config.js';
 
 const NOTIFY_TIMEOUT_MS = 5000;
 
-/// 把 Google 的 event resource 攤平成 n8n 好處理的形狀。
+/// 把 Google 的 event resource 摊平成 n8n 好处理的形状。
 ///
-/// n8n 那端不必知道 Google 用 `date` 表示全天、用 `dateTime` 表示定時，也不必
-/// 知道 `end.date` 是排他的。那些差異在這裡一次弭平。
+/// n8n 那端不必知道 Google 用 `date` 表示全天、用 `dateTime` 表示定时，也不必
+/// 知道 `end.date` 是排他的。那些差异在这里一次弭平。
 ///
-/// [actor] 是 authorize() 回傳值裡的 `{ uid, name }`。兩個都送：群組裡要看的是
-/// 名字，但名字會改、也可能重複，事後要追是誰做的還是得靠 uid。
+/// [actor] 是 authorize() 回传值里的 `{ uid, name }`。两个都送：群组里要看的是
+/// 名字，但名字会改、也可能重复，事后要追是谁做的还是得靠 uid。
 export function notifyPayload(action, event, actor, timeZone = churchConfig().timeZone) {
   const allDay = Boolean(event?.start?.date);
   return {
@@ -38,14 +38,14 @@ export function notifyPayload(action, event, actor, timeZone = churchConfig().ti
     description: event?.description ?? '',
     link: event?.htmlLink ?? null,
     actorUid: actor?.uid ?? null,
-    // 舊資料可能沒有 name 欄位，所以這裡可能是 null —— n8n 那端要能少這一行。
+    // 旧资料可能没有 name 栏位，所以这里可能是 null —— n8n 那端要能少这一行。
     actorName: actor?.name ?? null,
   };
 }
 
-/// Google 的 `end.date` 是排他的：8/20 的單日活動存進去是 end.date=8/21。
-/// buildGoogleEvent() 進去時加了一天，出來給人看要減回來，否則群組收到的訊息
-/// 會晚一天。
+/// Google 的 `end.date` 是排他的：8/20 的单日活动存进去是 end.date=8/21。
+/// buildGoogleEvent() 进去时加了一天，出来给人看要减回来，否则群组收到的讯息
+/// 会晚一天。
 function inclusiveEndDate(date) {
   if (typeof date !== 'string') return null;
   const stamp = Date.parse(`${date}T00:00:00Z`);
@@ -53,13 +53,13 @@ function inclusiveEndDate(date) {
   return new Date(stamp - 86400000).toISOString().slice(0, 10);
 }
 
-/// 送出通知。失敗只會留在 log 裡，不會往外拋。
+/// 送出通知。失败只会留在 log 里，不会往外抛。
 ///
-/// 呼叫到這裡時事件已經寫進 Google 了。LINE 發不出去是件該修的事，但不是使用者
-/// 的操作失敗 —— 讓它變成 500 只會讓人以為活動沒建成，然後再按一次。
+/// 呼叫到这里时事件已经写进 Google 了。LINE 发不出去是件该修的事，但不是使用者
+/// 的操作失败 —— 让它变成 500 只会让人以为活动没建成，然后再按一次。
 ///
-/// 兩個環境變數任一沒設就整個關掉：本機 `wrangler pages dev` 和 Preview 部署
-/// 因此不會把測試資料推進真的群組。
+/// 两个环境变数任一没设就整个关掉：本机 `wrangler pages dev` 和 Preview 部署
+/// 因此不会把测试资料推进真的群组。
 export async function notifyN8n(env, payload, fetchImpl = fetch) {
   if (!churchConfig(env).features.lineNotifications) return;
   const url = env?.NOTIFY_WEBHOOK_URL;
@@ -73,7 +73,7 @@ export async function notifyN8n(env, payload, fetchImpl = fetch) {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        // n8n Webhook node 的 Header Auth 憑證，名稱要跟這裡一致。
+        // n8n Webhook node 的 Header Auth 凭证，名称要跟这里一致。
         'x-notify-secret': secret,
       },
       body: JSON.stringify(payload),
@@ -89,10 +89,10 @@ export async function notifyN8n(env, payload, fetchImpl = fetch) {
   }
 }
 
-/// 把通知丟進背景，讓回應先回給使用者。
+/// 把通知丢进背景，让回应先回给使用者。
 ///
-/// `waitUntil` 由 Pages 執行期提供，但單元測試是直接呼叫 handler 的，那裡沒有。
-/// 沒有就退回「就地等完」—— 慢一點，但不會因為缺一個 context 欄位就整支炸掉。
+/// `waitUntil` 由 Pages 执行期提供，但单元测试是直接呼叫 handler 的，那里没有。
+/// 没有就退回「就地等完」—— 慢一点，但不会因为缺一个 context 栏位就整支炸掉。
 export function scheduleNotify(waitUntil, promise) {
   if (typeof waitUntil === 'function') {
     waitUntil(promise);

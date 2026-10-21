@@ -8,7 +8,7 @@ import 'package:church_staff_pwa/core/config/church_config.dart';
 import 'package:church_staff_pwa/core/types/service_type.dart';
 import 'roster_photo.dart';
 
-/// 使用者看得懂的失敗。訊息已經是中文（多半是 API 自己寫的），呼叫端直接顯示。
+/// 使用者看得懂的失败。讯息已经是中文（多半是 API 自己写的），呼叫端直接显示。
 class RosterImportException implements Exception {
   final String message;
   const RosterImportException(this.message);
@@ -19,23 +19,23 @@ class RosterImportException implements Exception {
 
 typedef IdTokenProvider = Future<String?> Function();
 
-/// 把服事表照片送去辨識，拿回可以貼進匯入框的 JSON。
+/// 把服事表照片送去辨识，拿回可以贴进汇入框的 JSON。
 ///
-/// 回傳的是**字串**而不是解析好的物件，而且刻意填回原本那個文字框：辨識完
-/// 的結果要讓人看一眼再按匯入，而按下匯入之後走的還是
-/// `parseRosterImportJson` —— 跟手動貼上完全同一條路。辨識只是省掉打字，
-/// 不是另一條匯入流程。
+/// 回传的是**字串**而不是解析好的物件，而且刻意填回原本那个文字框：辨识完
+/// 的结果要让人看一眼再按汇入，而按下汇入之后走的还是
+/// `parseRosterImportJson` —— 跟手动贴上完全同一条路。辨识只是省掉打字，
+/// 不是另一条汇入流程。
 class RosterImportService {
-  /// 一張密密麻麻的服事表模型要跑一陣子，而免費版忙碌時 worker 還會重試。
-  /// worker 最晚在第 75 秒開始最後一次、那一次最多給 100 秒（見
-  /// worker/gemini.js），這裡要留得比 175 秒寬，否則使用者會先看到「逾時」，
-  /// 而那邊其實正要成功。
+  /// 一张密密麻麻的服事表模型要跑一阵子，而免费版忙碌时 worker 还会重试。
+  /// worker 最晚在第 75 秒开始最后一次、那一次最多给 100 秒（见
+  /// worker/gemini.js），这里要留得比 175 秒宽，否则使用者会先看到「逾时」，
+  /// 而那边其实正要成功。
   ///
-  /// 公開是因為匯入畫面要倒數「最多再等幾秒」，那個數字得跟這裡同一個。
+  /// 公开是因为汇入画面要倒数「最多再等几秒」，那个数字得跟这里同一个。
   static const Duration timeout = Duration(seconds: 190);
 
-  /// 一次順利的辨識大約 50–70 秒（見 worker/gemini.js）。超過這個時間還沒回來，
-  /// 多半是 Gemini 回了忙碌、worker 在重試 —— 畫面用它決定要不要改口說「比平常久」。
+  /// 一次顺利的辨识大约 50–70 秒（见 worker/gemini.js）。超过这个时间还没回来，
+  /// 多半是 Gemini 回了忙碌、worker 在重试 —— 画面用它决定要不要改口说「比平常久」。
   static const Duration usualDuration = Duration(seconds: 75);
 
   final http.Client _client;
@@ -53,21 +53,21 @@ class RosterImportService {
   static Future<String?> _firebaseIdToken() =>
       FirebaseAuth.instance.currentUser?.getIdToken() ?? Future.value(null);
 
-  /// 送出照片，回傳排版過的 JSON 字串。
+  /// 送出照片，回传排版过的 JSON 字串。
   Future<String> convert({
     required ServiceType type,
     required List<RosterPhoto> photos,
   }) async {
     if (!ChurchConfig.current.features.photoImport) {
-      throw const RosterImportException('照片辨識未啟用，請貼上 JSON 匯入');
+      throw const RosterImportException('照片辨识未启用，请贴上 JSON 汇入');
     }
     if (photos.isEmpty) {
-      throw const RosterImportException('請先選一張服事表照片');
+      throw const RosterImportException('请先选一张服事表照片');
     }
 
     final token = await _idToken();
     if (token == null || token.isEmpty) {
-      throw const RosterImportException('請先登入');
+      throw const RosterImportException('请先登入');
     }
 
     final request = http.Request('POST', _endpoint)
@@ -83,9 +83,9 @@ class RosterImportService {
       final streamed = await _client.send(request).timeout(timeout);
       response = await http.Response.fromStream(streamed).timeout(timeout);
     } on TimeoutException {
-      throw const RosterImportException('辨識逾時了。請把照片裁到只剩表格，或裁成上下兩半分兩次辨識');
+      throw const RosterImportException('辨识逾时了。请把照片裁到只剩表格，或裁成上下两半分两次辨识');
     } catch (_) {
-      throw const RosterImportException('連線失敗，請檢查網路後再試一次');
+      throw const RosterImportException('连线失败，请检查网路后再试一次');
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -96,29 +96,29 @@ class RosterImportService {
     try {
       decoded = jsonDecode(utf8.decode(response.bodyBytes));
     } catch (_) {
-      throw const RosterImportException('辨識完成，但回應看不懂，請再試一次');
+      throw const RosterImportException('辨识完成，但回应看不懂，请再试一次');
     }
     final entries = (decoded is Map<String, dynamic>)
         ? decoded['entries']
         : null;
     if (entries is! List) {
-      throw const RosterImportException('辨識完成，但回應看不懂，請再試一次');
+      throw const RosterImportException('辨识完成，但回应看不懂，请再试一次');
     }
     if (entries.isEmpty) {
-      throw const RosterImportException('這張照片沒有讀出任何日期，請確認拍到整張表');
+      throw const RosterImportException('这张照片没有读出任何日期，请确认拍到整张表');
     }
 
-    // 排版過再填回文字框。擠成一行的話，使用者想確認哪天排了誰得先自己讀
-    // 一段 JSON —— 而「看一眼再匯入」正是保留這個文字框的理由。
+    // 排版过再填回文字框。挤成一行的话，使用者想确认哪天排了谁得先自己读
+    // 一段 JSON —— 而「看一眼再汇入」正是保留这个文字框的理由。
     return '${const JsonEncoder.withIndent('  ').convert(entries)}\n';
   }
 
-  /// 優先用 API 自己寫的訊息；沒有才退回依狀態碼猜。
+  /// 优先用 API 自己写的讯息；没有才退回依状态码猜。
   ///
-  /// 沒有訊息通常代表回應不是這支函式產生的（Cloudflare 擋下、舊的 service
-  /// worker 接走），那時狀態碼是唯一的線索 —— 所以猜的訊息後面一律帶上狀態
-  /// 碼。實際踩過：Cloudflare 因為 CPU 超時回的 503，跟 Gemini 忙碌時 worker
-  /// 回的 503 顯示成同一句話，查了很久才分出是哪一層。
+  /// 没有讯息通常代表回应不是这支函式产生的（Cloudflare 挡下、旧的 service
+  /// worker 接走），那时状态码是唯一的线索 —— 所以猜的讯息后面一律带上状态
+  /// 码。实际踩过：Cloudflare 因为 CPU 超时回的 503，跟 Gemini 忙碌时 worker
+  /// 回的 503 显示成同一句话，查了很久才分出是哪一层。
   String _errorMessage(http.Response response) {
     try {
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
@@ -129,16 +129,16 @@ class RosterImportService {
         }
       }
     } catch (_) {
-      // 落到下面依狀態碼給訊息。
+      // 落到下面依状态码给讯息。
     }
     final status = response.statusCode;
     final guess = switch (status) {
-      401 => '請重新登入後再試一次',
-      403 => '沒有編輯服事表的權限',
-      413 => '照片太大了，請先縮小再試',
-      429 => '辨識用量已達上限，請稍後再試',
-      >= 500 => '伺服器沒有處理完，請稍後再試',
-      _ => '辨識失敗，請稍後再試',
+      401 => '请重新登入后再试一次',
+      403 => '没有编辑服事表的权限',
+      413 => '照片太大了，请先缩小再试',
+      429 => '辨识用量已达上限，请稍后再试',
+      >= 500 => '伺服器没有处理完，请稍后再试',
+      _ => '辨识失败，请稍后再试',
     };
     return '$guess（$status）';
   }

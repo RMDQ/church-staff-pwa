@@ -1,9 +1,9 @@
-// 匯入的內部實作：把 JSON 讀成逐日的服事與活動，並記下哪些名字沒對上。
+// 汇入的内部实作：把 JSON 读成逐日的服事与活动，并记下哪些名字没对上。
 //
-// app 裡只有 roster_import.dart（planRosterImport）用它 —— 對到現有服事表、
-// 樣板排序、報告都在那邊，直接呼叫這裡等於繞過那些檢查。
-// test/roster_import_plan_test.dart 有一個測試守著這件事。直接用它的只有它
-// 自己的測試，和 scripts/preview-roster-import.py（要逐日印出排序結果）。
+// app 里只有 roster_import.dart（planRosterImport）用它 —— 对到现有服事表、
+// 样板排序、报告都在那边，直接呼叫这里等于绕过那些检查。
+// test/roster_import_plan_test.dart 有一个测试守著这件事。直接用它的只有它
+// 自己的测试，和 scripts/preview-roster-import.py（要逐日印出排序结果）。
 
 import 'dart:convert';
 
@@ -37,14 +37,14 @@ class RosterImportParseResult {
 
   /// Names that did not appear in the candidate-name list.
   ///
-  /// 不含 [guestSpeakerNames] —— 那些人另外列，不算問題。
+  /// 不含 [guestSpeakerNames] —— 那些人另外列，不算问题。
   final List<String> notInRosterNames;
 
-  /// 只出現在「信息」這一格、名單裡沒有、也沒有很像的人：外來講員。
+  /// 只出现在「信息」这一格、名单里没有、也没有很像的人：外来讲员。
   ///
-  /// 名字一樣照寫進服事表，只是報告上不把他們當成要處理的事。講員一年可能
-  /// 就來一次，沒有帳號是正常的；跟「新同工還沒開帳號」混在同一段，真正要
-  /// 注意的那幾個名字就被淹掉了。
+  /// 名字一样照写进服事表，只是报告上不把他们当成要处理的事。讲员一年可能
+  /// 就来一次，没有帐号是正常的；跟「新同工还没开帐号」混在同一段，真正要
+  /// 注意的那几个名字就被淹掉了。
   final List<String> guestSpeakerNames;
 
   /// Names whose role assignment did not match the allowed-by-role map.
@@ -57,11 +57,11 @@ class RosterImportParseResult {
   /// or a full name two people on the list both have.
   final List<String> otherNames;
 
-  /// 表上原字 → 名單裡跟它只差一個字的那幾位。**只是提示，沒有套用。**
+  /// 表上原字 → 名单里跟它只差一个字的那几位。**只是提示，没有套用。**
   ///
-  /// 這些名字一律照表上原文寫進服事表，沒有 uid —— 也就是同時會出現在
-  /// [notInRosterNames]。列出候選是為了讓管理者一眼看出「這是不是某位的
-  /// 別寫法」，該不該改由他決定。
+  /// 这些名字一律照表上原文写进服事表，没有 uid —— 也就是同时会出现在
+  /// [notInRosterNames]。列出候选是为了让管理者一眼看出「这是不是某位的
+  /// 别写法」，该不该改由他决定。
   final Map<String, List<String>> nearMatchSuggestions;
 
   /// Event names that were not found in the supplied catalog.
@@ -100,22 +100,22 @@ class RosterImportParseResult {
       notInEventCatalog = const [];
 }
 
-/// 常由外面的人來擔任的服事。三個崇拜的講道在服事項目樣板裡都叫「信息」。
+/// 常由外面的人来担任的服事。三个崇拜的讲道在服事项目样板里都叫「信息」。
 ///
-/// 只放這一項：其他服事由沒帳號的人擔任時，多半是新同工還沒開帳號，
-/// 那正是匯入報告要讓人看到的。
+/// 只放这一项：其他服事由没帐号的人担任时，多半是新同工还没开帐号，
+/// 那正是汇入报告要让人看到的。
 ///
-/// 寫死而不是做成設定：三個崇拜都叫這個名字，為一個不會變的值多做一個
-/// 設定畫面不划算。**服事項目設定裡把「信息」改名的話，這裡要跟著改**，
-/// 否則講員會回到「名單裡沒有這個人」—— 沒有測試會替你抓到這件事。
+/// 写死而不是做成设定：三个崇拜都叫这个名字，为一个不会变的值多做一个
+/// 设定画面不划算。**服事项目设定里把「信息」改名的话，这里要跟著改**，
+/// 否则讲员会回到「名单里没有这个人」—— 没有测试会替你抓到这件事。
 const Set<String> guestSpeakerRoles = {'信息'};
 
-/// 名稱裡帶著自己日期的活動，例如「感恩聚餐（12/26 六）」。
+/// 名称里带著自己日期的活动，例如「感恩聚餐（12/26 六）」。
 ///
-/// 主日的辨識規則會把「表旁邊寫在星期六」這種活動放到之後那個主日，名稱
-/// 後面帶上它真正的日期。這種活動一次性、名字每次都不同，**不該**進活動
-/// 清單：放進去也永遠對不上下一次的名稱。所以不列進「活動沒有固定顏色」，
-/// 也就不會有人對它按「加入活動清單」。
+/// 主日的辨识规则会把「表旁边写在星期六」这种活动放到之后那个主日，名称
+/// 后面带上它真正的日期。这种活动一次性、名字每次都不同，**不该**进活动
+/// 清单：放进去也永远对不上下一次的名称。所以不列进「活动没有固定颜色」，
+/// 也就不会有人对它按「加入活动清单」。
 bool isDatedOneOffEvent(String name) =>
     RegExp(r'[（(]\s*\d{1,2}/\d{1,2}').hasMatch(name);
 
@@ -152,18 +152,18 @@ RosterImportParseResult parseRosterImportJson({
   required Map<String, EventOption> catalogByName,
 }) {
   if (input.trim().isEmpty) {
-    return const RosterImportParseResult.fatal('請貼上 JSON 內容');
+    return const RosterImportParseResult.fatal('请贴上 JSON 内容');
   }
 
   dynamic decoded;
   try {
     decoded = jsonDecode(input);
   } catch (_) {
-    return const RosterImportParseResult.fatal('JSON 格式錯誤');
+    return const RosterImportParseResult.fatal('JSON 格式错误');
   }
 
   if (decoded is! List) {
-    return const RosterImportParseResult.fatal('JSON 最外層需為陣列');
+    return const RosterImportParseResult.fatal('JSON 最外层需为阵列');
   }
 
   final dutiesByDate = <String, List<RosterEntry>>{};
@@ -174,7 +174,7 @@ RosterImportParseResult parseRosterImportJson({
   final duplicateDates = <String>[];
 
   final notInRosterNames = <String>[];
-  // 沒對到的人各自出現在哪些服事 —— 用來分出外來講員。
+  // 没对到的人各自出现在哪些服事 —— 用来分出外来讲员。
   final notInRosterRoles = <String, Set<String>>{};
   final roleMismatchNames = <String>[];
   final roleMismatchDetails = <String, Set<String>>{};
@@ -186,17 +186,17 @@ RosterImportParseResult parseRosterImportJson({
     final rowNum = i + 1;
     final item = decoded[i];
     if (item is! Map) {
-      return RosterImportParseResult.fatal('第 $rowNum 筆不是物件');
+      return RosterImportParseResult.fatal('第 $rowNum 笔不是物件');
     }
 
     // ── date ──────────────────────────────────────────────────────────────
     final dateValue = item['date'];
     if (dateValue is! String) {
-      return RosterImportParseResult.fatal('第 $rowNum 筆缺少 date');
+      return RosterImportParseResult.fatal('第 $rowNum 笔缺少 date');
     }
     final parsedDate = _parseDateKey(dateValue);
     if (parsedDate == null) {
-      return RosterImportParseResult.fatal('第 $rowNum 筆 date 格式錯誤');
+      return RosterImportParseResult.fatal('第 $rowNum 笔 date 格式错误');
     }
 
     // ── duties (optional key) ─────────────────────────────────────────────
@@ -205,7 +205,7 @@ RosterImportParseResult parseRosterImportJson({
     if (hasDutiesKey) {
       final dutiesValue = item['duties'];
       if (dutiesValue is! List) {
-        return RosterImportParseResult.fatal('第 $rowNum 筆 duties 格式錯誤');
+        return RosterImportParseResult.fatal('第 $rowNum 笔 duties 格式错误');
       }
       final duties = <RosterEntry>[];
       for (var j = 0; j < dutiesValue.length; j++) {
@@ -213,56 +213,56 @@ RosterImportParseResult parseRosterImportJson({
         final duty = dutiesValue[j];
         if (duty is! Map) {
           return RosterImportParseResult.fatal(
-            '第 $rowNum 筆 duties 第 $dutyNum 筆不是物件',
+            '第 $rowNum 笔 duties 第 $dutyNum 笔不是物件',
           );
         }
         final roleValue = duty['role'];
         if (roleValue is! String || roleValue.trim().isEmpty) {
           return RosterImportParseResult.fatal(
-            '第 $rowNum 筆 duties 第 $dutyNum 筆 role 缺失',
+            '第 $rowNum 笔 duties 第 $dutyNum 笔 role 缺失',
           );
         }
         final peopleValue = duty['people'];
         if (peopleValue is! List) {
           return RosterImportParseResult.fatal(
-            '第 $rowNum 筆 duties 第 $dutyNum 筆 people 格式錯誤',
+            '第 $rowNum 笔 duties 第 $dutyNum 笔 people 格式错误',
           );
         }
-        // 非字串的元素（null、數字）以前被 whereType 靜靜濾掉 —— 跟這次要
-        // 消滅的「名字無聲失蹤」是同一件事，只是更難察覺：它連報告都不會進。
-        // 這種資料就是壞掉的，直接讓整份匯入停下來說明是哪一筆。
+        // 非字串的元素（null、数字）以前被 whereType 静静滤掉 —— 跟这次要
+        // 消灭的「名字无声失踪」是同一件事，只是更难察觉：它连报告都不会进。
+        // 这种资料就是坏掉的，直接让整份汇入停下来说明是哪一笔。
         for (var k = 0; k < peopleValue.length; k++) {
           if (peopleValue[k] is! String) {
             return RosterImportParseResult.fatal(
-              '第 $rowNum 筆 duties 第 $dutyNum 筆 people 第 ${k + 1} 個不是文字',
+              '第 $rowNum 笔 duties 第 $dutyNum 笔 people 第 ${k + 1} 个不是文字',
             );
           }
         }
         final people = peopleValue
             .cast<String>()
             .map((name) => name.trim())
-            // 空字串不是名字，跳過。這是唯一會被靜靜略過的東西。
+            // 空字串不是名字，跳过。这是唯一会被静静略过的东西。
             .where((name) => name.isNotEmpty)
             .map((name) {
               final result = staff.resolve(name, roleValue.trim());
-              // 沒對到的名字一律照樣寫進服事表，只記進報告，不丟掉。
+              // 没对到的名字一律照样写进服事表，只记进报告，不丢掉。
               //
-              // 以前是丟掉的，那格於是變成「待定」，同一格還有別人時甚至什麼
-              // 痕跡都沒有 —— 牆上的表寫著兩個人，app 顯示一個，肉眼分不出來。
-              // 臨時支援別的崇拜是正常狀況，不該被當成錯誤資料刪掉。
+              // 以前是丢掉的，那格于是变成「待定」，同一格还有别人时甚至什么
+              // 痕迹都没有 —— 墙上的表写著两个人，app 显示一个，肉眼分不出来。
+              // 临时支援别的崇拜是正常状况，不该被当成错误资料删掉。
               //
-              // 首頁的「我的服事」在 uid 對不上時會退回姓名比對，所以名字留著
-              // 本人就看得到自己被排到；名字刪掉才是真的把人弄丟。
+              // 首页的「我的服事」在 uid 对不上时会退回姓名比对，所以名字留著
+              // 本人就看得到自己被排到；名字删掉才是真的把人弄丢。
               if (result.suggestions.isNotEmpty) {
-                // 名單裡很像的那幾位。名字照原文寫進去了，這只是提示。
+                // 名单里很像的那几位。名字照原文写进去了，这只是提示。
                 nearMatchSuggestions[name] = result.suggestions;
               }
               switch (result.status) {
                 case NameMatchStatus.matched:
                   return result.name;
                 case NameMatchStatus.roleMismatch:
-                  // 人是名單上的真人，uid 也查得到（下面的 personIdsByName
-                  // 會自動帶上），只是沒設定這個服事。
+                  // 人是名单上的真人，uid 也查得到（下面的 personIdsByName
+                  // 会自动带上），只是没设定这个服事。
                   roleMismatchNames.add(result.name);
                   _addRoleMismatch(
                     roleMismatchDetails,
@@ -271,14 +271,14 @@ RosterImportParseResult parseRosterImportJson({
                   );
                   return result.name;
                 case NameMatchStatus.notInList:
-                  // 名單上沒有這個人 —— 存純文字，沒有 uid，收不到通知。
+                  // 名单上没有这个人 —— 存纯文字，没有 uid，收不到通知。
                   notInRosterNames.add(name);
                   notInRosterRoles
                       .putIfAbsent(name, () => <String>{})
                       .add(roleValue.trim());
                   return name;
                 case NameMatchStatus.other:
-                  // 對到兩個以上同名的人，系統無從判斷是誰，原字串照留。
+                  // 对到两个以上同名的人，系统无从判断是谁，原字串照留。
                   otherNames.add(name);
                   return name;
               }
@@ -293,9 +293,9 @@ RosterImportParseResult parseRosterImportJson({
           ),
         );
       }
-      // duties key 存在但 array 為空 → reject
+      // duties key 存在但 array 为空 → reject
       if (duties.isEmpty) {
-        return RosterImportParseResult.fatal('第 $rowNum 筆 duties 不可為空');
+        return RosterImportParseResult.fatal('第 $rowNum 笔 duties 不可为空');
       }
       parsedDuties = duties;
     }
@@ -324,7 +324,7 @@ RosterImportParseResult parseRosterImportJson({
 
     // ── at least one of duties / events must be provided ─────────────────
     if (!hasDutiesKey && !hasEventsKey) {
-      return RosterImportParseResult.fatal('第 $rowNum 筆需至少包含 duties 或 events');
+      return RosterImportParseResult.fatal('第 $rowNum 笔需至少包含 duties 或 events');
     }
 
     // ── duplicate date detection ──────────────────────────────────────────
@@ -349,13 +349,13 @@ RosterImportParseResult parseRosterImportJson({
   }
 
   if (duplicateDates.isNotEmpty) {
-    return RosterImportParseResult.fatal('重複日期：${duplicateDates.join(', ')}');
+    return RosterImportParseResult.fatal('重复日期：${duplicateDates.join(', ')}');
   }
 
   final unmatched = uniqueNames(notInRosterNames);
   bool isGuestSpeaker(String name) =>
       notInRosterRoles[name]!.every(guestSpeakerRoles.contains) &&
-      // 名單裡有很像的，多半是某位同工的名字被讀錯一個字，不是外人。
+      // 名单里有很像的，多半是某位同工的名字被读错一个字，不是外人。
       (nearMatchSuggestions[name] ?? const []).isEmpty;
 
   return RosterImportParseResult(
@@ -382,30 +382,30 @@ RosterImportParseResult parseRosterImportJson({
 
 // ── orderDutiesByTemplate ───────────────────────────────────────────────────
 
-/// 依「服事項目樣板」的角色順序重排匯入進來的服事項目。
+/// 依「服事项目样板」的角色顺序重排汇入进来的服事项目。
 ///
-/// JSON 自己的順序刻意不採用。樣板是唯一的排序依據 —— 不管 JSON 是誰產生的、
-/// 用什麼順序寫，同一個類別的服事表在畫面上的項目順序都一致。
+/// JSON 自己的顺序刻意不采用。样板是唯一的排序依据 —— 不管 JSON 是谁产生的、
+/// 用什么顺序写，同一个类别的服事表在画面上的项目顺序都一致。
 ///
-/// 樣板裡沒有的角色一律接在最後，彼此之間才維持 JSON 的相對順序。
+/// 样板里没有的角色一律接在最后，彼此之间才维持 JSON 的相对顺序。
 ///
-/// [templateRoles] 為空時所有角色並列，等於整份退回 JSON 順序 —— 呼叫端必須
-/// 先確認樣板真的載入過再進來，否則同一份 JSON 匯入兩次會排出兩種結果。
+/// [templateRoles] 为空时所有角色并列，等于整份退回 JSON 顺序 —— 呼叫端必须
+/// 先确认样板真的载入过再进来，否则同一份 JSON 汇入两次会排出两种结果。
 List<RosterEntry> orderDutiesByTemplate(
   List<RosterEntry> duties,
   List<String> templateRoles,
 ) {
   final roleOrder = <String, int>{};
   for (var i = 0; i < templateRoles.length; i++) {
-    // 樣板理論上不會有重複角色（設定畫面擋掉了），真的有的話取第一次出現的
-    // 位置，跟人看樣板的直覺一致。
+    // 样板理论上不会有重复角色（设定画面挡掉了），真的有的话取第一次出现的
+    // 位置，跟人看样板的直觉一致。
     roleOrder.putIfAbsent(templateRoles[i], () => i);
   }
 
-  // 先把 JSON 的原始索引綁上去再排。Dart 的 List.sort 不保證穩定，同一個角色
-  // 在 JSON 裡出現兩次時，不自己 tie-break 的話相對順序是未定義的。
-  // 用索引而不是 indexOf：indexOf 走的是 ==，將來 RosterEntry 若加上值相等，
-  // 兩個相等的項目會拿到同一個索引，tie-break 就失效了。
+  // 先把 JSON 的原始索引绑上去再排。Dart 的 List.sort 不保证稳定，同一个角色
+  // 在 JSON 里出现两次时，不自己 tie-break 的话相对顺序是未定义的。
+  // 用索引而不是 indexOf：indexOf 走的是 ==，将来 RosterEntry 若加上值相等，
+  // 两个相等的项目会拿到同一个索引，tie-break 就失效了。
   final indexed = <MapEntry<int, RosterEntry>>[
     for (var i = 0; i < duties.length; i++) MapEntry(i, duties[i]),
   ];
@@ -432,7 +432,7 @@ EventParseOutcome parseEventsList(
   Map<String, EventOption> catalogByName,
 ) {
   if (raw is! List) {
-    return EventParseOutcome.err('第 $rowIndex 筆 events 格式錯誤');
+    return EventParseOutcome.err('第 $rowIndex 笔 events 格式错误');
   }
 
   final names = <String>[];
@@ -448,18 +448,18 @@ EventParseOutcome parseEventsList(
     if (elem is String) {
       eventName = elem.trim();
       if (eventName.isEmpty) {
-        return EventParseOutcome.err('第 $rowIndex 筆 events 第 $elemNum 筆名稱不可為空');
+        return EventParseOutcome.err('第 $rowIndex 笔 events 第 $elemNum 笔名称不可为空');
       }
     } else if (elem is Map) {
       final nameRaw = elem['name'];
       if (nameRaw == null) {
         return EventParseOutcome.err(
-          '第 $rowIndex 筆 events 第 $elemNum 筆缺少 name',
+          '第 $rowIndex 笔 events 第 $elemNum 笔缺少 name',
         );
       }
       if (nameRaw is! String || nameRaw.trim().isEmpty) {
         return EventParseOutcome.err(
-          '第 $rowIndex 筆 events 第 $elemNum 筆 name 格式錯誤',
+          '第 $rowIndex 笔 events 第 $elemNum 笔 name 格式错误',
         );
       }
       eventName = nameRaw.trim();
@@ -469,18 +469,18 @@ EventParseOutcome parseEventsList(
         final parsed = parseColor(colorRaw);
         if (parsed == null) {
           return EventParseOutcome.err(
-            '第 $rowIndex 筆 events 第 $elemNum 筆 color 格式錯誤',
+            '第 $rowIndex 笔 events 第 $elemNum 笔 color 格式错误',
           );
         }
         explicitColor = parsed;
       }
     } else {
-      return EventParseOutcome.err('第 $rowIndex 筆 events 第 $elemNum 筆格式錯誤');
+      return EventParseOutcome.err('第 $rowIndex 笔 events 第 $elemNum 笔格式错误');
     }
 
     // Duplicate name check within the same day
     if (seenNames.contains(eventName)) {
-      return EventParseOutcome.err('第 $rowIndex 筆 events 名稱重複：$eventName');
+      return EventParseOutcome.err('第 $rowIndex 笔 events 名称重复：$eventName');
     }
     seenNames.add(eventName);
     names.add(eventName);

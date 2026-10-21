@@ -67,7 +67,7 @@ async function dropFirstSessionCookie({ requestId, request }) {
   cookieDropped = true;
   await send('Fetch.fulfillRequest', { requestId, responseCode: 401,
     responseHeaders: [{ name: 'Content-Type', value: 'application/json; charset=utf-8' }],
-    body: Buffer.from(JSON.stringify({ message: '請使用啟動工具顯示的私人連結開啟精靈' })).toString('base64') });
+    body: Buffer.from(JSON.stringify({ message: '请使用启动工具显示的私人连结开启精灵' })).toString('base64') });
 }
 const linkToken = new URL(server.url).searchParams.get('k');
 const evaluate = async (expression) => {
@@ -96,7 +96,7 @@ try {
   await send('Page.navigate', { url: `http://localhost:${entry.address().port}/` });
   await waitFor("!!document.getElementById('open')", 'cross-site entry page');
   await evaluate("document.getElementById('open').click()");
-  await waitFor("document.getElementById('status').textContent.includes('先連接')", 'session established');
+  await waitFor("document.getElementById('status').textContent.includes('先连接')", 'session established');
   await send('Fetch.disable');
   const boot = startupEvents.slice(0, startupEvents.indexOf('GET /api/state') + 1);
   check('a first open that loses the cookie recovers once, without reopening the link', cookieDropped &&
@@ -111,8 +111,8 @@ try {
   await evaluate("document.getElementById('connect-cloudflare').click()");
   await waitFor("document.getElementById('cloudflare-account').value.length === 32", 'cloudflare account selected');
   await evaluate(`(() => { const f = document.getElementById('settings-form');
-    f.appName.value = '範例教會同工助手'; f.shortName.value = '同工助手'; f.siteName.value = 'example-staff';
-    f.adminName.value = '測試管理員'; f.adminEmail.value = 'admin@example.invalid';
+    f.appName.value = '范例教会同工助手'; f.shortName.value = '同工助手'; f.siteName.value = 'example-staff';
+    f.adminName.value = '测试管理员'; f.adminEmail.value = 'admin@example.invalid';
     document.getElementById('add-service').click();
     const rows = document.querySelectorAll('.service-row');
     rows[1].querySelector('[data-field=label]').value = '青崇';
@@ -133,7 +133,7 @@ try {
   // Double click must not start two runs.
   await evaluate("document.getElementById('apply').click(); document.getElementById('apply').click()");
   await waitFor("[...document.querySelectorAll('#steps li')].some((li) => li.dataset.state === 'failed')", 'demo interruption at rules');
-  check('interruption shown as error with resume button', (await evaluate("document.getElementById('error-message').textContent")).includes('示範中斷') && (await evaluate("document.getElementById('apply').textContent")).includes('接續'));
+  check('interruption shown as error with resume button', (await evaluate("document.getElementById('error-message').textContent")).includes('示范中断') && (await evaluate("document.getElementById('apply').textContent")).includes('接续'));
   // Demo steps finish too fast for polling to catch, so render a running build directly.
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 900, deviceScaleFactor: 1, mobile: true });
   const running = await evaluate(`(() => {
@@ -144,17 +144,17 @@ try {
     timer = setInterval(refresh, 1500);
     return result;
   })()`);
-  check('running step shows elapsed time and expected duration without overflow', /秒/.test(running.text) && running.text.includes('十幾分鐘') && running.status.includes('已經過') && !running.overflow);
+  check('running step shows elapsed time and expected duration without overflow', /秒/.test(running.text) && running.text.includes('十几分钟') && running.status.includes('已经过') && !running.overflow);
   const pendingLabel = await evaluate(`(() => {
     clearInterval(timer);
-    render({ ...current, status: 'paused', busy: false, error: { code: 'GOOGLE_OPERATION_PENDING', message: 'Google 仍在建立資源' },
+    render({ ...current, status: 'paused', busy: false, error: { code: 'GOOGLE_OPERATION_PENDING', message: 'Google 仍在建立资源' },
       steps: current.steps.map((step) => ({ ...step, status: step.id === 'firebase' ? 'waiting' : step.status })) });
     const result = [document.querySelector('#steps li[data-state=waiting] .step-state').textContent,
       document.getElementById('apply').textContent];
     timer = setInterval(refresh, 1500);
     return result;
   })()`);
-  check('pending Firebase operation says wait then resume', pendingLabel.every((label) => label.includes('稍後接續')));
+  check('pending Firebase operation says wait then resume', pendingLabel.every((label) => label.includes('稍后接续')));
   const countdown = await evaluate(`(() => {
     clearInterval(timer);
     const device = { url: 'https://dash.cloudflare.com/oauth2/device/verify', code: 'AbCd1234' };
@@ -166,7 +166,7 @@ try {
     timer = setInterval(refresh, 1500);
     return [live, expired];
   })()`);
-  check('Cloudflare code shows a live countdown and says when to get a new one', countdown[0].includes('2 分 05 秒') && countdown[1].includes('已過期'));
+  check('Cloudflare code shows a live countdown and says when to get a new one', countdown[0].includes('2 分 05 秒') && countdown[1].includes('已过期'));
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   const runId = await evaluate("document.getElementById('run-id').textContent");
   // Reload keeps the HttpOnly session and restores progress from the server.
@@ -194,7 +194,7 @@ try {
     (await evaluate("document.getElementById('mail-sender').textContent")) === `noreply@${plan.projectId}.firebaseapp.com`);
   const share = await evaluate("document.getElementById('share-message').value");
   check('share message opens LINE links in the phone browser',
-    share.includes(`https://${plan.pagesProject}.pages.dev/?openExternalBrowser=1`) && share.includes('加入主畫面') && share.includes('忘記密碼'));
+    share.includes(`https://${plan.pagesProject}.pages.dev/?openExternalBrowser=1`) && share.includes('加入主画面') && share.includes('忘记密码'));
   const handoff = await evaluate("[...document.querySelectorAll('#handoff dd')].map((item) => item.textContent)");
   check('handoff card records the accounts and IDs, never a credential',
     handoff.includes(plan.googleEmail) && handoff.includes(plan.projectId) && handoff.includes(plan.pagesProject) && handoff.includes(plan.runId) &&
@@ -207,7 +207,7 @@ try {
   await evaluate("document.getElementById('find-installs').click()");
   await waitFor("document.querySelectorAll('#installs input[type=radio]').length === 1", 'installed site listed');
   check('installed site shows its name, address and current release',
-    (await evaluate("document.getElementById('installs').textContent")).includes('恩典教會同工助手') &&
+    (await evaluate("document.getElementById('installs').textContent")).includes('恩典教会同工助手') &&
     (await evaluate("document.getElementById('installs').textContent")).includes('grace-church-staff.pages.dev') &&
     (await evaluate("document.getElementById('installs').textContent")).includes('2026.9.1'));
   await evaluate("document.querySelector('#installs input[type=radio]').click()");
@@ -247,14 +247,14 @@ try {
     message: await evaluate("document.getElementById('fatal').textContent"),
     navigations: startupEvents.filter((event) => event === 'navigation').length - beforeMissingCookie,
   };
-  check('opening without the link code (Google sign-in check) says to click the link again, without a loop', noCookie.message.includes('再點一次') && noCookie.navigations === 1);
-  if (!noCookie.message.includes('再點一次') || noCookie.navigations !== 1) results.push(`  missing-cookie diagnostic: ${JSON.stringify(noCookie)}`);
+  check('opening without the link code (Google sign-in check) says to click the link again, without a loop', noCookie.message.includes('再点一次') && noCookie.navigations === 1);
+  if (!noCookie.message.includes('再点一次') || noCookie.navigations !== 1) results.push(`  missing-cookie diagnostic: ${JSON.stringify(noCookie)}`);
   await send('Page.navigate', { url: `http://localhost:${entry.address().port}/` });
   await waitFor("!!document.getElementById('open')", 'return to entry without a cookie');
   await evaluate("document.getElementById('open').click()");
   await waitFor("!document.getElementById('fatal').hidden", 'used token without a cookie');
   check('used private link cannot recreate a session after cookies are cleared',
-    (await evaluate("document.getElementById('fatal').textContent")).includes('開啟連結已失效'));
+    (await evaluate("document.getElementById('fatal').textContent")).includes('开启连结已失效'));
   // Every browser error comes from an intentional 401 in the security tests.
   const unexpected = consoleErrors.filter((error) => !error.includes('status of 401'));
   check('no unexpected browser console errors', unexpected.length === 0 && consoleErrors.length >= 3);

@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""從 Firestore 現況產生服事表匯入用的 prompt。
+"""从 Firestore 现况产生服事表汇入用的 prompt。
 
-repo 是公開的，所以同工姓名一律不進版控：模板在
-docs/roster-import-prompt.template.md，產生的成品寫到 .local/（已 gitignore）。
+repo 是公开的，所以同工姓名一律不进版控：模板在
+docs/roster-import-prompt.template.md，产生的成品写到 .local/（已 gitignore）。
 
 用法：
-    uv run scripts/build-import-prompt.py            # 所有設定的聚會都產生
-    uv run scripts/build-import-prompt.py youth      # 只產生青崇
-    uv run scripts/build-import-prompt.py --publish  # 順便發佈到 Firestore
+    uv run scripts/build-import-prompt.py            # 所有设定的聚会都产生
+    uv run scripts/build-import-prompt.py youth      # 只产生青崇
+    uv run scripts/build-import-prompt.py --publish  # 顺便发布到 Firestore
 
-需要環境變數 FIREBASE_PROJECT_ID，或 .local/project-id 這個檔。
+需要环境变数 FIREBASE_PROJECT_ID，或 .local/project-id 这个档。
 
-沒有 --publish 就只讀 Firestore，產物寫到 .local/。
+没有 --publish 就只读 Firestore，产物写到 .local/。
 
---publish 會把**模板**寫進 settings/import_prompts，那是 app 內建的「照片直接
-匯入」在用的 —— functions/api/roster/import-image.js 從那裡讀。
+--publish 会把**模板**写进 settings/import_prompts，那是 app 内建的「照片直接
+汇入」在用的 —— functions/api/roster/import-image.js 从那里读。
 
-發佈的是模板不是完成品：服事項目、活動、同工名單、今天這幾個留成 {{...}}，
-由 worker 每次呼叫時從 Firestore 現況填。所以**新同工建完帳號就直接生效，
-不必重跑這支**。只有改了版面規則、欄名對照、綽號或模板本文才要重新發佈。
+发布的是模板不是完成品：服事项目、活动、同工名单、今天这几个留成 {{...}}，
+由 worker 每次呼叫时从 Firestore 现况填。所以**新同工建完帐号就直接生效，
+不必重跑这支**。只有改了版面规则、栏名对照、绰号或模板本文才要重新发布。
 
-各教會自己的規則（例如「會前禱+奉獻拆兩項」、敬拜團展開方式、綽號對照）
-放在 .local/import-rules.json，格式見模板文件末段。
+各教会自己的规则（例如「会前祷+奉献拆两项」、敬拜团展开方式、绰号对照）
+放在 .local/import-rules.json，格式见模板文件末段。
 """
 
 import datetime
@@ -36,15 +36,15 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-# worker 每次呼叫才填的欄位。跟 worker/roster_prompt.js 的 fillPrompt 一致 ——
-# 兩邊對不上的話，prompt 會帶著 {{NAMES}} 這種字面值送出去。
+# worker 每次呼叫才填的栏位。跟 worker/roster_prompt.js 的 fillPrompt 一致 ——
+# 两边对不上的话，prompt 会带著 {{NAMES}} 这种字面值送出去。
 LIVE_FIELDS = ("ROLES", "EVENTS", "NAMES", "TODAY", "SAMPLE_ROLE_A", "SAMPLE_ROLE_B")
 
-# 名單一行放幾個人，以及活動清單空的時候寫什麼。這兩個值 worker 也各有一份 ——
-# 對不上的話，本機驗過的 prompt 跟線上送出去的就不是同一份，而且沒有東西會
-# 叫。functions-tests/prompt_parity.test.js 把兩邊釘在一起。
+# 名单一行放几个人，以及活动清单空的时候写什么。这两个值 worker 也各有一份 ——
+# 对不上的话，本机验过的 prompt 跟线上送出去的就不是同一份，而且没有东西会
+# 叫。functions-tests/prompt_parity.test.js 把两边钉在一起。
 NAMES_PER_LINE = 6
-NO_EVENTS = "（尚未設定）"
+NO_EVENTS = "（尚未设定）"
 
 from _firestore import LOCAL, ROOT, TYPES, base_url, get, project_id, token  # noqa: F401
 from _church_config import CONFIG
@@ -68,11 +68,11 @@ def fetch_names(base: str, tok: str) -> list[str]:
 
 
 def fill_live(template: str, *, roles: list[str], events: list[str], names: list[str]) -> str:
-    """填上「活的」那幾個欄位。
+    """填上「活的」那几个栏位。
 
-    這支只給本機預覽用。正式流程是 worker 的 fillPrompt 做同一件事，資料直接
-    從 Firestore 現況讀 —— 所以新同工建完帳號就生效，不必有人回來重跑。
-    兩邊的輸出要長得一樣，否則本機驗過的跟線上跑的不是同一份 prompt。
+    这支只给本机预览用。正式流程是 worker 的 fillPrompt 做同一件事，资料直接
+    从 Firestore 现况读 —— 所以新同工建完帐号就生效，不必有人回来重跑。
+    两边的输出要长得一样，否则本机验过的跟线上跑的不是同一份 prompt。
     """
     return (
         template.replace("{{ROLES}}", "、".join(roles))
@@ -84,8 +84,8 @@ def fill_live(template: str, *, roles: list[str], events: list[str], names: list
                 for i in range(0, len(names), NAMES_PER_LINE)
             ),
         )
-        # 有些表的標題根本不寫年份（兒主那張就是），模型只能猜。給它今天，
-        # 讓它挑離今天最近的那個年份 —— 猜錯年份整份都匯不進去。
+        # 有些表的标题根本不写年份（儿主那张就是），模型只能猜。给它今天，
+        # 让它挑离今天最近的那个年份 —— 猜错年份整份都汇不进去。
         .replace("{{TODAY}}", datetime.datetime.now(ZoneInfo(CONFIG["timeZone"])).date().isoformat())
         .replace("{{SAMPLE_ROLE_A}}", roles[0])
         .replace("{{SAMPLE_ROLE_B}}", roles[1] if len(roles) > 1 else roles[0])
@@ -93,13 +93,13 @@ def fill_live(template: str, *, roles: list[str], events: list[str], names: list
 
 
 def publish(base: str, tok: str, prompts: dict[str, str]) -> None:
-    """把產生好的 prompt 寫進 settings/import_prompts。
+    """把产生好的 prompt 写进 settings/import_prompts。
 
-    只送這一輪真的產生出來的那幾個崇拜（updateMask），所以
-    `build-import-prompt.py youth --publish` 不會把另外兩個洗掉。
+    只送这一轮真的产生出来的那几个崇拜（updateMask），所以
+    `build-import-prompt.py youth --publish` 不会把另外两个洗掉。
     """
-    # 設定允許 ID 帶連字號；Firestore field path 要引用才能維持單一頂層鍵。
-    # IDs 已通過 ChurchConfig 驗證，不含反引號或反斜線。
+    # 设定允许 ID 带连字号；Firestore field path 要引用才能维持单一顶层键。
+    # IDs 已通过 ChurchConfig 验证，不含反引号或反斜线。
     mask = urllib.parse.urlencode(
         [("updateMask.fieldPaths", f"`{t}`") for t in prompts]
     )
@@ -117,11 +117,11 @@ def publish(base: str, tok: str, prompts: dict[str, str]) -> None:
             json.load(response)
     except urllib.error.HTTPError as e:
         sys.exit(
-            f"發佈失敗（HTTP {e.code}）。這個帳號要有寫入 settings/ 的權限。\n"
+            f"发布失败（HTTP {e.code}）。这个帐号要有写入 settings/ 的权限。\n"
             + e.read().decode(errors="replace")[:600]
         )
-    print(f"\n已發佈到 settings/import_prompts：{'、'.join(TYPES[t] for t in prompts)}")
-    print("app 的「照片直接匯入」現在用的就是這一份。")
+    print(f"\n已发布到 settings/import_prompts：{'、'.join(TYPES[t] for t in prompts)}")
+    print("app 的「照片直接汇入」现在用的就是这一份。")
 
 
 def main() -> None:
@@ -130,7 +130,7 @@ def main() -> None:
     wanted = [a for a in args if a != "--publish"] or list(TYPES)
     for t in wanted:
         if t not in TYPES:
-            sys.exit(f"未知的崇拜類別「{t}」，可用：{', '.join(TYPES)}")
+            sys.exit(f"未知的崇拜类别「{t}」，可用：{', '.join(TYPES)}")
 
     base = (
         f"https://firestore.googleapis.com/v1/projects/{project_id()}"
@@ -140,20 +140,20 @@ def main() -> None:
 
     names = fetch_names(base, tok)
     if not names:
-        sys.exit("users 讀回來是空的，中止")
+        sys.exit("users 读回来是空的，中止")
 
     templates = get(base, "settings/roster_templates", tok).get("fields", {})
     options = get(base, "settings/event_options", tok).get("fields", {})
     rules_path = LOCAL / "import-rules.json"
     rules = json.loads(rules_path.read_text()) if rules_path.exists() else {}
 
-    # 只擷取模板本文那段（```` 圍起來的第一個區塊）。
+    # 只撷取模板本文那段（```` 围起来的第一个区块）。
     body = re.search(r"^````\n(.*?)^````$", TEMPLATE.read_text(), re.S | re.M)
     if not body:
-        sys.exit("模板裡找不到 ```` 圍起來的本文區塊")
+        sys.exit("模板里找不到 ```` 围起来的本文区块")
     body = body.group(1)
 
-    # 去姓後撞名 → app 會判成「不確定是哪一位」，那格不會連到任何帳號。
+    # 去姓后撞名 → app 会判成「不确定是哪一位」，那格不会连到任何帐号。
     from collections import Counter
 
     given = Counter(n[1:] for n in names if len(n) > 1)
@@ -175,7 +175,7 @@ def main() -> None:
             .get("values", [])
         ]
         if not roles:
-            print(f"⚠ {TYPES[service_type]} 在 roster_templates 裡沒有服事項目，跳過")
+            print(f"⚠ {TYPES[service_type]} 在 roster_templates 里没有服事项目，跳过")
             continue
 
         rule = rules.get(service_type, {})
@@ -184,22 +184,22 @@ def main() -> None:
         if nicknames:
             lines = "\n".join(f"{k} → {v}" for k, v in nicknames.items())
             nickname_block = (
-                "\n### 綽號對照\n\n表上這些寫法對不到名單，只能查表：\n\n"
+                "\n### 绰号对照\n\n表上这些写法对不到名单，只能查表：\n\n"
                 + lines
                 + "\n"
             )
 
         team = rule.get("teamRules", "")
-        # 版面規則是三個崇拜差最多的地方（主日整張是轉置的），沒寫的話這一段
-        # 就空著 —— 模板本文刻意不再假設「一列一天」。
+        # 版面规则是三个崇拜差最多的地方（主日整张是转置的），没写的话这一段
+        # 就空著 —— 模板本文刻意不再假设「一列一天」。
         layout = rule.get("layoutRules", "")
-        # ── 兩類欄位 ──────────────────────────────────────────────────────
-        # 「寫的」：版面規則、欄名對照、綽號、敬拜團 —— 有人去改
-        # .local/import-rules.json 才會變，發佈時就填好。
+        # ── 两类栏位 ──────────────────────────────────────────────────────
+        # 「写的」：版面规则、栏名对照、绰号、敬拜团 —— 有人去改
+        # .local/import-rules.json 才会变，发布时就填好。
         #
-        # 「活的」：服事項目、活動、同工名單、今天 —— 隨時會變，**故意留成
-        # {{...}}** 交給 worker 每次呼叫時填。烤進去的話，新同工建完帳號還要
-        # 有人記得回來重跑這支，而沒人會記得。
+        # 「活的」：服事项目、活动、同工名单、今天 —— 随时会变，**故意留成
+        # {{...}}** 交给 worker 每次呼叫时填。烤进去的话，新同工建完帐号还要
+        # 有人记得回来重跑这支，而没人会记得。
         template = (
             body.replace("{{LAYOUT_RULES}}", f"\n{layout}\n" if layout else "")
             .replace("{{EXTRA_ROLE_RULES}}", rule.get("extraRoleRules", ""))
@@ -209,33 +209,33 @@ def main() -> None:
         remaining = set(re.findall(r"\{\{([A-Z_]+)\}\}", template))
         if remaining != set(LIVE_FIELDS):
             sys.exit(
-                "模板剩下的欄位跟 worker 會填的對不上。\n"
-                f"  模板裡有：{sorted(remaining)}\n"
+                "模板剩下的栏位跟 worker 会填的对不上。\n"
+                f"  模板里有：{sorted(remaining)}\n"
                 f"  worker 填：{sorted(LIVE_FIELDS)}\n"
-                "改了模板的話，worker/roster_prompt.js 的 fillPrompt 要一起改。"
+                "改了模板的话，worker/roster_prompt.js 的 fillPrompt 要一起改。"
             )
 
         filled = fill_live(template, roles=roles, events=events, names=names)
         left = re.findall(r"\{\{[A-Z_]+\}\}", filled)
         if left:
-            sys.exit(f"填完還有剩下的欄位：{sorted(set(left))}")
+            sys.exit(f"填完还有剩下的栏位：{sorted(set(left))}")
 
         out = LOCAL / f"roster-import-prompt.{service_type}.md"
-        # 本機這份是填好的，給 try-gemini-import.py 與肉眼看用。
+        # 本机这份是填好的，给 try-gemini-import.py 与肉眼看用。
         out.write_text(filled)
-        # 發佈出去的是**模板**，不是上面那份。
+        # 发布出去的是**模板**，不是上面那份。
         published[service_type] = template
-        note = "" if layout else "，⚠ 沒有 layoutRules"
+        note = "" if layout else "，⚠ 没有 layoutRules"
         print(
             f"{TYPES[service_type]}：{out.relative_to(ROOT)}"
-            f"（{len(names)} 人、{len(roles)} 個服事項目{note}）"
+            f"（{len(names)} 人、{len(roles)} 个服事项目{note}）"
         )
 
     if should_publish and published:
         publish(base, tok, published)
 
     if clashes:
-        print("\n⚠ 去掉姓氏後會撞名，這幾位匯入時可能對不到帳號：")
+        print("\n⚠ 去掉姓氏后会撞名，这几位汇入时可能对不到帐号：")
         for given_name, full in clashes.items():
             print(f"    {given_name} → {full}")
 

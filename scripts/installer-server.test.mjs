@@ -39,7 +39,7 @@ test('static UI uses restrictive headers and never includes the private bootstra
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
   assert.equal(body.includes(linkToken(server)), false);
-  assert.match(body, /教會安裝精靈/);
+  assert.match(body, /教会安装精灵/);
 });
 
 // The Cloud Shell terminal link opens the wizard as a cross-site navigation.
@@ -62,7 +62,7 @@ test('the wizard page loads through cross-site redirects but the API does not ac
   ]) {
     const page = await rawGet(server.localOrigin, '/', headers);
     assert.equal(page.status, 200);
-    assert.match(page.body, /教會安裝精靈/);
+    assert.match(page.body, /教会安装精灵/);
     assert.equal((await rawGet(server.localOrigin, '/app.js', headers)).status, 200);
   }
   assert.equal((await rawGet(server.localOrigin, '/api/state', { 'Sec-Fetch-Site': 'cross-site', 'X-Installer-Request': '1' })).status, 403);
@@ -190,9 +190,9 @@ test('authenticated HTTP flow connects, plans, confirms, completes and lists res
   assert.equal((await call('/api/connect/cloudflare', {}, auth)).status, 202);
   while (manager.snapshot().busy) await new Promise((resolve) => setImmediate(resolve));
   const response = await call('/api/plan', {
-    appName: '範例教會', shortName: '同工助手', siteName: 'example-staff', timeZone: 'Asia/Taipei', region: 'asia-east1',
+    appName: '范例教会', shortName: '同工助手', siteName: 'example-staff', timeZone: 'Asia/Taipei', region: 'asia-east1',
     services: [{ name: '主日崇拜', label: '主日', weekday: 7 }],
-    adminName: '測試管理員', adminEmail: 'admin@example.invalid', cloudflareAccountId: '0123456789abcdef0123456789abcdef',
+    adminName: '测试管理员', adminEmail: 'admin@example.invalid', cloudflareAccountId: '0123456789abcdef0123456789abcdef',
   }, auth);
   assert.equal(response.status, 200);
   const plan = await response.json();

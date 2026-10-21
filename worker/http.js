@@ -22,7 +22,7 @@ export function errorResponse(error) {
   if (error instanceof HttpError) {
     return jsonResponse({ error: error.message }, error.status);
   }
-  return jsonResponse({ error: '操作失敗，請稍後再試' }, 500);
+  return jsonResponse({ error: '操作失败，请稍后再试' }, 500);
 }
 
 /// Wraps a handler so thrown HttpErrors become responses instead of 500s.
@@ -45,6 +45,6 @@ export async function readJsonBody(request) {
   try {
     return await request.json();
   } catch {
-    throw new HttpError(400, '資料格式不正確');
+    throw new HttpError(400, '资料格式不正确');
   }
 }

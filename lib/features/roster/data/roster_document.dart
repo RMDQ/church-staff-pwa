@@ -27,8 +27,8 @@ Map<String, dynamic> rosterToFirestore(ServiceRoster roster) => {
 ServiceRoster rosterFromFirestore(Map<String, dynamic> data, String id) {
   final storedDate = (data['date'] as Timestamp).toDate();
   final key = data['dateKey'];
-  // 舊 ID 本來就記錄了排表的日期。不要用現在的裝置或教會時區重新解讀，
-  // 否則出國或修改部署時區會把已排好的服事移到另一日。
+  // 旧 ID 本来就记录了排表的日期。不要用现在的装置或教会时区重新解读，
+  // 否则出国或修改部署时区会把已排好的服事移到另一日。
   final idDate = RegExp(r'^(\d{4})(\d{2})(\d{2})_').firstMatch(id);
   final date = key is String
       ? ChurchTime.parseDate(key)
@@ -37,7 +37,7 @@ ServiceRoster rosterFromFirestore(Map<String, dynamic> data, String id) {
       : ChurchTime.dateOnly(ChurchTime.inZone(storedDate));
   final typeName = data['type'];
   if (typeName is! String || typeName.isEmpty) {
-    throw const FormatException('服事表缺少聚會 ID');
+    throw const FormatException('服事表缺少聚会 ID');
   }
   final colors = data['customEventColors'];
   return ServiceRoster(

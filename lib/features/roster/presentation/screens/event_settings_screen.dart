@@ -8,9 +8,9 @@ import '../../../../core/widgets/text_controller_scope.dart';
 import '../write_failure.dart';
 import '../widgets/event_color_picker.dart';
 
-/// 部分失敗時接在後面的話：設定本身寫進去了，只有幾天的服事表沒同步到新
-/// 名稱。再存一次會補上 —— 改過的那幾天已經沒有舊名稱可以換，不會重複改。
-const _partialSaveNote = '設定本身已儲存，再按一次儲存會補上';
+/// 部分失败时接在后面的话：设定本身写进去了，只有几天的服事表没同步到新
+/// 名称。再存一次会补上 —— 改过的那几天已经没有旧名称可以换，不会重复改。
+const _partialSaveNote = '设定本身已储存，再按一次储存会补上';
 
 class EventSettingsScreen extends StatefulWidget {
   const EventSettingsScreen({super.key});
@@ -53,13 +53,13 @@ class _EventSettingsScreenState extends State<EventSettingsScreen> {
   }
 
   Future<void> _promptAddEvent(ServiceType type) async {
-    // controller 由 TextControllerScope 在 bottom sheet 子樹卸載時 dispose。
+    // controller 由 TextControllerScope 在 bottom sheet 子树卸载时 dispose。
     final controller = TextEditingController();
     final result = await _showEventDialog(
       title: '新增事件',
       controller: controller,
       existing: _editingOptions[type] ?? const <EventOption>[],
-      // 預設給這個崇拜用得最少的顏色，跟匯入時自動加進清單的挑法一樣。
+      // 预设给这个崇拜用得最少的颜色，跟汇入时自动加进清单的挑法一样。
       initialColor: pickEventColor(
         _editingOptions[type] ?? const <EventOption>[],
       ),
@@ -73,7 +73,7 @@ class _EventSettingsScreenState extends State<EventSettingsScreen> {
     if (current == null) return;
     final controller = TextEditingController(text: current.name);
     final result = await _showEventDialog(
-      title: '編輯事件',
+      title: '编辑事件',
       controller: controller,
       existing: _editingOptions[type] ?? const <EventOption>[],
       currentName: current.name,
@@ -110,8 +110,8 @@ class _EventSettingsScreenState extends State<EventSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('確認刪除'),
-        content: const Text('確定要刪除此事件嗎？'),
+        title: const Text('确认删除'),
+        content: const Text('确定要删除此事件吗？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -119,7 +119,7 @@ class _EventSettingsScreenState extends State<EventSettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: const Text('删除'),
           ),
         ],
       ),
@@ -150,13 +150,13 @@ class _EventSettingsScreenState extends State<EventSettingsScreen> {
         int selectedColor = initialColor;
         String? validateValue(String value) {
           final trimmed = value.trim();
-          if (trimmed.isEmpty) return '請輸入名稱';
+          if (trimmed.isEmpty) return '请输入名称';
           final isDuplicate = existing.any(
             (name) =>
                 name.name.trim() == trimmed &&
                 name.name.trim() != currentName?.trim(),
           );
-          if (isDuplicate) return '名稱已存在';
+          if (isDuplicate) return '名称已存在';
           return null;
         }
 
@@ -186,8 +186,8 @@ class _EventSettingsScreenState extends State<EventSettingsScreen> {
                     TextField(
                       controller: controller,
                       decoration: InputDecoration(
-                        labelText: '事件名稱',
-                        hintText: '例：聖餐主日',
+                        labelText: '事件名称',
+                        hintText: '例：圣餐主日',
                         hintStyle: TextStyle(
                           color: Theme.of(
                             context,
@@ -205,7 +205,7 @@ class _EventSettingsScreenState extends State<EventSettingsScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        '標籤顏色',
+                        '标签颜色',
                         style: TextStyle(color: Colors.grey.shade700),
                       ),
                     ),
@@ -231,7 +231,7 @@ class _EventSettingsScreenState extends State<EventSettingsScreen> {
       length: ServiceType.active.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('事件選項設定'),
+          title: const Text('事件选项设定'),
           bottom: TabBar(
             isScrollable: ServiceType.active.length > 3,
             tabs: ServiceType.active
@@ -250,10 +250,10 @@ class _EventSettingsScreenState extends State<EventSettingsScreen> {
                     renamedEventsByType: _renamedEventsByType,
                   );
                 } catch (e) {
-                  // 留在這頁：改到一半的設定還在，再按一次就能重送。
+                  // 留在这页：改到一半的设定还在，再按一次就能重送。
                   showWriteFailure(
                     messenger,
-                    '儲存',
+                    '储存',
                     e,
                     partialNote: _partialSaveNote,
                   );
