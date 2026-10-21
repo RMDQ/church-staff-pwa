@@ -23,10 +23,16 @@ export const STEPS = [
   ['activation', '寄送管理员设定密码信', 'google'],
 ].map(([id, label, provider]) => ({ id, label, provider }));
 
+// The site's secret holding the key of the service account that creates and
+// removes staff sign-ins (worker/account_admin.js). The step that sets it up
+// ('accounts' provider above) runs Google and Cloudflare in turn.
+export const ACCOUNT_ADMIN_SECRET = 'ACCOUNT_ADMIN_KEY';
+
 export const stepIdsFor = (provider) => new Set(STEPS.filter((step) => step.provider === provider).map((step) => step.id));
 
-// Update mode: rebuild an existing install from the latest source. Nothing is
-// created and no data, account or admin is touched; only the site and rules change.
+// Update mode: rebuild an existing install from the latest source. No data,
+// staff account or admin is touched; the site, its rules and the account
+// management key (set up here for sites installed before it existed) change.
 export const UPDATE_STEPS = [
   ['inspect', '核对网站与 Google 专案', 'google'],
   ['build', '建置新版网站', 'build'],

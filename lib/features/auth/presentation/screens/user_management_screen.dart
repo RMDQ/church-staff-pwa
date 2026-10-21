@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/user.dart';
@@ -268,6 +270,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                             onPressed: () async {
                                               final authProvider = context
                                                   .read<UserAdminProvider>();
+                                              final messenger =
+                                                  ScaffoldMessenger.of(context);
                                               final confirm = await showDialog<bool>(
                                                 context: context,
                                                 builder: (context) => AlertDialog(
@@ -302,9 +306,24 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                               );
 
                                               if (confirm != true) return;
-                                              await authProvider.deleteUser(
-                                                data.user.id,
-                                              );
+                                              try {
+                                                await authProvider.deleteUser(
+                                                  data.user.id,
+                                                );
+                                              } catch (e, st) {
+                                                log(
+                                                  '刪除使用者失敗',
+                                                  error: e,
+                                                  stackTrace: st,
+                                                );
+                                                messenger.showSnackBar(
+                                                  accountErrorSnackBar(
+                                                    e,
+                                                    prefix: '刪除失敗：',
+                                                  ),
+                                                );
+                                                return;
+                                              }
                                               if (!context.mounted) return;
                                               _refreshUsers();
                                             },

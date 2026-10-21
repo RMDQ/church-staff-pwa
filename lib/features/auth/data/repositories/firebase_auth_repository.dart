@@ -8,14 +8,19 @@ import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/signup_request.dart';
 import '../cached_user_storage.dart';
+import '../sign_in_admin_service.dart';
 
 class FirebaseAuthRepository implements AuthRepository {
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final CachedUserStorage _cachedUserStorage;
+  final SignInAdminService _signIns;
 
-  FirebaseAuthRepository({CachedUserStorage? cachedUserStorage})
-    : _cachedUserStorage = cachedUserStorage ?? CachedUserStorage();
+  FirebaseAuthRepository({
+    CachedUserStorage? cachedUserStorage,
+    SignInAdminService? signIns,
+  }) : _cachedUserStorage = cachedUserStorage ?? CachedUserStorage(),
+       _signIns = signIns ?? SignInAdminService();
 
   CollectionReference get _usersCollection => _firestore.collection('users');
 
@@ -123,24 +128,74 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> addUser(User user, String password) async {
-    if (user.email.trim().isEmpty) {
+    final email = user.email.trim();
+    if (email.isEmpty) {
       await _usersCollection.doc(user.id).set(user.toJson());
       return;
     }
+    final uid = await _createSignIn(email, password, user.name);
+    await _usersCollection.doc(uid).set(user.copyWith(id: uid).toJson());
+  }
+
+  @override
+  Future<void> updateUser(User user, {String? password}) async {
+    final email = user.email.trim();
+    if (email.isNotEmpty && password != null) {
+      // A staff member without an email gets one: their profile moves to the
+      // new sign-in's uid.
+      final uid = await _createSignIn(email, password, user.name);
+      await _usersCollection.doc(uid).set(user.copyWith(id: uid).toJson());
+      if (uid != user.id) {
+        await _usersCollection.doc(user.id).delete();
+      }
+      return;
+    }
+
+    await _usersCollection.doc(user.id).update(user.toJson());
+  }
+
+  /// The sign-in goes first: once the profile is gone the admin can no longer
+  /// see the person, and a failed sign-in removal would leave the email
+  /// unusable. Removing a sign-in that is already gone succeeds, so a retry
+  /// after a failed profile delete works.
+  @override
+  Future<void> deleteUser(String id) async {
+    // On a site without account management only the profile goes, as before.
+    await _signIns.delete(id);
+    await _usersCollection.doc(id).delete();
+  }
+
+  /// Creates [email]'s sign-in and returns its uid: through the site's own
+  /// account management when it has one, else in the browser like before.
+  Future<String> _createSignIn(
+    String email,
+    String password,
+    String name,
+  ) async {
+    final uid = await _signIns.create(
+      email: email,
+      password: password,
+      name: name,
+    );
+    return uid ?? await _createSignInInBrowser(email, password);
+  }
+
+  /// A second Firebase app, so creating the sign-in does not sign the admin
+  /// out of the first one.
+  Future<String> _createSignInInBrowser(String email, String password) async {
     FirebaseApp? secondaryApp;
     try {
       secondaryApp = await Firebase.initializeApp(
         name: 'SecondaryApp',
         options: Firebase.app().options,
       );
-
       final secondaryAuth = firebase_auth.FirebaseAuth.instanceFor(
         app: secondaryApp,
       );
 
       // 使用 User 物件中携带的完整 Email
       final credential = await secondaryAuth.createUserWithEmailAndPassword(
-        email: user.email.trim(),
+        email: email,
         password: password,
       );
 
@@ -189,12 +244,12 @@ class FirebaseAuthRepository implements AuthRepository {
         await secondaryApp?.delete();
       }
     }
-
-    await _usersCollection.doc(user.id).update(user.toJson());
-  }
-
-  @override
-  Future<void> deleteUser(String id) async {
-    await _usersCollection.doc(id).delete();
+    final projectId = Firebase.app().options.projectId;
+    return SignInAccountException(
+      '這個 Email 之前建立過登入帳號（刪除同工時登入帳號還留著）。'
+      '請按「開啟 Firebase」，在 Users 清單找到這個 Email 刪除後，再回來新增。',
+      helpUrl:
+          'https://console.firebase.google.com/project/$projectId/authentication/users',
+    );
   }
 }

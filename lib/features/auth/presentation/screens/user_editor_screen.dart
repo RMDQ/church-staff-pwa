@@ -8,8 +8,8 @@ import '../../../roster/presentation/providers/roster_provider.dart';
 import '../providers/group_settings_provider.dart';
 import '../providers/session_provider.dart';
 import '../providers/user_admin_provider.dart';
+import '../widgets/account_error_snack_bar.dart';
 import '../../../../core/config/church_config.dart';
-import '../../../../core/utils/error_messages.dart';
 
 class UserEditorScreen extends StatefulWidget {
   final User? user; // If null, it's add mode

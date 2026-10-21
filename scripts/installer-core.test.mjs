@@ -3,8 +3,9 @@ import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { createInstallationManager, createInstallationPlan, publicError, STEPS } from './installer/core.mjs';
+import { coreChurchConfig, createInstallationManager, createInstallationPlan, publicError, regionForTimeZone, REGIONS, STEPS } from './installer/core.mjs';
 import { createDemoProviders } from './install-core.mjs';
+import { setUpAccountAdmin } from './installer/core.mjs';
 import { commandEnvironment, runCommand } from './installer/process.mjs';
 import { git } from './test-git.mjs';
 
@@ -31,6 +32,9 @@ async function fixture(t, options = {}) {
   }
   const build = providers.build;
   providers.build = async (context) => { calls.push('build'); return build(context); };
+  // The account step asks Cloudflare first, then Google (setUpAccountAdmin).
+  const keyState = providers.cloudflare.accountAdminKeyState;
+  providers.cloudflare.accountAdminKeyState = async (context, options) => { calls.push('account-admin'); return keyState(context, options); };
   const manager = createInstallationManager({ rootDir, ...providers, demo: true, sourceRevision: 'test-v1' });
   t.after(() => manager.dispose());
   await manager.connectGoogle();
@@ -53,6 +57,59 @@ test('plan is pure, stable, core-only and creates safe resource names', () => {
   assert.equal(plan.admin.username, '测试管理员');
   assert.equal(plan.mode, 'cloud');
   assert.equal('activationEmailConfirmed' in plan, false);
+});
+
+// The app only knows exact IANA spellings; Intl takes any case. A site whose
+// config says europe/amsterdam would never get past its loading screen.
+test('plan stores the time zone in the spelling Intl resolves to', () => {
+  for (const [typed, stored] of [
+    ['europe/amsterdam', 'Europe/Amsterdam'],
+    ['ASIA/TAIPEI', 'Asia/Taipei'],
+    ['us/pacific', 'America/Los_Angeles'],
+    ['utc', 'UTC'],
+    ['Europe/Amsterdam', 'Europe/Amsterdam'],
+  ]) {
+    assert.equal(createInstallationPlan({ ...input(), timeZone: typed }, identity).churchConfig.timeZone, stored);
+  }
+});
+
+// Churches do not pick a data center unless they open the advanced option.
+test('without a chosen region the plan uses the one nearest the time zone', () => {
+  for (const [timeZone, region] of [
+    ['Asia/Taipei', 'asia-east1'], ['America/Los_Angeles', 'us-central1'], ['us/pacific', 'us-central1'],
+    ['Europe/Amsterdam', 'europe-west1'], ['Asia/Kuala_Lumpur', 'asia-southeast1'],
+  ]) {
+    for (const automatic of [undefined, '']) {
+      const plan = createInstallationPlan({ ...input(), timeZone, region: automatic }, identity);
+      assert.equal(plan.region, region, `${timeZone} ${JSON.stringify(automatic)}`);
+    }
+  }
+  const plan = createInstallationPlan({ ...input(), timeZone: 'America/Los_Angeles', region: 'us-east1' }, identity);
+  assert.equal(plan.region, 'us-east1');
+});
+
+test('every time zone maps to a region the wizard offers', async () => {
+  const offered = new Set(REGIONS.map(([id]) => id));
+  const zones = (await readFile(new URL('../test/support/installer_time_zones.txt', import.meta.url), 'utf8'))
+    .split('\n').filter((line) => line && !line.startsWith('#'));
+  for (const zone of zones) assert.ok(offered.has(regionForTimeZone(zone)), zone);
+  for (const [zone, region] of [
+    ['Asia/Hong_Kong', 'asia-east2'], ['Asia/Tokyo', 'asia-northeast1'], ['Asia/Seoul', 'asia-northeast1'],
+    ['Asia/Singapore', 'asia-southeast1'], ['Australia/Sydney', 'australia-southeast1'], ['Pacific/Auckland', 'australia-southeast1'],
+    ['America/New_York', 'us-east1'], ['America/Toronto', 'us-east1'], ['America/Chicago', 'us-central1'],
+    ['America/Vancouver', 'us-central1'], ['Europe/London', 'europe-west1'],
+    ['Asia/Jayapura', 'asia-southeast1'], ['Pacific/Guam', 'asia-northeast1'], ['Atlantic/Bermuda', 'us-east1'],
+    ['Atlantic/Azores', 'europe-west1'], ['Arctic/Longyearbyen', 'europe-west1'],
+    // No continent: the nearest by UTC offset.
+    ['UTC', 'europe-west1'], ['Etc/GMT+8', 'us-central1'], ['Etc/GMT+5', 'us-east1'], ['Etc/GMT-8', 'asia-east1'],
+    ['Antarctica/McMurdo', 'australia-southeast1'],
+  ]) assert.equal(regionForTimeZone(zone), region, zone);
+});
+
+// Updating a site installed before that fixes its config on the way.
+test('an installed config is respelled the same way', () => {
+  const config = coreChurchConfig({ appName: 'x', shortName: 'x', timeZone: 'europe/oslo', services: [{ id: 'service1', label: '主日', name: '主日崇拜', weekday: 7, enabled: true }] });
+  assert.equal(config.timeZone, 'Europe/Oslo');
 });
 
 for (const [label, change] of [
@@ -105,7 +162,8 @@ test('full installation uses the same interface and saves each completed step', 
   const file = JSON.parse(await readFile(path.join(rootDir, '.local/install', plan.runId, 'state.json')));
   assert.equal(file.approved, true);
   assert.equal(file.status, 'complete');
-  assert.equal(Object.keys(file.intents).length, STEPS.length);
+  // Every step but the account one, which keeps nothing (its key is never saved).
+  assert.equal(Object.keys(file.intents).length, STEPS.length - 1);
   assert.equal(JSON.stringify(file).includes('access_token'), false);
   await assert.rejects(manager.plan(input()), /不能更改/);
 });
@@ -421,4 +479,55 @@ test('a logo file swapped for a link is refused, not followed', async (t) => {
   await symlink(elsewhere, logo);
   await assert.rejects(manager.apply(confirmation(plan)), /Logo 档案遗失或被更改/);
   assert.equal(manager.snapshot().status, 'ready');
+});
+
+// The key passes from Google to Cloudflare in memory. A first install has not
+// published, so old keys go at once; an update keeps them until it has.
+function accountProviders(calls, { stored = true, live = true, key = { id: 'new0123456789abcd', json: '{"k":1}' } } = {}) {
+  return {
+    google: {
+      newAccountAdminKey: async (_context, options) => { calls.push(['key', options]); return key; },
+      retireOtherAccountAdminKeys: async (_context, options) => { calls.push(['retire', options]); },
+    },
+    cloudflare: {
+      accountAdminKeyState: async (_context, options) => { calls.push(['state', options]); return { stored, live }; },
+      storeAccountAdminKey: async (_context, json, options) => { calls.push(['store', json, options]); },
+    },
+  };
+}
+
+test('a first install stores the new key, then retires the others at once', async () => {
+  const calls = [];
+  const context = { transient: {} };
+  await setUpAccountAdmin({ ...accountProviders(calls, { stored: false }), context });
+  assert.deepEqual(calls, [
+    ['state', { update: false }], ['key', { update: false, configured: false }],
+    ['store', '{"k":1}', { update: false }], ['retire', { keep: 'new0123456789abcd' }],
+  ]);
+  assert.equal(context.transient.accountAdminRedeploy, 'key-new012345678');
+});
+
+test('an update stores the new key and leaves retiring the old ones until it has published', async () => {
+  const calls = [];
+  const context = { transient: {} };
+  await setUpAccountAdmin({ ...accountProviders(calls), context, update: true });
+  assert.ok(!calls.some(([name]) => name === 'retire'));
+  assert.equal(context.transient.retireAccountAdminKeys, 'new0123456789abcd');
+  assert.equal(context.transient.accountAdminRedeploy, 'key-new012345678');
+});
+
+test('a failed store never retires anything', async () => {
+  const calls = [];
+  const providers = accountProviders(calls, { stored: false });
+  providers.cloudflare.storeAccountAdminKey = async () => { throw new Error('Cloudflare down'); };
+  await assert.rejects(setUpAccountAdmin({ ...providers, context: { transient: {} } }), /Cloudflare down/);
+  assert.ok(!calls.some(([name]) => name === 'retire'));
+});
+
+test('a key stored by an update that never deployed gets deployed now', async () => {
+  for (const [live, expected] of [[false, 'key'], [true, undefined], [undefined, undefined]]) {
+    const context = { transient: {} };
+    await setUpAccountAdmin({ ...accountProviders([], { live, key: null }), context, update: true });
+    assert.equal(context.transient.accountAdminRedeploy, expected);
+  }
 });

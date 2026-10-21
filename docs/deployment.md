@@ -272,6 +272,9 @@ Cloudflare runtime 最小必需 `FIREBASE_PROJECT_ID`。选用整合再补：
 | Google Calendar 写入 | `GOOGLE_CALENDAR_ID`、Secret `GOOGLE_SERVICE_ACCOUNT_JSON` |
 | 照片辨识 | Secret `GEMINI_API_KEY`，选填 `GEMINI_MODEL` |
 | LINE/n8n webhook | `NOTIFY_WEBHOOK_URL`、Secret `NOTIFY_WEBHOOK_SECRET` |
+| 同工登入帳號的新增／刪除 | Secret `ACCOUNT_ADMIN_KEY` |
+
+`ACCOUNT_ADMIN_KEY` 是只授予 `roles/firebaseauth.admin` 的 service account key（JSON 全文），讓 `/api/accounts` 替管理員建立、刪除同工的 Firebase Auth 帳號；不要和行事曆那把共用。沒設定時 App 改在瀏覽器建立帳號，刪除同工只刪 `users/{uid}`，登入帳號要到 Firebase Console 手動刪。安裝精靈裝的網站會自動設定（見[安裝精靈說明](install-cloud-shell.md#同工帳號管理)）。
 
 一般不要设定 runtime `CHURCH_CONFIG_JSON` binding；Worker 使用 staging 内的产生设定。如果设定了 binding，**任何值与 staging 不一致都会拒绝**，不只是 service IDs，以免名称、时区或功能开关与 Flutter／rules 漂移。修改 secrets 后依 Cloudflare 的设定生效方式重新部署，并分别验证 Production／Preview。
 

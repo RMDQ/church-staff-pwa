@@ -17,6 +17,10 @@ async function fixture(t, { config } = {}) {
   providers.cloudflare.publishUpdate = async (context) => { calls.push('publish'); return publish(context); };
   const build = providers.build;
   providers.build = async (context) => { calls.push(['build', context.liveBuildVersion, context.plan.churchConfig.appName]); return build(context); };
+  const retire = providers.google.retireOtherAccountAdminKeys;
+  providers.google.retireOtherAccountAdminKeys = async (context, options) => { calls.push(['retire keys', options]); return retire(context, options); };
+  const store = providers.cloudflare.storeAccountAdminKey;
+  providers.cloudflare.storeAccountAdminKey = async (context, json, options) => { calls.push(['store key', options]); return store(context, json, options); };
   if (config !== undefined) {
     const fetchSite = providers.fetchSite;
     providers.fetchSite = async (url, options) => url.endsWith('/church-config.json') ? config : fetchSite(url, options);
@@ -168,4 +172,29 @@ test('without a custom domain the domain step is not shown or run', async (t) =>
   await manager.applyUpdate({ confirm: site.pagesProject });
   assert.ok(!manager.snapshot().update.steps.some((step) => step.id === 'domain'));
   assert.ok(!calls.includes('domain'));
+});
+
+test('a second update leaves the stored key alone', async (t) => {
+  const { manager, calls } = await fixture(t);
+  await manager.connectGoogle();
+  await manager.connectCloudflare();
+  await manager.findInstalls();
+  const [site] = manager.snapshot().installs;
+  for (let run = 0; run < 2; run += 1) {
+    await manager.planUpdate({ pagesProject: site.pagesProject, accountId: site.accountId });
+    await manager.applyUpdate({ confirm: 'grace-church-staff' });
+  }
+  assert.equal(calls.filter((call) => call[0] === 'store key').length, 1);
+});
+
+test('an update retires the old account management keys only after it has published', async (t) => {
+  const { manager, calls } = await fixture(t);
+  await manager.connectGoogle();
+  await manager.connectCloudflare();
+  await manager.findInstalls();
+  const [site] = manager.snapshot().installs;
+  await manager.planUpdate({ pagesProject: site.pagesProject, accountId: site.accountId });
+  await manager.applyUpdate({ confirm: 'grace-church-staff' });
+  const order = calls.map((call) => Array.isArray(call) ? call[0] : call);
+  assert.ok(order.indexOf('publish') < order.indexOf('retire keys'));
 });

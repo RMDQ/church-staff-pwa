@@ -35,7 +35,7 @@ const ACTIONS = {
 
 /// Rejects a caller who may not perform [action].
 ///
-/// `{ edit: 'calendar' }` returns `{ uid, name, token }`.
+/// `{ edit: 'calendar' }` and `{ edit: 'accounts' }` return `{ uid, name, token }`.
 ///
 /// `{ edit: 'roster' }` returns `{ uid, name, forRosterType(type) }`. The group
 /// only says "may edit rosters"; which roster is in the request body, and the
@@ -56,7 +56,7 @@ export async function authorize(request, env, action, fetchImpl = fetch) {
   const caller = await identifyCaller(request, env, fetchImpl);
   // admin is root: every group, every zone, without holding either.
   const isAdmin = caller.role === 'admin';
-  if (!isAdmin && !caller.groups.includes(rule.group)) {
+  if (!isAdmin && (!rule.group || !caller.groups.includes(rule.group))) {
     throw new HttpError(403, rule.denied);
   }
 

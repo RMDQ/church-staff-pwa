@@ -11,11 +11,11 @@
 // admins do not need their own Google account on the calendar — but that
 // credential must never reach the browser, hence this server side.
 
-import { HttpError, base64UrlToBytes, requireEnv } from './firebase_user.js';
+import { HttpError, requireEnv } from './firebase_user.js';
+import { serviceAccountToken } from './service_account.js';
 import { churchConfig, requireFeature } from './church_config.js';
 
 const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
-const TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
 
 // Wall-clock requests are interpreted in the deployment's IANA time zone.

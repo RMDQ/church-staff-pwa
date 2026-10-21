@@ -49,12 +49,14 @@ async function setup(t, overrides = {}) {
   };
   let interceptor;
   let account = 'operator@example.invalid';
+  let tokenStderr;
   const command = async (file, args) => {
     state.commands.push({ file, args });
     assert.equal(file, 'gcloud');
     if (args[0] === 'config') return { stdout: '{}', stderr: '' };
     if (args[1] === 'list') return { stdout: JSON.stringify([{ account, status: 'ACTIVE' }]), stderr: '' };
     assert.deepEqual(args, ['auth', 'print-access-token', `--account=${account}`, '--quiet']);
+    if (tokenStderr !== undefined) throw Object.assign(new Error('必要工具未成功完成'), { stderr: tokenStderr });
     return { stdout: 'never-log-this-google-token\n', stderr: '' };
   };
   const fetchImpl = async (url, init) => {
@@ -63,7 +65,7 @@ async function setup(t, overrides = {}) {
     assert.ok(init.signal instanceof AbortSignal);
     const parsed = new URL(url);
     const host = parsed.hostname.split('.')[0];
-    if (['firebase', 'firestore', 'identitytoolkit', 'firebaserules'].includes(host)) {
+    if (['firebase', 'firestore', 'identitytoolkit', 'firebaserules', 'iam'].includes(host)) {
       assert.equal(init.headers['x-goog-user-project'], projectId);
     } else assert.equal(init.headers['x-goog-user-project'], undefined);
     const pathname = decodeURIComponent(parsed.pathname);
@@ -192,7 +194,7 @@ async function setup(t, overrides = {}) {
     assert.fail(`Unexpected offline API call: ${init.method} ${host}${pathname}`);
   };
   const adapter = createGoogleInstaller({ fetchImpl, command, delay: async (ms) => state.delays.push(ms), now: () => fixedNow, ...overrides });
-  return { adapter, context, state, setInterceptor: (fn) => { interceptor = fn; }, setAccount: (value) => { account = value; },
+  return { adapter, context, state, setInterceptor: (fn) => { interceptor = fn; }, setAccount: (value) => { account = value; }, setTokenStderr: (value) => { tokenStderr = value; },
     through: async (last) => { for (const step of steps.slice(0, steps.indexOf(last) + 1)) await adapter.execute(step, context); } };
 }
 
@@ -603,18 +605,35 @@ test('connecting Google asks Cloud Shell to authorize the wizard configuration o
       calls.push({ args, timeoutMs: options?.timeoutMs });
       if (args[0] === 'config') return { stdout: '{}' };
       if (args[1] === 'list') return { stdout: JSON.stringify(authorized ? [{ account: 'Person@Example.invalid', status: 'ACTIVE' }] : []) };
-      assert.deepEqual(args, ['auth', 'print-access-token', '--quiet']);
+      assert.equal(args[1], 'print-access-token');
       authorized = true;
       return { stdout: 'discarded-token\n' };
     },
     authorizeTimeoutMs: 1234,
   });
   assert.deepEqual(await adapter.authorize(), { email: 'person@example.invalid' });
-  assert.equal(calls.filter((call) => call.args[1] === 'print-access-token').length, 1);
-  assert.equal(calls.find((call) => call.args[1] === 'print-access-token').timeoutMs, 1234);
+  const tokens = () => calls.filter((call) => call.args[1] === 'print-access-token');
+  assert.deepEqual(tokens().map((call) => [call.args, call.timeoutMs]), [[['auth', 'print-access-token', '--quiet'], 1234]]);
+  // Already listed: the token request proves the credentials still work.
   calls.length = 0;
   assert.deepEqual(await adapter.authorize(), { email: 'person@example.invalid' });
-  assert.equal(calls.some((call) => call.args[1] === 'print-access-token'), false);
+  assert.deepEqual(tokens().map((call) => call.args), [['auth', 'print-access-token', '--account=person@example.invalid', '--quiet']]);
+});
+
+// The 4-second failures in the field: listed, but the credentials are gone.
+test('connecting Google reports a listed account whose credentials no longer work', async () => {
+  const adapter = createGoogleInstaller({
+    fetchImpl: () => assert.fail('no network'),
+    command: async (file, args) => {
+      if (args[0] === 'config') return { stdout: '{}' };
+      if (args[1] === 'list') return { stdout: JSON.stringify([{ account: 'person@example.invalid', status: 'ACTIVE' }]) };
+      throw Object.assign(new Error('必要工具未成功完成'), {
+        stderr: 'ERROR: (gcloud.auth.print-access-token) Your current active account [person@example.invalid] does not have any valid credentials\nPlease run:\n\n  $ gcloud auth login\n',
+      });
+    },
+  });
+  await assert.rejects(adapter.authorize(), (err) => err.code === 'GOOGLE_AUTH_REQUIRED' && /重新啟動/.test(err.message) &&
+    /原因：Your current active account \[person@example\.invalid\] does not have any valid credentials$/.test(err.message));
 });
 
 test('an untrusted (ephemeral) Cloud Shell explains how to leave ephemeral mode', async (t) => {
@@ -642,6 +661,53 @@ test('a declined Cloud Shell authorization explains how to retry', async () => {
     },
   });
   await assert.rejects(adapter.authorize(), (err) => err.code === 'GOOGLE_AUTH_REQUIRED' && /Authorize/.test(err.message));
+});
+
+// gcloud's stderr decides which step to show; its first ERROR line is shown too.
+test('a failed Cloud Shell token says what to do for each kind of gcloud error', async () => {
+  const failing = (stderr, extra = {}) => createGoogleInstaller({
+    fetchImpl: () => assert.fail('no network'),
+    command: async (file, args) => {
+      if (args[0] === 'config') return { stdout: '{}' };
+      if (args[1] === 'list') return { stdout: '[]' };
+      throw Object.assign(new Error('必要工具未成功完成'), { stderr, ...extra });
+    },
+    authorizeTimeoutMs: 3 * 60_000,
+  });
+  const cases = [
+    ['ERROR: (gcloud.auth.print-access-token) There was a problem refreshing your current auth tokens: Reauthentication failed. cannot prompt during non-interactive execution.\nPlease run:\n\n  $ gcloud auth login\n',
+      'GOOGLE_REAUTH_REQUIRED', /gcloud auth login[\s\S]*原因：There was a problem refreshing your current auth tokens: Reauthentication failed/],
+    ['ERROR: (gcloud.auth.print-access-token) There was a problem refreshing your current auth tokens: (\'invalid_grant: reauth related error (invalid_rapt)\', ...)\n',
+      'GOOGLE_REAUTH_REQUIRED', /重新確認你的身分/],
+    ['ERROR: (gcloud.auth.print-access-token) There was a problem refreshing your current auth tokens: access_denied: Account restricted by your administrator (admin_policy_enforced)\n',
+      'GOOGLE_ORG_POLICY', /個人 Gmail/],
+    ['ERROR: (gcloud.auth.print-access-token) There was a problem refreshing your current auth tokens: access_denied\n\nAccess was blocked by Context Aware Access. If you are using gcloud on a ...\n',
+      'GOOGLE_ORG_POLICY', /個人 Gmail/],
+    ['ERROR: (gcloud.auth.print-access-token) There was a problem refreshing your current auth tokens: Failed to retrieve http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token from the Google Compute Engine metadata service. Status: 401 Response:\nb\'{"error":"reauth needed"}\'\n',
+      'GOOGLE_AUTH_REQUIRED', /重新啟動[\s\S]*原因：.*metadata/],
+    ['ERROR: (gcloud.auth.print-access-token) You do not currently have an active account selected.\n',
+      'GOOGLE_AUTH_REQUIRED', /^Cloud Shell 目前沒有可用的 Google 授權。.*重新啟動[\s\S]*原因：You do not currently have an active account selected\./],
+    ['', 'GOOGLE_AUTH_REQUIRED', /^Cloud Shell 沒有完成 Google 授權。.*Authorize.*一直不行的話.*重新啟動[^\n]*$/],
+  ];
+  for (const [stderr, code, message] of cases) {
+    await assert.rejects(failing(stderr).authorize(), (err) => err.code === code && message.test(err.message), stderr);
+  }
+  await assert.rejects(failing('', { timedOut: true }).authorize(), (err) => /^等了 3 分鐘/.test(err.message));
+  await assert.rejects(failing(`ERROR: (gcloud.auth.print-access-token) odd ya29.a0AfH6SMBsecret ${'x'.repeat(50)}\n`).authorize(),
+    (err) => !/ya29\.a0|x{40}/.test(err.message) && /原因：odd …/.test(err.message));
+});
+
+// Mid-run there is no 「連接 Google」 button to press: the advice restarts Cloud Shell instead.
+test('a step that cannot get a token says what to do without pointing at the connect button', async (t) => {
+  const h = await setup(t);
+  h.setTokenStderr('ERROR: (gcloud.auth.print-access-token) Your current active account [operator@example.invalid] does not have any valid credentials\n');
+  await assert.rejects(h.adapter.execute('google-project', h.context), (err) => err.code === 'GOOGLE_AUTH_REQUIRED' &&
+    /^Cloud Shell 目前沒有可用的 Google 授權。.*重新啟動/.test(err.message) && !/連接 Google/.test(err.message) && /原因：Your current active account/.test(err.message));
+  h.setTokenStderr('ERROR: (gcloud.auth.print-access-token) There was a problem refreshing your current auth tokens: Reauthentication failed. cannot prompt during non-interactive execution.\n');
+  await rejectsCode(h.adapter.execute('google-project', h.context), 'GOOGLE_REAUTH_REQUIRED');
+  h.setTokenStderr('ERROR: (gcloud.auth.print-access-token) something new\n');
+  await assert.rejects(h.adapter.execute('google-project', h.context), (err) => /^無法取得 Google 短期授權。.*重新啟動/.test(err.message) && !/連接 Google/.test(err.message));
+  assert.equal(h.state.requests.length, 0);
 });
 
 test('every step rejects a changed Google account and project ownership before mutation', async (t) => {
@@ -1082,4 +1148,153 @@ test('the password mail names the church as its sender, and a refusal does not s
   await refused.through('activation');
   assert.equal(refused.state.sent, 1);
   assert.ok(refused.context.events.some((event) => event.message?.includes('寄件者名称没有设定成功')));
+});
+
+// ---------------------------------------------------------------------------
+// Account management (both modes)
+// ---------------------------------------------------------------------------
+
+const accountEmail = `church-accounts@${projectId}.iam.gserviceaccount.com`;
+const accountPath = `/v1/projects/${projectId}/serviceAccounts/${accountEmail}`;
+const PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----never-persist-account-key-----END PRIVATE KEY-----';
+
+// IAM, the project policy and enabling the IAM API, on top of setup()'s fakes.
+function fakeIam(h, { keys = [], account, bindings = [{ role: 'roles/owner', members: ['user:operator@example.invalid'] }], refuseKeys } = {}) {
+  const iam = { account, keys: [...keys], policy: { version: 1, etag: 'BwX1', bindings }, created: 0, setPolicy: [], deleted: [] };
+  iam.interceptor = (call) => {
+    if (call.host === 'serviceusage' && call.pathname.endsWith('/services/iam.googleapis.com:enable')) {
+      h.state.enabled.add('iam.googleapis.com');
+      return response(200, { name: 'operations/acat.iam-enable', done: true, response: {} });
+    }
+    if (call.host === 'cloudresourcemanager' && call.pathname === `/v3/${project}:getIamPolicy`) return response(200, iam.policy);
+    if (call.host === 'cloudresourcemanager' && call.pathname === `/v3/${project}:setIamPolicy`) {
+      assert.equal(call.body.policy.etag, iam.policy.etag, 'sent back with the etag that was read');
+      iam.setPolicy.push(call.body);
+      iam.policy = { ...call.body.policy, etag: 'BwX2' };
+      return response(200, iam.policy);
+    }
+    if (call.host !== 'iam') return undefined;
+    if (call.pathname === accountPath && call.method === 'GET') return iam.account ? response(200, iam.account) : response(404);
+    if (call.pathname === `/v1/projects/${projectId}/serviceAccounts` && call.method === 'POST') {
+      assert.equal(call.body.accountId, 'church-accounts');
+      iam.account = { email: accountEmail, projectId, name: `projects/${projectId}/serviceAccounts/${accountEmail}` };
+      return response(200, iam.account);
+    }
+    if (call.pathname === `${accountPath}/keys` && call.method === 'GET') {
+      assert.equal(call.search, '?keyTypes=USER_MANAGED');
+      return response(200, { keys: iam.keys.map((id) => ({ name: `projects/${projectId}/serviceAccounts/${accountEmail}/keys/${id}` })) });
+    }
+    if (call.pathname === `${accountPath}/keys` && call.method === 'POST') {
+      if (refuseKeys) return response(400, { error: { status: 'FAILED_PRECONDITION', message: 'Key creation is not allowed on this service account.' } });
+      const id = `${++iam.created}`.padStart(40, 'a');
+      iam.keys.push(id);
+      const file = { type: 'service_account', project_id: projectId, private_key_id: id, private_key: PRIVATE_KEY, client_email: accountEmail };
+      return response(200, { name: `projects/${projectId}/serviceAccounts/${accountEmail}/keys/${id}`,
+        privateKeyData: Buffer.from(JSON.stringify(file)).toString('base64') });
+    }
+    if (call.pathname.startsWith(`${accountPath}/keys/`) && call.method === 'DELETE') {
+      const id = call.pathname.split('/').at(-1);
+      iam.deleted.push(id);
+      iam.keys = iam.keys.filter((key) => key !== id);
+      return response(200, {});
+    }
+    return undefined;
+  };
+  h.setInterceptor(iam.interceptor);
+  return iam;
+}
+
+test('account management: a service account that may only manage sign-ins, and a key that is never saved', async (t) => {
+  const h = await setup(t);
+  await h.through('admin');
+  const iam = fakeIam(h);
+  const key = await h.adapter.newAccountAdminKey(h.context, { configured: false });
+  assert.ok(h.state.enabled.has('iam.googleapis.com'));
+  assert.equal(JSON.parse(key.json).client_email, accountEmail);
+  assert.equal(key.id, iam.keys[0]);
+  // Every binding that was there is sent back; one member is added.
+  assert.equal(iam.setPolicy.length, 1);
+  assert.deepEqual(iam.policy.bindings, [
+    { role: 'roles/owner', members: ['user:operator@example.invalid'] },
+    { role: 'roles/firebaseauth.admin', members: [`serviceAccount:${accountEmail}`] },
+  ]);
+  const persisted = JSON.stringify([h.context.snapshots, h.context.checkpoint, h.context.events]);
+  assert.equal(persisted.includes('never-persist-account-key'), false);
+
+  // Stored on the site (configured) with exactly that key: nothing to do.
+  assert.equal(await h.adapter.newAccountAdminKey(h.context, { configured: true }), null);
+  assert.equal(iam.created, 1);
+  assert.equal(iam.setPolicy.length, 1, 'an existing grant is not sent again');
+});
+
+test('account management redoes a key the site does not hold, and only then retires the others', async (t) => {
+  const h = await setup(t);
+  await h.through('admin');
+  // An earlier run stopped between creating a key and storing it.
+  const iam = fakeIam(h, { keys: ['b'.repeat(40), 'c'.repeat(40)],
+    account: { email: accountEmail, projectId },
+    bindings: [{ role: 'roles/firebaseauth.admin', members: ['user:someone@example.invalid', `serviceAccount:${accountEmail}`] }] });
+  const key = await h.adapter.newAccountAdminKey(h.context, { configured: true });
+  assert.ok(key, 'two keys: which one the site holds is unknown');
+  assert.equal(iam.setPolicy.length, 0);
+  assert.deepEqual(iam.deleted, [], 'nothing is retired before the new key is stored');
+  await h.adapter.retireOtherAccountAdminKeys(h.context, { keep: key.id });
+  assert.deepEqual(iam.keys, [key.id]);
+  assert.deepEqual(iam.deleted.sort(), ['b'.repeat(40), 'c'.repeat(40)]);
+});
+
+test('an organisation that forbids service account keys skips account management, not the install', async (t) => {
+  const h = await setup(t);
+  await h.through('admin');
+  fakeIam(h, { refuseKeys: true });
+  assert.equal(await h.adapter.newAccountAdminKey(h.context, { configured: false }), null);
+  assert.ok(h.context.events.some((event) => event.message?.includes('不允許建立服務帳號金鑰')));
+});
+
+test('a first install that already published keeps its key; a disabled account is left disabled', async (t) => {
+  const h = await setup(t);
+  await h.through('admin');
+  const iam = fakeIam(h, { keys: ['b'.repeat(40)], account: { email: accountEmail, projectId } });
+  h.context.checkpoint.resources.website = 'https://demo-church-site.pages.dev';
+  assert.equal(await h.adapter.newAccountAdminKey(h.context, { configured: false }), null);
+  assert.equal(iam.created, 0);
+
+  iam.account = { email: accountEmail, projectId, disabled: true };
+  delete h.context.checkpoint.resources.website;
+  assert.equal(await h.adapter.newAccountAdminKey(h.context, { configured: false }), null);
+  assert.equal(iam.created, 0);
+  assert.ok(h.context.events.some((event) => event.message?.includes('被停用')));
+});
+
+test('update mode sets account management up on a site installed before it', async (t) => {
+  const h = await setup(t);
+  await h.through('activation');
+  h.context.transient = {};
+  const iam = fakeIam(h);
+  const key = await h.adapter.newAccountAdminKey(h.context, { update: true, configured: false });
+  assert.ok(key);
+  assert.equal(iam.created, 1);
+  // A Google project without this install's label is never touched.
+  h.state.project.labels = { 'church-install': 'someone-else' };
+  await rejectsCode(h.adapter.newAccountAdminKey(h.context, { update: true, configured: false }), 'GOOGLE_RESOURCE_CONFLICT');
+  assert.equal(iam.created, 1);
+});
+
+test('a service account Google has not finished creating is waited for, not reported as a failure', async (t) => {
+  const h = await setup(t);
+  await h.through('admin');
+  const iam = fakeIam(h);
+  let refused = 0;
+  h.setInterceptor((call, ...rest) => {
+    if (call.pathname.endsWith(':setIamPolicy') && refused < 2) {
+      refused++;
+      return response(400, { error: { status: 'INVALID_ARGUMENT', message: `Service account ${accountEmail} does not exist.` } });
+    }
+    return iam.interceptor(call, ...rest);
+  });
+  const key = await h.adapter.newAccountAdminKey(h.context, { configured: false });
+  assert.ok(key);
+  assert.equal(refused, 2);
+  assert.equal(iam.setPolicy.length, 1);
+  assert.equal(h.state.delays.filter((ms) => ms === 10_000).length, 2);
 });

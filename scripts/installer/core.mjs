@@ -13,6 +13,61 @@ export const REGIONS = [
   ['australia-southeast1', '雪梨'], ['europe-west1', '比利时'],
   ['us-central1', '美国中部'], ['us-east1', '美国东部'],
 ];
+
+// Churches rarely know which data center suits them, and the choice is
+// permanent, so by default the plan picks the one nearest the church's time
+// zone: exact places first, then the continent, then the standard UTC offset.
+const REGION_BY_ZONE = {
+  'Asia/Taipei': 'asia-east1', 'Asia/Shanghai': 'asia-east1', 'Asia/Manila': 'asia-east1',
+  'Asia/Hong_Kong': 'asia-east2', 'Asia/Macau': 'asia-east2',
+  // Indonesia and East Timor reach east to UTC+9, still nearest Singapore.
+  'Asia/Jakarta': 'asia-southeast1', 'Asia/Pontianak': 'asia-southeast1', 'Asia/Makassar': 'asia-southeast1',
+  'Asia/Jayapura': 'asia-southeast1', 'Asia/Dili': 'asia-southeast1',
+  // Western Pacific islands nearer Tokyo than Sydney (Intl may spell Chuuk and Pohnpei the old way).
+  'Pacific/Guam': 'asia-northeast1', 'Pacific/Saipan': 'asia-northeast1', 'Pacific/Palau': 'asia-northeast1',
+  'Pacific/Chuuk': 'asia-northeast1', 'Pacific/Truk': 'asia-northeast1', 'Pacific/Pohnpei': 'asia-northeast1',
+  'Pacific/Ponape': 'asia-northeast1', 'Pacific/Kosrae': 'asia-northeast1', 'Pacific/Wake': 'asia-northeast1',
+};
+
+function standardOffsetHours(timeZone) {
+  // The smaller of January and July is standard time in either hemisphere.
+  // A fixed year keeps the answer the same from one run to the next.
+  const offsets = [0, 6].map((month) => {
+    const name = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'longOffset' })
+      .formatToParts(Date.UTC(2026, month, 15)).find((part) => part.type === 'timeZoneName').value;
+    const match = /GMT([+-])(\d{2}):(\d{2})/.exec(name);
+    return match ? (match[1] === '-' ? -1 : 1) * (Number(match[2]) + Number(match[3]) / 60) : 0;
+  });
+  return Math.min(...offsets);
+}
+
+// The offered region nearest a UTC offset, for zones that name no continent
+// (UTC, Etc/GMT+8, Antarctica/…) or span an ocean.
+function regionForOffset(offset) {
+  if (offset < -5) return 'us-central1';
+  if (offset < -2) return 'us-east1';
+  if (offset < 5) return 'europe-west1';
+  if (offset < 8) return 'asia-southeast1';
+  if (offset < 9) return 'asia-east1';
+  return offset < 10 ? 'asia-northeast1' : 'australia-southeast1';
+}
+
+export function regionForTimeZone(timeZone) {
+  if (REGION_BY_ZONE[timeZone]) return REGION_BY_ZONE[timeZone];
+  const area = timeZone.split('/')[0];
+  const offset = standardOffsetHours(timeZone);
+  if (area === 'Europe' || area === 'Africa') return 'europe-west1';
+  if (area === 'America') return offset >= -5 ? 'us-east1' : 'us-central1';
+  if (area === 'Australia') return 'australia-southeast1';
+  if (area === 'Pacific') return offset > 0 ? 'australia-southeast1' : 'us-central1';
+  if (area === 'Indian') return 'asia-southeast1';
+  if (area === 'Asia') {
+    if (offset >= 9) return 'asia-northeast1';
+    return offset >= 5 ? 'asia-southeast1' : 'europe-west1';
+  }
+  return regionForOffset(offset);
+}
+
 const RUN_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 // The Pages project name becomes <name>.pages.dev, which staff type and share,
 // so the church picks it. Cloudflare allows up to 58; 40 leaves room for the
@@ -40,11 +95,22 @@ function requireEmail(value, label) {
 // the site's own /church-config.json, whose service ids are kept as they are).
 export function coreChurchConfig({ appName, shortName, timeZone, services }) {
   return validateChurchConfig({
-    schemaVersion: 1, appName, shortName, timeZone, services,
+    schemaVersion: 1, appName, shortName, timeZone: canonicalTimeZone(timeZone), services,
     features: { calendar: false, photoImport: false, pushNotifications: false, lineNotifications: false },
     devotional: { enabled: false, dataUrl: '', linkUrl: '', sourceName: '每日灵粮', fetchUrl: '', fetchFormat: 'json' },
     icons: { ...CORE_ICONS },
   });
+}
+
+// Intl takes a time zone in any letter case (europe/amsterdam), the app only
+// in its exact IANA spelling, so the config stores the name Intl resolves to.
+// An unknown zone is left as typed for validateChurchConfig to reject.
+function canonicalTimeZone(value) {
+  try {
+    return new Intl.DateTimeFormat('en-US', { timeZone: value }).resolvedOptions().timeZone;
+  } catch {
+    return value;
+  }
 }
 
 // A small JSON file from a site this wizard published. Pages answers unknown
@@ -169,7 +235,7 @@ export function createInstallationPlan(input, identity, {
     schemaVersion: 1, runId, sourceRevision, mode,
     projectId, pagesProject: siteName,
     cloudflareAccountId: input.cloudflareAccountId,
-    googleEmail, region: input.region, churchConfig,
+    googleEmail, region: input.region || regionForTimeZone(churchConfig.timeZone), churchConfig,
     ...(iconHashes ? { icons: { ...iconHashes } } : {}),
     // Sign-in uses the email; like bootstrap-admin, the username defaults to the name.
     admin: { name: adminName, email: requireEmail(input.adminEmail, '管理员 email'), username: adminName },
@@ -311,6 +377,30 @@ async function updateDirectory(rootDir, runId) {
   const runDir = path.join(base, runId);
   await privateDirectory(runDir);
   return runDir;
+}
+
+// Account management: a Google service account that may create and remove
+// staff sign-ins, its key stored as the site's secret. Google and Cloudflare
+// each do their half; the key passes between them in memory and is never
+// written anywhere else.
+//
+// A stored key reaches the site only with its next deployment. A first install
+// has not published yet (the Google half makes sure), so old keys go at once.
+// An update sets transient.retireAccountAdminKeys instead, and the old keys go
+// once the new deployment is live; until then the site still runs on them.
+export async function setUpAccountAdmin({ google, cloudflare, context, update = false }) {
+  const site = await cloudflare.accountAdminKeyState(context, { update });
+  const key = await google.newAccountAdminKey(context, { update, configured: site.stored });
+  if (key) {
+    await cloudflare.storeAccountAdminKey(context, key.json, { update });
+    // Names the deployment that carries this key (see publishUpdate).
+    context.transient.accountAdminRedeploy = `key-${key.id.slice(0, 12)}`;
+    if (update) context.transient.retireAccountAdminKeys = key.id;
+    else await google.retireOtherAccountAdminKeys(context, { keep: key.id });
+    return;
+  }
+  // Stored by an earlier update whose deployment never went through.
+  if (update && site.stored && site.live === false) context.transient.accountAdminRedeploy = 'key';
 }
 
 export function createInstallationManager({ rootDir, google, cloudflare, build, sourceRevision = 'development', resumableRevisions = [], demo = false, report = () => {}, release, fetchSite = fetchSiteJson, fetchAsset = fetchSiteBytes }) {
@@ -514,11 +604,17 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
             update.steps[step.id] = 'running';
             message = step.label;
             if (step.provider === 'build') await build(context);
+            else if (step.provider === 'accounts') await setUpAccountAdmin({ google, cloudflare, context, update: true });
             else if (step.provider === 'google') await google.update(step.id, context);
             else if (step.provider === 'domain') {
               update.domain = await cloudflare.addCustomDomain(context);
               await google.update('domain', context);
-            } else update.result = await cloudflare.publishUpdate(context);
+            } else {
+              update.result = await cloudflare.publishUpdate(context);
+              // The site now runs on the key stored above; the old ones can go.
+              const keep = context.transient.retireAccountAdminKeys;
+              if (keep) await google.retireOtherAccountAdminKeys(context, { update: true, keep });
+            }
             update.steps[step.id] = context.transient.unchanged && ['build', 'publish'].includes(step.id) ? 'skipped' : 'complete';
           }
           update.status = 'complete';
@@ -625,6 +721,7 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
             message = step.label;
             await store.write(state);
             if (step.provider === 'build') await build(context);
+            else if (step.provider === 'accounts') await setUpAccountAdmin({ google, cloudflare, context });
             else await (step.provider === 'google' ? google : cloudflare).execute(step.id, context);
             await writeQueue;
             state.steps[step.id] = 'complete';

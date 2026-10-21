@@ -22,6 +22,7 @@ import {
 
 const CALENDAR = { edit: 'calendar' };
 const ROSTER = { edit: 'roster' };
+const ACCOUNTS = { edit: 'accounts' };
 
 const YOUTH_EDITOR_UID = 'youth-editor-uid';
 /// 有青崇的牧区，却不在 roster-editors：牧区本身不是授权。
