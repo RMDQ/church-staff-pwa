@@ -138,7 +138,10 @@ jobs:
       # 3. 取得 Flutter 套件
       - run: flutter pub get
 
-      # 4. 品質關卡：analyze / test 沒過就不部署
+      # 4. 品質關卡：format / analyze / test 沒過就不部署
+      - name: Verify code formatting
+        run: dart format --output=none --set-exit-if-changed lib test
+
       - name: Analyze
         run: flutter analyze
 

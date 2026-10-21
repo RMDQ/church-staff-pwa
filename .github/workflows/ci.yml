@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.41.0'
+
+jobs:
+  flutter-quality:
+    name: Flutter Lint & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Check code formatting
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Analyze code (lints)
+        run: flutter analyze
+
+      - name: Run Flutter unit & widget tests
+        env:
+          TZ: Asia/Taipei
+        run: flutter test
+
+  web-tests:
+    name: Web Worker & Cache Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test service worker caching rules
+        run: npm test
+        working-directory: web-tests
+
+  functions-tests:
+    name: Worker & Script Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test deployment operator scripts
+        run: node --test scripts/*.test.mjs
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+          enable-cache: false
+
+      - name: Test prompt publishing offline
+        run: uv run --no-project --offline scripts/build_import_prompt_test.py
+
+      - name: Test calendar write API
+        run: npm test
+        working-directory: functions-tests
+
+  firestore-rules:
+    name: Firestore Security Rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: firestore-tests/package-lock.json
+
+      - name: Install test dependencies
+        run: npm ci
+        working-directory: firestore-tests
+
+      - name: Test firestore.rules against emulator
+        run: npm test
+        working-directory: firestore-tests

@@ -96,11 +96,10 @@ void main() {
     fetcher.answer(0, [existing]);
     await pumpEventQueue();
 
-    expect(
-      _ids(months.eventsForMonth(_september)),
-      ['added', 'existing'],
-      reason: 'the stale read must not overwrite the patch',
-    );
+    expect(_ids(months.eventsForMonth(_september)), [
+      'added',
+      'existing',
+    ], reason: 'the stale read must not overwrite the patch');
     expect(
       fetcher.calls,
       hasLength(2),
