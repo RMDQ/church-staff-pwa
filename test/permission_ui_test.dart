@@ -224,16 +224,16 @@ void main() {
       );
 
       expect(find.text('同工'), findsOneWidget);
-      expect(find.text('行事曆編輯'), findsOneWidget);
-      expect(find.text('服事表編輯'), findsNothing);
+      expect(find.text('行事历编辑'), findsOneWidget);
+      expect(find.text('服事表编辑'), findsNothing);
     });
 
     testWidgets('沒有 group 的人只看到角色標籤', (tester) async {
       await _pumpProfile(tester, user: _user(role: UserRole.leader));
 
-      expect(find.text('小組長'), findsOneWidget);
-      expect(find.text('行事曆編輯'), findsNothing);
-      expect(find.text('服事表編輯'), findsNothing);
+      expect(find.text('小组长'), findsOneWidget);
+      expect(find.text('行事历编辑'), findsNothing);
+      expect(find.text('服事表编辑'), findsNothing);
     });
 
     // 管理員隱含全部，列出來反而像是只被指定了那幾項。
@@ -243,15 +243,15 @@ void main() {
         user: _user(role: UserRole.admin, groups: {UserGroup.rosterEditors}),
       );
 
-      expect(find.text('管理員'), findsOneWidget);
-      expect(find.text('服事表編輯'), findsNothing);
+      expect(find.text('管理员'), findsOneWidget);
+      expect(find.text('服事表编辑'), findsNothing);
     });
   });
 
   group('使用者列表副標', () {
     test('沒有任何 group 的人只顯示角色與牧區', () {
       final subtitle = userListSubtitle(_user(role: UserRole.leader), '主日');
-      expect(subtitle, '小組長 | 主日');
+      expect(subtitle, '小组长 | 主日');
     });
 
     // 角色與牧區都是身分，排在一起；編輯權是另一回事，接在最後。
@@ -260,7 +260,7 @@ void main() {
         _user(role: UserRole.staff, groups: {UserGroup.calendarEditors}),
         '主日',
       );
-      expect(subtitle, '同工 | 主日 | 可編輯：行事曆');
+      expect(subtitle, '同工 | 主日 | 可编辑：行事历');
     });
 
     // 最長的情況：三個牧區都有。標籤都是兩個字，所以權限還是排得進去。
@@ -269,7 +269,7 @@ void main() {
         _user(role: UserRole.staff, groups: {UserGroup.rosterEditors}),
         '主日, 青崇, 兒主',
       );
-      expect(subtitle, '同工 | 主日, 青崇, 兒主 | 可編輯：服事表');
+      expect(subtitle, '同工 | 主日, 青崇, 兒主 | 可编辑：服事表');
     });
 
     test('兩個 group 依 UserGroup 宣告順序排列', () {
@@ -280,7 +280,7 @@ void main() {
         ),
         '',
       );
-      expect(subtitle, '同工 | 可編輯：服事表、行事曆');
+      expect(subtitle, '同工 | 可编辑：服事表、行事历');
     });
 
     // 管理員隱含全部，逐項列出反而像是「只被指定了這幾項」。
@@ -289,11 +289,11 @@ void main() {
         _user(role: UserRole.admin, groups: {UserGroup.rosterEditors}),
         '主日',
       );
-      expect(subtitle, '管理員 | 主日');
+      expect(subtitle, '管理员 | 主日');
     });
 
     test('沒有牧區時不會留下多餘的分隔線', () {
-      expect(userListSubtitle(_user(role: UserRole.member), ''), '組員');
+      expect(userListSubtitle(_user(role: UserRole.member), ''), '组员');
     });
   });
 
@@ -422,7 +422,7 @@ void main() {
       );
 
       expect(tabs, isEmpty);
-      expect(find.text('尚未設定可檢視的牧區'), findsOneWidget);
+      expect(find.text('尚未设置可查看的牧区'), findsOneWidget);
     });
   });
 

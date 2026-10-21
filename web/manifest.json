@@ -1,11 +1,11 @@
 {
-    "name": "教會同工助手",
+    "name": "教会同工助手",
     "short_name": "同工助手",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#2196F3",
-    "description": "教會同工全方位助手",
+    "description": "教会同工全方位助手",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

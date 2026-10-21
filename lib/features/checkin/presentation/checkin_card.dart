@@ -142,7 +142,11 @@ class _CheckinCardState extends State<CheckinCard> {
           children: [
             Row(
               children: [
-                Icon(Icons.how_to_reg_outlined, size: 18, color: scheme.primary),
+                Icon(
+                  Icons.how_to_reg_outlined,
+                  size: 18,
+                  color: scheme.primary,
+                ),
                 const SizedBox(width: 8),
                 const Text(
                   '主日崇拜打卡',
@@ -177,7 +181,9 @@ class _CheckinCardState extends State<CheckinCard> {
                           child: const Text('重新发送'),
                         ),
                         TextButton(
-                          onPressed: _checkingVerification ? null : _refreshVerification,
+                          onPressed: _checkingVerification
+                              ? null
+                              : _refreshVerification,
                           child: const Text('我已验证'),
                         ),
                       ],
@@ -202,9 +208,7 @@ class _CheckinCardState extends State<CheckinCard> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.place_outlined),
-                label: Text(
-                  done ? '已打卡' : (busy ? _busyText : '打卡'),
-                ),
+                label: Text(done ? '已打卡' : (busy ? _busyText : '打卡')),
               ),
             ),
             if (result != null) ...[
@@ -212,7 +216,9 @@ class _CheckinCardState extends State<CheckinCard> {
               Text(
                 '${result.onTime ? '准时' : '迟到'} · ${result.time} · 距离教堂约 ${result.distanceMeters} 米',
                 style: TextStyle(
-                  color: result.onTime ? const Color(0xFF2E7D32) : const Color(0xFFB26A00),
+                  color: result.onTime
+                      ? const Color(0xFF2E7D32)
+                      : const Color(0xFFB26A00),
                   fontWeight: FontWeight.w600,
                 ),
               ),

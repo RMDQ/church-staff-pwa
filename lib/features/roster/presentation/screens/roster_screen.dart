@@ -158,7 +158,7 @@ class _RosterScreenState extends State<RosterScreen>
         if (canEdit)
           IconButton(
             icon: const Icon(Icons.edit),
-            tooltip: '切換至編輯模式',
+            tooltip: '切换至编辑模式',
             onPressed: () =>
                 _loadEditLibrary(context, roster_edit_screen.loadLibrary),
           ),
@@ -180,8 +180,8 @@ class _RosterScreenState extends State<RosterScreen>
         appBar: appBar,
         body: const EmptyState(
           icon: Icons.folder_off_outlined,
-          message: '尚未設定可檢視的牧區',
-          hint: '請聯絡管理員為您加入服事牧區',
+          message: '尚未设置可查看的牧区',
+          hint: '请联系管理员为您添加服事牧区',
         ),
       );
     }
@@ -211,7 +211,7 @@ class _RosterScreenState extends State<RosterScreen>
                     const CircularProgressIndicator(),
                     const SizedBox(height: 12),
                     Text(
-                      '載入服事資訊中…',
+                      '加载服事信息中…',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
@@ -230,7 +230,7 @@ class _RosterScreenState extends State<RosterScreen>
                   onPressed: () =>
                       context.read<RosterProvider>().fetchInitialData(),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('重試'),
+                  label: const Text('重试'),
                 ),
               );
             }
@@ -308,10 +308,10 @@ class _RosterViewListState extends State<_RosterViewList>
       );
       return EmptyState(
         icon: Icons.event_busy_outlined,
-        message: '此類別目前沒有服事資訊',
+        message: '此类别目前没有服事信息',
         hint: canEdit
-            ? '按右上角的鉛筆開始編輯：先按右上角中間的清單圖示「服事項目設定」新增服事項目，再到各日期按「新增服事項目」排班。'
-            : '管理員建立後會在這裡顯示',
+            ? '点击右上角的铅笔开始编辑：先点击右上角列表图标「服事项目设置」添加服事项目，再到各日期点击「新增服事项目」排班。'
+            : '管理员创建后会在此显示',
       );
     }
 

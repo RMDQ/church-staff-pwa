@@ -71,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            result == AppUpdateResult.updating ? '找到新版本，正在更新…' : '已經是最新版本',
+            result == AppUpdateResult.updating ? '找到新版本，正在更新…' : '已经是最新版本',
           ),
         ),
       );
@@ -81,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // 這個按鈕存在的理由就是使用者已經不相信畫面上的版本了，失敗要說出來，
       // 不能讓它看起來像「檢查過了，沒事」。
       messenger.showSnackBar(
-        SnackBar(content: Text('檢查更新失敗：${mapErrorToUserMessage(error)}')),
+        SnackBar(content: Text('检查更新失败：${mapErrorToUserMessage(error)}')),
       );
     } finally {
       if (mounted) setState(() => _isCheckingUpdate = false);
@@ -115,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           dialogShown = false;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入失敗：${mapErrorToUserMessage(error)}')),
+          SnackBar(content: Text('加载失败：${mapErrorToUserMessage(error)}')),
         );
       }
     } finally {
@@ -173,17 +173,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _isPushEnabled = enabled);
       if (value && !enabled) {
         final reasonMessage = switch (result.failureReason) {
-          PushToggleFailureReason.missingVapidKey => '系統設定缺少推播金鑰，請聯絡管理員。',
+          PushToggleFailureReason.missingVapidKey => '系统设置缺少推送密钥，请联系管理员。',
           PushToggleFailureReason.permissionDenied =>
-            '通知權限未開啟，請到 iPhone 設定允許此 App 通知。',
+            '通知权限未开启，请在系统设置中允许此 App 通知。',
           PushToggleFailureReason.tokenUnavailable =>
-            '目前裝置無法取得推播識別碼，請重新開啟 App 後再試。',
-          PushToggleFailureReason.saveTokenFailed => '已取得識別碼，但儲存失敗，請稍後再試。',
-          PushToggleFailureReason.savePreferenceFailed => '通知偏好儲存失敗，請稍後再試。',
-          PushToggleFailureReason.notInitialized => '推播服務尚未初始化完成，請重整後再試。',
-          PushToggleFailureReason.disabled => '推播通知未啟用。',
-          PushToggleFailureReason.notWeb => '目前環境不支援網頁推播。',
-          null => '通知未啟用，請確認瀏覽器通知權限設定。',
+            '当前设备无法获取推送标识码，请重新打开 App 后再试。',
+          PushToggleFailureReason.saveTokenFailed => '已获取标识码，但保存失败，请稍后再试。',
+          PushToggleFailureReason.savePreferenceFailed => '通知偏好保存失败，请稍后再试。',
+          PushToggleFailureReason.notInitialized => '推送服务尚未初始化完成，请刷新后再试。',
+          PushToggleFailureReason.disabled => '推送通知未启用。',
+          PushToggleFailureReason.notWeb => '当前环境不支持网页推送。',
+          null => '通知未启用，请确认浏览器通知权限设置。',
         };
         ScaffoldMessenger.of(
           context,
@@ -193,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       log('更新通知設定失敗', error: error, stackTrace: st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('更新通知設定失敗：${mapErrorToUserMessage(error)}')),
+        SnackBar(content: Text('更新通知设置失败：${mapErrorToUserMessage(error)}')),
       );
     } finally {
       if (mounted) {
@@ -210,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user == null) return const SizedBox.shrink();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('個人中心')),
+      appBar: AppBar(title: const Text('个人中心')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -283,8 +283,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.manage_accounts),
-              title: const Text('帳號管理'),
-              subtitle: const Text('新增、刪除或修改同工權限'),
+              title: const Text('账号管理'),
+              subtitle: const Text('新增、删除或修改同工权限'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _loadAndPush(
                 context,
@@ -294,8 +294,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.event_repeat),
-              title: const Text('聚會設定'),
-              subtitle: const Text('新增或修改每週的聚會'),
+              title: const Text('聚会设置'),
+              subtitle: const Text('新增或修改每周的聚会'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _loadAndPush(
                 context,
@@ -305,8 +305,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.groups),
-              title: const Text('小組管理'),
-              subtitle: const Text('設定各牧區小組清單'),
+              title: const Text('小组管理'),
+              subtitle: const Text('设置各牧区小组列表'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _loadAndPush(
                 context,
@@ -325,7 +325,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SwitchListTile(
               secondary: const Icon(Icons.notifications_active),
               title: const Text('服事提醒'),
-              subtitle: const Text('每週一晚間發送提醒'),
+              subtitle: const Text('每周一晚间发送提醒'),
               value: _isPushEnabled,
               onChanged: _isPushLoading ? null : _togglePush,
             ),
@@ -333,13 +333,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Logout Button
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('登出', style: TextStyle(color: Colors.red)),
+            title: const Text('退出登录', style: TextStyle(color: Colors.red)),
             onTap: () async {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('登出確認'),
-                  content: const Text('確定要登出嗎？'),
+                  title: const Text('退出登录确认'),
+                  content: const Text('确定要退出登录吗？'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
@@ -348,7 +348,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
                       child: const Text(
-                        '登出',
+                        '退出登录',
                         style: TextStyle(color: Colors.red),
                       ),
                     ),
@@ -393,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // version.json 跟著 bundle 一起進快取（見 AppVersionService）。
                     if (info != null)
                       Text(
-                        '更新於 ${_buildVersionDateText(info)}',
+                        '更新于 ${_buildVersionDateText(info)}',
                         textAlign: TextAlign.center,
                         style: captionStyle,
                       ),
@@ -407,7 +407,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             horizontal: 12,
                           ),
                           child: Text(
-                            _isCheckingUpdate ? '檢查中…' : '檢查更新',
+                            _isCheckingUpdate ? '检查中…' : '检查更新',
                             textAlign: TextAlign.center,
                             // 顏色跟上面那行一樣，只用底線表示按得下去。
                             style: captionStyle?.copyWith(
@@ -481,7 +481,7 @@ class _NewReleaseTile extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '目前 $current，最新 ${release.version}。只有管理員看得到這則提醒。',
+              '当前 $current，最新 ${release.version}。只有管理员看得到这则提醒。',
               style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
             ),
             if (release.notes.isNotEmpty) ...[
@@ -497,7 +497,7 @@ class _NewReleaseTile extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => openExternalLink(guideUrl),
-                  child: const Text('怎麼更新'),
+                  child: const Text('更新指南'),
                 ),
               ),
           ],

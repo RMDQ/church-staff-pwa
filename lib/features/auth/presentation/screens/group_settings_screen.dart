@@ -39,7 +39,7 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
     // controller 由 TextControllerScope 在對話框子樹卸載時 dispose。
     final controller = TextEditingController();
     final name = await _showGroupNameDialog(
-      title: '新增小組',
+      title: '新增小组',
       controller: controller,
       existing: _editingTemplates[type] ?? const <String>[],
     );
@@ -59,7 +59,7 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
     final current = _editingTemplates[type]?[index] ?? '';
     final controller = TextEditingController(text: current);
     final name = await _showGroupNameDialog(
-      title: '編輯小組',
+      title: '编辑小组',
       controller: controller,
       existing: _editingTemplates[type] ?? const <String>[],
       currentName: current,
@@ -72,8 +72,8 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('確認刪除'),
-        content: const Text('確定要刪除此小組嗎？'),
+        title: const Text('确认删除'),
+        content: const Text('确定要删除此小组吗？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -81,7 +81,7 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: const Text('删除'),
           ),
         ],
       ),
@@ -104,12 +104,12 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
         String? errorText;
         String? validateValue(String value) {
           final trimmed = value.trim();
-          if (trimmed.isEmpty) return '請輸入名稱';
+          if (trimmed.isEmpty) return '请输入名称';
           final isDuplicate = existing.any(
             (name) =>
                 name.trim() == trimmed && name.trim() != currentName?.trim(),
           );
-          if (isDuplicate) return '名稱已存在';
+          if (isDuplicate) return '名称已存在';
           return null;
         }
 
@@ -132,7 +132,7 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
                 controller: controller,
                 autofocus: true,
                 decoration: InputDecoration(
-                  labelText: '小組名稱',
+                  labelText: '小组名称',
                   border: const OutlineInputBorder(),
                   errorText: errorText,
                 ),
@@ -145,7 +145,7 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
                   onPressed: () => Navigator.pop(context),
                   child: const Text('取消'),
                 ),
-                TextButton(onPressed: submit, child: const Text('儲存')),
+                TextButton(onPressed: submit, child: const Text('保存')),
               ],
             ),
           ),
@@ -165,13 +165,13 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
     final provider = context.watch<GroupSettingsProvider>();
     if (!_initialized && provider.isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('小組設定')),
+        appBar: AppBar(title: const Text('小组设置')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     if (!_initialized && provider.error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('小組設定')),
+        appBar: AppBar(title: const Text('小组设置')),
         body: Center(child: Text(provider.error!)),
       );
     }
@@ -180,7 +180,7 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
       length: ServiceType.active.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('小組設定'),
+          title: const Text('小组设置'),
           bottom: TabBar(
             isScrollable: ServiceType.active.length > 3,
             tabs: ServiceType.active
@@ -213,7 +213,7 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
                 if (index == groups.length) {
                   return ListTile(
                     leading: const Icon(Icons.add),
-                    title: const Text('新增小組'),
+                    title: const Text('新增小组'),
                     onTap: () => _promptAddGroup(type),
                   );
                 }

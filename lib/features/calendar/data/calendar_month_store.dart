@@ -26,7 +26,7 @@ typedef CalendarMonthFetcher =
 /// so `identical()` on [eventsForMonth] is enough to tell whether a cached
 /// layout is still good.
 class CalendarMonthStore with ChangeNotifier {
-  /// 同一個月在這段時間內不重抓。沒有這道閘門的話，每次左右換頁都會對
+  /// 同一個月在这段時間內不重抓。沒有這道閘門的話，每次左右換頁都會對
   /// 當月 + 前後月各打一次 Google Calendar API，來回滑幾次就燒掉配額。
   static const Duration monthFreshness = Duration(minutes: 10);
 
@@ -45,7 +45,7 @@ class CalendarMonthStore with ChangeNotifier {
   final Map<String, String?> _errorsByMonth = {};
   final Map<String, DateTime> _fetchedAtByMonth = {};
 
-  // 每個月的寫入世代。寫入時 +1；fetch 開始時記下當時的值，回來時若已經
+  // 每个月的寫入世代。寫入時 +1；fetch 開始時記下當時的值，回來時若已經
   // 不同，代表這份回應是在寫入之前發出去的 —— 它不知道那筆寫入，套上去會
   // 蓋掉本地 patch 還蓋上新鮮戳記，錯的資料會掛十分鐘。所以丟掉，重抓。
   final Map<String, int> _writeGeneration = {};

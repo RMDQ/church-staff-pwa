@@ -27,7 +27,10 @@ const _sample = {
   'counts': {'total': 2, 'onTime': 1, 'late': 1},
 };
 
-AttendanceService _serviceReturning(http.Response response, {List<http.Request>? sent}) {
+AttendanceService _serviceReturning(
+  http.Response response, {
+  List<http.Request>? sent,
+}) {
   return AttendanceService(
     client: MockClient((request) async {
       sent?.add(request);
@@ -46,7 +49,9 @@ http.Response _json(int status, Object body) => http.Response(
 
 void main() {
   test('reads a day with its rows and counts', () async {
-    final day = await _serviceReturning(_json(200, _sample)).load(date: '2026-10-04');
+    final day = await _serviceReturning(
+      _json(200, _sample),
+    ).load(date: '2026-10-04');
 
     expect(day.date, '2026-10-04');
     expect(day.total, 2);
@@ -61,7 +66,10 @@ void main() {
 
   test('sends the date and the ID token', () async {
     final sent = <http.Request>[];
-    await _serviceReturning(_json(200, _sample), sent: sent).load(date: '2026-10-04');
+    await _serviceReturning(
+      _json(200, _sample),
+      sent: sent,
+    ).load(date: '2026-10-04');
 
     expect(sent.single.url.queryParameters['date'], '2026-10-04');
     expect(sent.single.headers['Authorization'], 'Bearer token-1');
@@ -78,14 +86,23 @@ void main() {
     final service = _serviceReturning(_json(403, {'error': '只有管理员和小组长可以查看出勤'}));
     expect(
       () => service.load(),
-      throwsA(isA<AttendanceException>().having((e) => e.message, 'message', '只有管理员和小组长可以查看出勤')),
+      throwsA(
+        isA<AttendanceException>().having(
+          (e) => e.message,
+          'message',
+          '只有管理员和小组长可以查看出勤',
+        ),
+      ),
     );
   });
 
-  test('a body that does not match the contract is reported, not crashed on', () async {
-    final service = _serviceReturning(_json(200, {'unexpected': true}));
-    expect(() => service.load(), throwsA(isA<AttendanceException>()));
-  });
+  test(
+    'a body that does not match the contract is reported, not crashed on',
+    () async {
+      final service = _serviceReturning(_json(200, {'unexpected': true}));
+      expect(() => service.load(), throwsA(isA<AttendanceException>()));
+    },
+  );
 
   test('refuses to send without a signed-in user', () async {
     final service = AttendanceService(
@@ -95,7 +112,9 @@ void main() {
     );
     expect(
       () => service.load(),
-      throwsA(isA<AttendanceException>().having((e) => e.message, 'message', '请先登录')),
+      throwsA(
+        isA<AttendanceException>().having((e) => e.message, 'message', '请先登录'),
+      ),
     );
   });
 

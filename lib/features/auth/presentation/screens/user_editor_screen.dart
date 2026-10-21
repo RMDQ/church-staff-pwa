@@ -63,12 +63,12 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('編輯權限', style: Theme.of(context).textTheme.labelLarge),
+        Text('编辑权限', style: Theme.of(context).textTheme.labelLarge),
         if (isAdmin)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              '管理員擁有全部編輯權限，不需要另外指定。',
+              '管理员拥有全部编辑权限，不需要另外指定。',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -109,7 +109,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
     if (availableTypes.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('已新增所有牧區')));
+      ).showSnackBar(const SnackBar(content: Text('已添加所有牧区')));
       return;
     }
     setState(() {
@@ -145,7 +145,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
     if (_zones.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('請至少設定一個牧區')));
+      ).showSnackBar(const SnackBar(content: Text('请至少设置一个牧区')));
       return;
     }
     if (_formKey.currentState!.validate()) {
@@ -183,7 +183,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('儲存成功')));
+          ).showSnackBar(const SnackBar(content: Text('保存成功')));
           Navigator.pop(context);
         }
       } catch (e, st) {
@@ -194,7 +194,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
               content: Text(
                 e is AccountSafetyException
                     ? e.message
-                    : '錯誤：${mapErrorToUserMessage(e)}',
+                    : '错误：${mapErrorToUserMessage(e)}',
               ),
             ),
           );
@@ -217,7 +217,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
         (!hadEmail && _emailController.text.trim().isNotEmpty);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.user == null ? '新增帳號' : '編輯帳號'),
+        title: Text(widget.user == null ? '新增账号' : '编辑账号'),
         leading: widget.isDialog
             ? IconButton(
                 icon: const Icon(Icons.close),
@@ -238,7 +238,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '基本資料',
+                      '基本资料',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 16),
@@ -248,22 +248,22 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                         labelText: '姓名',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) => v?.isEmpty == true ? '請輸入姓名' : null,
+                      validator: (v) => v?.isEmpty == true ? '请输入姓名' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
                       decoration: const InputDecoration(
-                        labelText: 'Email (選填)',
+                        labelText: '邮箱 (选填)',
                         border: OutlineInputBorder(),
                         hintText: 'example@gmail.com',
-                        helperText: '補上後會建立登入帳號並需要設定密碼',
+                        helperText: '填写后将创建登录账号并需要设置密码',
                       ),
                       enabled: canEditEmail,
                       onChanged: canEditEmail ? (_) => setState(() {}) : null,
                       validator: (v) {
                         if (v == null || v.isEmpty) return null;
-                        if (!v.contains('@')) return '請輸入有效的 Email';
+                        if (!v.contains('@')) return '请输入有效的邮箱地址';
                         return null;
                       },
                     ),
@@ -273,9 +273,9 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                       // 只是顯示在個人頁的 @代稱；登入一律用 Email。以前叫「顯示帳號
                       // (ID)」而且有 Email 就必填，同工看不懂要填什麼。
                       decoration: const InputDecoration(
-                        labelText: '帳號代稱（選填）',
+                        labelText: '账号代称（选填）',
                         border: OutlineInputBorder(),
-                        helperText: '顯示在個人頁，不是登入用；不填就用姓名',
+                        helperText: '显示在个人主页，不是登录用；不填就默认使用姓名',
                       ),
                     ),
                     if (shouldPromptPassword) ...[
@@ -283,7 +283,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                           _emailController.text.trim().isNotEmpty) ...[
                         const SizedBox(height: 8),
                         const Text(
-                          '補上 Email 後會建立登入帳號，請設定可登入的密碼',
+                          '添加邮箱后将创建登录账号，请设置登录密码',
                           style: TextStyle(color: Colors.grey),
                         ),
                       ],
@@ -291,16 +291,16 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                       TextFormField(
                         controller: _passwordController,
                         decoration: const InputDecoration(
-                          labelText: '密碼',
+                          labelText: '密码',
                           border: OutlineInputBorder(),
-                          helperText: '建立登入帳號用',
+                          helperText: '创建登录账号用',
                         ),
                         obscureText: true,
                         textInputAction: TextInputAction.done,
                         validator: (v) {
                           if (_emailController.text.trim().isNotEmpty &&
                               v?.trim().isEmpty == true) {
-                            return '請輸入密碼';
+                            return '请输入密码';
                           }
                           return null;
                         },
@@ -312,7 +312,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                       decoration: InputDecoration(
                         labelText: '角色',
                         border: const OutlineInputBorder(),
-                        helperText: isSelf ? '不能變更自己的角色，請另一位管理員幫你改' : null,
+                        helperText: isSelf ? '不能变更自己的角色，请另一位管理员协助修改' : null,
                       ),
                       items: UserRole.values.map((role) {
                         return DropdownMenuItem(
@@ -340,7 +340,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '牧區資料（必填）',
+                  '牧区资料（必填）',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 if (ServiceType.active.any(
@@ -348,7 +348,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                 ))
                   TextButton.icon(
                     icon: const Icon(Icons.add),
-                    label: const Text('新增牧區'),
+                    label: const Text('新增牧区'),
                     onPressed: _addZone,
                   ),
               ],
@@ -358,7 +358,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                 padding: EdgeInsets.all(16.0),
                 child: Center(
                   child: Text(
-                    '尚未設定牧區。請按「新增牧區」，至少設定一個才能儲存。',
+                    '尚未设置牧区。请点击「新增牧区」，至少设置一个才能保存。',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey),
                   ),
@@ -368,7 +368,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
               const Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(
-                  '在牧區裡勾選「參與服事」，這位同工才會出現在該服事的排班名單。',
+                  '在牧区中勾选「参与服事」，这位同工才会出现在该服事的排班名单。',
                   style: TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ),
@@ -435,8 +435,8 @@ class _ZoneEditorCardState extends State<_ZoneEditorCard> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('確認刪除'),
-        content: const Text('確定要刪除此牧區嗎？'),
+        title: const Text('确认删除'),
+        content: const Text('确定要删除此牧区吗？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -444,7 +444,7 @@ class _ZoneEditorCardState extends State<_ZoneEditorCard> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: const Text('删除'),
           ),
         ],
       ),
@@ -474,7 +474,7 @@ class _ZoneEditorCardState extends State<_ZoneEditorCard> {
                 Expanded(
                   child: DropdownButtonFormField<ServiceType>(
                     initialValue: _selectedType,
-                    decoration: const InputDecoration(labelText: '牧區'),
+                    decoration: const InputDecoration(labelText: '牧区'),
                     items: {...ServiceType.active, _selectedType}.map((type) {
                       final isUsed = widget.usedTypes.contains(type);
                       final isCurrent = type == _selectedType;
@@ -522,26 +522,26 @@ class _ZoneEditorCardState extends State<_ZoneEditorCard> {
             const SizedBox(height: 12),
 
             _OptionListSelector(
-              title: '所屬小組',
+              title: '所属小组',
               options: groupOptions,
               selected: _groups,
               onChanged: (newGroups) {
                 _groups = newGroups;
                 _notifyUpdate();
               },
-              emptyText: '尚未設定小組清單',
+              emptyText: '尚未设置小组列表',
             ),
             const SizedBox(height: 12),
 
             _OptionListSelector(
-              title: '參與服事',
+              title: '参与服事',
               options: ministryOptions,
               selected: _ministries,
               onChanged: (newMinistries) {
                 _ministries = newMinistries;
                 _notifyUpdate();
               },
-              emptyText: '尚未設定服事項目：請先到「服事表」按鉛筆，再按右上角清單圖示「服事項目設定」新增',
+              emptyText: '尚未设置服事项目：请先到「服事表」点击铅笔，再点击右上角图标「服事项目设置」添加',
             ),
           ],
         ),

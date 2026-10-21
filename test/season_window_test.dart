@@ -19,7 +19,7 @@ void main() {
       final window = seasonWindow(day);
       expect(window.end, DateTime.utc(2026, 12, 31), reason: '$day');
       expect(window.title, '我的服事');
-      expect(window.emptyText, '最近還沒有排到你的服事');
+      expect(window.emptyText, '最近还没有排到你的服事');
     }
   });
 

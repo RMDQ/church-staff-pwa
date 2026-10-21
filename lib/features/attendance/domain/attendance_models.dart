@@ -31,7 +31,9 @@ class AttendanceRow {
     }
     return AttendanceRow(
       name: name,
-      smallGroups: groups is List ? groups.whereType<String>().toList() : const [],
+      smallGroups: groups is List
+          ? groups.whereType<String>().toList()
+          : const [],
       time: time,
       onTime: status == 'onTime',
       distanceMeters: distance is num ? distance.round() : null,

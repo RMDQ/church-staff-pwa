@@ -143,7 +143,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('帳號管理'),
+        title: const Text('账号管理'),
         actions: [
           IconButton(
             tooltip: '待审核的注册',
@@ -209,7 +209,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                     child: TextField(
                       decoration: const InputDecoration(
-                        labelText: '搜尋姓名',
+                        labelText: '搜索姓名',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.search),
                       ),
@@ -226,7 +226,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   ),
                   Expanded(
                     child: filteredUsers.isEmpty
-                        ? const Center(child: Text('沒有符合的帳號'))
+                        ? const Center(child: Text('没有匹配的账号'))
                         : ListView.builder(
                             key: const PageStorageKey('user_management_list'),
                             controller: _scrollController,
@@ -271,9 +271,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                               final confirm = await showDialog<bool>(
                                                 context: context,
                                                 builder: (context) => AlertDialog(
-                                                  title: const Text('確認刪除'),
+                                                  title: const Text('确认删除'),
                                                   content: Text(
-                                                    '確定要刪除 ${data.user.name} 嗎？',
+                                                    '确定要删除 ${data.user.name} 吗？',
                                                   ),
                                                   actions: [
                                                     TextButton(
@@ -291,7 +291,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                                             true,
                                                           ),
                                                       child: const Text(
-                                                        '刪除',
+                                                        '删除',
                                                         style: TextStyle(
                                                           color: Colors.red,
                                                         ),
@@ -342,7 +342,7 @@ String userListSubtitle(User user, String zoneText) {
   return [
     user.role.label,
     if (zoneText.isNotEmpty) zoneText,
-    if (groupText.isNotEmpty) '可編輯：$groupText',
+    if (groupText.isNotEmpty) '可编辑：$groupText',
   ].join(' | ');
 }
 

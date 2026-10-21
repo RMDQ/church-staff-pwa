@@ -1,4 +1,3 @@
-
 /// 打卡相关的提醒。只在 App 打开时计算，不发推送。
 class CheckinReminder {
   const CheckinReminder({
@@ -28,11 +27,7 @@ List<CheckinReminder> checkinReminders({
 
   if (!emailVerified) {
     reminders.add(
-      const CheckinReminder(
-        title: '邮箱还没有验证',
-        detail: '验证后才能打卡',
-        urgent: true,
-      ),
+      const CheckinReminder(title: '邮箱还没有验证', detail: '验证后才能打卡', urgent: true),
     );
   }
 
@@ -51,11 +46,7 @@ List<CheckinReminder> checkinReminders({
     }
     if (minutes >= open && minutes <= close) {
       reminders.add(
-        CheckinReminder(
-          title: '现在可以打卡',
-          detail: '截止 $end，还没有打卡',
-          urgent: true,
-        ),
+        CheckinReminder(title: '现在可以打卡', detail: '截止 $end，还没有打卡', urgent: true),
       );
     }
   }

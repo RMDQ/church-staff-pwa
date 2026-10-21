@@ -87,11 +87,11 @@ void main() {
     final service = _FakeUpdateService(result: AppUpdateResult.latest);
     await _pumpProfile(tester, service);
 
-    await tester.tap(find.text('檢查更新'));
+    await tester.tap(find.text('检查更新'));
     await tester.pumpAndSettle();
 
     expect(service.calls, 1);
-    expect(find.text('已經是最新版本'), findsOneWidget);
+    expect(find.text('已经是最新版本'), findsOneWidget);
   });
 
   testWidgets('找到新版時告訴使用者正在換', (tester) async {
@@ -100,7 +100,7 @@ void main() {
     final service = _FakeUpdateService(result: AppUpdateResult.updating);
     await _pumpProfile(tester, service);
 
-    await tester.tap(find.text('檢查更新'));
+    await tester.tap(find.text('检查更新'));
     await tester.pumpAndSettle();
 
     expect(find.text('找到新版本，正在更新…'), findsOneWidget);
@@ -113,11 +113,11 @@ void main() {
     );
     await _pumpProfile(tester, service);
 
-    await tester.tap(find.text('檢查更新'));
+    await tester.tap(find.text('检查更新'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('檢查更新失敗'), findsOneWidget);
-    expect(find.text('已經是最新版本'), findsNothing);
+    expect(find.textContaining('检查更新失败'), findsOneWidget);
+    expect(find.text('已经是最新版本'), findsNothing);
   });
 
   testWidgets('檢查中不能重複按', (tester) async {
@@ -128,19 +128,19 @@ void main() {
     );
     await _pumpProfile(tester, service);
 
-    await tester.tap(find.text('檢查更新'));
+    await tester.tap(find.text('检查更新'));
     await tester.pump(); // 讓 setState 生效，但結果還沒回來
 
-    expect(find.text('檢查中…'), findsOneWidget);
+    expect(find.text('检查中…'), findsOneWidget);
     final button = tester.widget<InkWell>(
-      find.ancestor(of: find.text('檢查中…'), matching: find.byType(InkWell)),
+      find.ancestor(of: find.text('检查中…'), matching: find.byType(InkWell)),
     );
     expect(button.onTap, isNull, reason: '按著不放也只會送出一次');
 
     gate.complete();
     await tester.pumpAndSettle();
     expect(service.calls, 1);
-    expect(find.text('檢查更新'), findsOneWidget, reason: '結束後回到原本的字');
+    expect(find.text('检查更新'), findsOneWidget, reason: '結束後回到原本的字');
   });
 
   testWidgets('是頁尾的註腳，不是一顆按鈕', (tester) async {
@@ -150,9 +150,9 @@ void main() {
     await _pumpProfile(tester, service);
 
     expect(find.byType(TextButton), findsNothing);
-    final label = tester.widget<Text>(find.text('檢查更新'));
+    final label = tester.widget<Text>(find.text('检查更新'));
     final caption = Theme.of(
-      tester.element(find.text('檢查更新')),
+      tester.element(find.text('检查更新')),
     ).textTheme.bodySmall;
     expect(label.style?.fontSize, caption?.fontSize);
     expect(label.style?.color, Colors.grey.shade600);
@@ -163,8 +163,8 @@ void main() {
     await _pumpProfile(tester, service);
 
     final screenCentre = tester.getCenter(find.byType(Scaffold)).dx;
-    final version = tester.getCenter(find.textContaining('更新於'));
-    final link = tester.getCenter(find.text('檢查更新'));
+    final version = tester.getCenter(find.textContaining('更新于'));
+    final link = tester.getCenter(find.text('检查更新'));
 
     expect(version.dx, moreOrLessEquals(screenCentre, epsilon: 1));
     expect(link.dx, moreOrLessEquals(screenCentre, epsilon: 1));
@@ -178,6 +178,6 @@ void main() {
     );
     await _pumpProfile(tester, service);
 
-    expect(find.text('檢查更新'), findsNothing);
+    expect(find.text('检查更新'), findsNothing);
   });
 }

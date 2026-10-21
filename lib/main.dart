@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -27,6 +28,7 @@ void main() async {
 
   // Run independent inits in parallel to shave startup latency.
   await Future.wait([
+    initializeDateFormatting('zh_CN', null),
     initializeDateFormatting('zh_TW', null),
     Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
     // 管理員在 App 裡改過的聚會清單（上一次讀到的），不等網路。
@@ -140,7 +142,18 @@ class ChurchApp extends StatelessWidget {
           ),
           appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
         ),
-        locale: const Locale('zh', 'TW'),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        locale: const Locale('zh', 'CN'),
+        supportedLocales: const [
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+          Locale('zh'),
+          Locale('en', 'US'),
+        ],
         home: AuthWrapper(pushNotificationService: pushNotificationService),
         debugShowCheckedModeBanner: false,
       ),

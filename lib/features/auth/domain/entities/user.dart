@@ -14,13 +14,13 @@ enum UserRole {
   String get label {
     switch (this) {
       case UserRole.admin:
-        return '管理員';
+        return '管理员';
       case UserRole.leader:
-        return '小組長';
+        return '小组长';
       case UserRole.staff:
         return '同工';
       case UserRole.member:
-        return '組員';
+        return '组员';
     }
   }
 }
@@ -32,8 +32,8 @@ enum UserRole {
 /// 等於要遷移資料。三個強制點共用同一組名稱：這裡、`firestore.rules` 的
 /// `inGroup()`、`worker/authorize.js` 的 `ACTIONS`。
 enum UserGroup {
-  rosterEditors('roster-editors', '服事表編輯', '服事表'),
-  calendarEditors('calendar-editors', '行事曆編輯', '行事曆');
+  rosterEditors('roster-editors', '服事表编辑', '服事表'),
+  calendarEditors('calendar-editors', '行事历编辑', '行事历');
 
   const UserGroup(this.name, this.label, this.shortLabel);
 

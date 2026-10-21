@@ -51,7 +51,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   static const int _recentActivitiesLimit = 3;
   static const int _recentActivitiesFetchMax = 20;
-  static const _dailyBreadRangeFallback = '查看今日經文範圍';
+  static const _dailyBreadRangeFallback = '查看今日经文范围';
 
   static final _whitespaceRe = RegExp(r'\s+');
   static final _latinRe = RegExp(r'[A-Za-z]');
@@ -64,6 +64,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _recentActivitiesError;
   List<RecentActivity> _recentActivities = const [];
 
+  final ScrollController _seasonScrollController = ScrollController();
+
   // 追蹤上一次的 userId，用來在 didChangeDependencies 偵測帳號切換。
   String? _lastUserId;
 
@@ -74,6 +76,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // 近期活動不在這裡抓：didChangeDependencies 在第一次 build 前必定會跑，
     // 且 _lastUserId 初始為 null，所以首次進畫面就會由它觸發一次。
     // 兩邊都抓會讓每次開首頁都打兩次 Google Calendar API。
+  }
+
+  @override
+  void dispose() {
+    _seasonScrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -96,14 +104,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final fullName = user?.name ?? '';
     final displayName = _displayName(fullName);
     return Scaffold(
-      appBar: AppBar(title: const Text('首頁'), centerTitle: true),
+      appBar: AppBar(title: const Text('首页'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '歡迎回來，$displayName！',
+              '欢迎回来，$displayName！',
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
@@ -111,7 +119,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const CheckinCard(),
             const SizedBox(height: 16),
             if (user != null &&
-                (user.role == UserRole.admin || user.role == UserRole.leader)) ...[
+                (user.role == UserRole.admin ||
+                    user.role == UserRole.leader)) ...[
               Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
@@ -195,10 +204,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         context,
       ).push(MaterialPageRoute(builder: (_) => calendar.CalendarScreen()));
     } catch (error, st) {
-      log('載入行事曆畫面失敗', error: error, stackTrace: st);
+      log('载入行事历画面失败', error: error, stackTrace: st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('載入失敗：${mapErrorToUserMessage(error)}')),
+        SnackBar(content: Text('载入失败：${mapErrorToUserMessage(error)}')),
       );
     } finally {
       if (mounted) {
@@ -216,7 +225,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!launched && mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('無法開啟每日靈糧頁面')));
+      ).showSnackBar(const SnackBar(content: Text('无法打开每日灵粮页面')));
     }
   }
 
@@ -226,7 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return range;
     }
     if (_isLoadingDailyBreadRange) {
-      return '載入今日經文範圍中...';
+      return '载入今日经文范围中...';
     }
     return _dailyBreadRangeFallback;
   }
@@ -606,10 +615,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             title: const Text(
-              '行事曆',
+              '行事历',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: const Text('教會年度活動一覽'),
+            subtitle: const Text('教会年度活动一览'),
             trailing: _isLoadingCalendar
                 ? const SizedBox(
                     width: 20,
@@ -646,13 +655,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (_recentActivities.isEmpty) {
-      return const Text('近期暫無活動');
+      return const Text('近期暂无活动');
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('近期活動', style: TextStyle(fontWeight: FontWeight.w600)),
+        const Text('近期活动', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         ..._recentActivities.map((event) => RecentActivityRow(activity: event)),
       ],
@@ -681,7 +690,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const Center(child: CircularProgressIndicator()),
                   const SizedBox(height: 12),
                   Text(
-                    '載入近期活動中…',
+                    '载入近期活动中…',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -705,7 +714,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 FilledButton.icon(
                   onPressed: () => provider.fetchInitialData(),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('重試'),
+                  label: const Text('重试'),
                 ),
               ],
             ),
@@ -719,7 +728,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
         if (assignments.isEmpty) {
           final emptyText = fullName.trim().isEmpty
-              ? '尚未登入同工資料'
+              ? '尚未登入同工资料'
               : window.emptyText;
           return _buildSectionCard(
             title: window.title,
@@ -734,14 +743,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: SizedBox(
             height: _seasonListHeight(assignments.length),
             child: Scrollbar(
+              controller: _seasonScrollController,
+              thumbVisibility: assignments.length > 5,
               child: ListView.separated(
+                controller: _seasonScrollController,
                 itemCount: assignments.length,
                 separatorBuilder: (_, itemIndex) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final assignment = assignments[index];
                   final dateText = DateFormat(
                     'MM/dd (EEEEE)',
-                    'zh_TW',
+                    'zh_CN',
                   ).format(assignment.roster.date);
                   final roleText = assignment.roles.join('、');
                   return Row(

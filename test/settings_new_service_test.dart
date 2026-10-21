@@ -177,7 +177,7 @@ void main() {
       groups: groups,
       userAdmin: userAdmin,
     );
-    await _addAndSave(tester, action: '新增小組', name: '新聚會小組');
+    await _addAndSave(tester, action: '新增小组', name: '新聚會小組');
 
     final expected = {
       ..._oldTemplates(),

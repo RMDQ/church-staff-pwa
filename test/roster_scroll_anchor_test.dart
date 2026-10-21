@@ -128,7 +128,7 @@ void main() {
     expect(anchorId, isNot(''), reason: '捲完之後畫面上應該還有卡片');
     final before = _topOf(tester, anchorId);
 
-    await tester.tap(find.byTooltip('切換至編輯模式'));
+    await tester.tap(find.byTooltip('切换至编辑模式'));
     await tester.pumpAndSettle();
 
     expect(find.byTooltip('切換至檢視模式'), findsOneWidget, reason: '應該已經在編輯模式');
@@ -146,7 +146,7 @@ void main() {
 
     await _pumpRosterScreen(tester);
 
-    await tester.tap(find.byTooltip('切換至編輯模式'));
+    await tester.tap(find.byTooltip('切换至编辑模式'));
     await tester.pumpAndSettle();
 
     // 在編輯模式裡捲動，再切回檢視。
@@ -159,7 +159,7 @@ void main() {
     await tester.tap(find.byTooltip('切換至檢視模式'));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('切換至編輯模式'), findsOneWidget, reason: '應該已經回到檢視模式');
+    expect(find.byTooltip('切换至编辑模式'), findsOneWidget, reason: '應該已經回到檢視模式');
     expect(
       _topOf(tester, anchorId),
       closeTo(before, 1.0),
@@ -176,7 +176,7 @@ void main() {
 
     await _pumpRosterScreen(tester);
 
-    await tester.tap(find.byTooltip('切換至編輯模式'));
+    await tester.tap(find.byTooltip('切换至编辑模式'));
     await tester.pumpAndSettle();
 
     expect(find.text('進階：匯入整季服事表'), findsOneWidget, reason: '匯入卡應該看得到');

@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     FocusScope.of(context).nextFocus(),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return '請輸入 Email';
+                                    return '请输入邮箱';
                                   }
                                   return null;
                                 },
@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextFormField(
                                 controller: _passwordController,
                                 decoration: InputDecoration(
-                                  labelText: '密碼',
+                                  labelText: '密码',
                                   border: const OutlineInputBorder(),
                                   prefixIcon: const Icon(Icons.lock),
                                   suffixIcon: IconButton(
@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ? Icons.visibility_off
                                           : Icons.visibility,
                                     ),
-                                    tooltip: _obscurePassword ? '顯示密碼' : '隱藏密碼',
+                                    tooltip: _obscurePassword ? '显示密码' : '隐藏密码',
                                     onPressed: () {
                                       setState(() {
                                         _obscurePassword = !_obscurePassword;
@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 textInputAction: TextInputAction.done,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return '請輸入密碼';
+                                    return '请输入密码';
                                   }
                                   return null;
                                 },
@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
                                   onPressed: _showForgotPassword,
-                                  child: const Text('忘記密碼？'),
+                                  child: const Text('忘记密码？'),
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -151,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             color: Colors.white,
                                           ),
                                         )
-                                      : const Text('登入'),
+                                      : const Text('登录'),
                                 ),
                               ),
                               Align(

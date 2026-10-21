@@ -19,7 +19,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _phone = TextEditingController();
-  late final SignupRepository _repository = widget.repository ?? SignupRepository();
+  late final SignupRepository _repository =
+      widget.repository ?? SignupRepository();
 
   bool _consented = false;
   bool _submitting = false;
@@ -118,9 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: _password,
-                    decoration: const InputDecoration(
-                      labelText: '密码（至少 8 位）',
-                    ),
+                    decoration: const InputDecoration(labelText: '密码（至少 8 位）'),
                     obscureText: true,
                     autofillHints: const [AutofillHints.newPassword],
                     textInputAction: TextInputAction.next,
@@ -138,7 +137,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     value: _consented,
                     onChanged: _submitting
                         ? null
-                        : (value) => setState(() => _consented = value ?? false),
+                        : (value) =>
+                              setState(() => _consented = value ?? false),
                     title: const Text(
                       '我同意教会使用我提供的姓名、电话、Email 和打卡记录，用于教会行政与出勤统计，可随时要求查看或删除。',
                       style: TextStyle(fontSize: 13),

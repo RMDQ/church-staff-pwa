@@ -15,7 +15,8 @@ class SignupReviewScreen extends StatefulWidget {
 }
 
 class _SignupReviewScreenState extends State<SignupReviewScreen> {
-  late final SignupRepository _repository = widget.repository ?? SignupRepository();
+  late final SignupRepository _repository =
+      widget.repository ?? SignupRepository();
   late Future<List<SignupRequest>> _future = _repository.pendingRequests();
   String? _message;
 

@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/recent_activity.dart';
 
-/// 首頁「近期活動」的一列：左邊日期、右邊標題。
+/// 首页「近期活动」的一列：左边日期、右边标题。
 ///
-/// 抽成獨立 widget 是為了讓版面能被測試盯住。日期欄是
-/// `Expanded(flex: 2)` + 單行 + ellipsis —— 字串太長不會報錯，只會被默默
-/// 截掉，肉眼在開發機上又不見得看得出來。recent_activity_row_test.dart 會
-/// 用 TextPainter 量實際字寬並跟欄寬比對，超出就讓測試紅。
+/// 抽成独立 widget 是为了让版面能被测试盯住。日期栏是
+/// `Expanded(flex: 2)` + 单行 + ellipsis —— 字串太长不会报错，只会
+/// 被默默截掉，肉眼在开发机上又不见得看得出来。recent_activity_row_test.dart
+/// 会用 TextPainter 量实际字宽并跟栏宽比对，超出就让测试红。
 class RecentActivityRow extends StatelessWidget {
   const RecentActivityRow({super.key, required this.activity});
 
   final RecentActivity activity;
 
-  /// 日期欄與標題欄的寬度比。固定比例（而不是讓日期照自然寬度）是為了讓
-  /// 每一列的標題都從同一個 x 起始 —— 「全日」與「有時間」兩種格式的自然
-  /// 寬度不同，不固定就會參差不齊。
+  /// 日期栏与标题栏的宽度比。固定比例（而不是让日期照自然宽度）是为了让
+  /// 每一列的标题都从同一个 x 起始 —— 「全日」与「有时间」两种格式的自然
+  /// 宽度不同，不固定就会参差不齐。
   static const int dateFlex = 2;
   static const int titleFlex = 3;
   static const double columnGap = 8;

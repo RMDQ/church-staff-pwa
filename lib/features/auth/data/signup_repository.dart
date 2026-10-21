@@ -85,7 +85,9 @@ class SignupRepository {
 
   /// 管理员：所有待审的申请。
   Future<List<SignupRequest>> pendingRequests() async {
-    final snapshot = await _requests.where('status', isEqualTo: 'pending').get();
+    final snapshot = await _requests
+        .where('status', isEqualTo: 'pending')
+        .get();
     final requests = <SignupRequest>[];
     for (final doc in snapshot.docs) {
       final data = doc.data();

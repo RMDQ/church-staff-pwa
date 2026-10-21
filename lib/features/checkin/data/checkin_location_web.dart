@@ -18,11 +18,13 @@ Future<CheckinPosition> currentPosition() {
       );
     }.toJS,
     (web.GeolocationPositionError error) {
-      completer.completeError(
-        const CheckinException('无法取得位置，请允许浏览器使用定位后再试'),
-      );
+      completer.completeError(const CheckinException('无法取得位置，请允许浏览器使用定位后再试'));
     }.toJS,
-    web.PositionOptions(enableHighAccuracy: true, timeout: 10000, maximumAge: 0),
+    web.PositionOptions(
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    ),
   );
   return completer.future;
 }

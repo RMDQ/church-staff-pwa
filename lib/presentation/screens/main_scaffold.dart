@@ -67,7 +67,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
-            label: '首頁',
+            label: '首页',
           ),
           NavigationDestination(
             icon: Icon(Icons.list_alt_outlined),

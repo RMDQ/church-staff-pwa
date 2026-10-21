@@ -194,7 +194,7 @@ void main() {
       const ProfileScreen(versionService: _NoVersionService()),
     );
     expect(find.text('服事提醒'), findsNothing);
-    expect(find.text('登出'), findsOneWidget);
+    expect(find.text('退出登录'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -208,7 +208,7 @@ void main() {
       const ProfileScreen(versionService: _NoVersionService()),
     );
     expect(find.text('服事提醒'), findsNothing);
-    expect(find.text('登出'), findsOneWidget);
+    expect(find.text('退出登录'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -373,7 +373,7 @@ void main() {
           }),
         ),
       );
-      expect(find.text('查看今日經文範圍'), findsOneWidget);
+      expect(find.text('查看今日经文范围'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

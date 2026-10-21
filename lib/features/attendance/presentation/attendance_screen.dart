@@ -82,12 +82,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             children: [
               Text(
                 day.date,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 '共 ${day.total} 人 · 准时 ${day.onTime} · 迟到 ${day.late}',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 16),
               if (day.rows.isEmpty)
