@@ -36,8 +36,41 @@ function httpsUrl(value, at) {
   }
 }
 
+const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
+const minutesOf = (text) => {
+  const [hour, minute] = text.split(':').map(Number);
+  return hour * 60 + minute;
+};
+
+/// The check-in rules the server enforces. The window, the on-time line, the
+/// allowed distance and the church's location are the church's own choices, so
+/// they live in the deployment configuration rather than in code.
+function checkinSettings(checkin, services) {
+  object(checkin, ['serviceId', 'start', 'end', 'onTimeBefore', 'allowedMeters', 'latitude', 'longitude'], 'checkin');
+  if (typeof checkin.serviceId !== 'string' || !services.some((service) => service.id === checkin.serviceId)) {
+    throw new Error('checkin.serviceId must name one of the configured services');
+  }
+  for (const key of ['start', 'end', 'onTimeBefore']) {
+    if (typeof checkin[key] !== 'string' || !CLOCK.test(checkin[key])) {
+      throw new Error(`checkin.${key} must be a time such as 13:00`);
+    }
+  }
+  if (!(minutesOf(checkin.start) <= minutesOf(checkin.onTimeBefore) && minutesOf(checkin.onTimeBefore) <= minutesOf(checkin.end))) {
+    throw new Error('checkin times must satisfy start <= onTimeBefore <= end');
+  }
+  if (!Number.isInteger(checkin.allowedMeters) || checkin.allowedMeters < 10 || checkin.allowedMeters > 500) {
+    throw new Error('checkin.allowedMeters must be an integer from 10 to 500');
+  }
+  if (typeof checkin.latitude !== 'number' || !Number.isFinite(checkin.latitude) || checkin.latitude < -90 || checkin.latitude > 90) {
+    throw new Error('checkin.latitude must be a number from -90 to 90');
+  }
+  if (typeof checkin.longitude !== 'number' || !Number.isFinite(checkin.longitude) || checkin.longitude < -180 || checkin.longitude > 180) {
+    throw new Error('checkin.longitude must be a number from -180 to 180');
+  }
+}
+
 export function validateChurchConfig(config) {
-  object(config, ['schemaVersion', 'appName', 'shortName', 'timeZone', 'services', 'features', 'devotional', 'icons'], 'config');
+  object(config, ['schemaVersion', 'appName', 'shortName', 'timeZone', 'services', 'features', 'devotional', 'icons', 'checkin'], 'config');
   if (config.schemaVersion !== 1) throw new Error('schemaVersion must be 1');
   text(config.appName, 'appName');
   text(config.shortName, 'shortName', 40);
@@ -84,6 +117,7 @@ export function validateChurchConfig(config) {
   if (config.devotional.enabled && (!config.devotional.dataUrl || !config.devotional.linkUrl)) {
     throw new Error('devotional.dataUrl and linkUrl are required when enabled');
   }
+  checkinSettings(config.checkin, config.services);
   object(config.icons, ICONS, 'icons');
   for (const key of ICONS) {
     const path = config.icons[key];
@@ -136,13 +170,18 @@ export function churchConfig(env) {
     return config;
   } catch (error) {
     console.error('invalid church configuration', error.message);
-    throw new HttpError(500, '教會設定有誤，請聯絡管理員');
+    throw new HttpError(500, '教会设定有误，请联络管理员');
   }
+}
+
+/// The check-in settings in effect for this deployment.
+export function checkinConfig(env) {
+  return churchConfig(env).checkin;
 }
 
 export function requireFeature(env, feature) {
   if (churchConfig(env).features[feature] !== true) {
-    throw new HttpError(403, '此教會尚未啟用這項功能');
+    throw new HttpError(403, '此教会尚未启用这项功能');
   }
 }
 

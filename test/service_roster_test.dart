@@ -7,40 +7,40 @@ import 'package:church_staff_pwa/features/roster/domain/entities/service_roster.
 void main() {
   // ── EventOption.fromJson / toJson ──────────────────────────────────────────
   group('EventOption 序列化', () {
-    test('fromJson → toJson 來回轉換不變', () {
-      const original = EventOption(name: '聖餐主日', color: 0xFFF39C12);
+    test('fromJson → toJson 来回转换不变', () {
+      const original = EventOption(name: '圣餐主日', color: 0xFFF39C12);
       final json = original.toJson();
       final restored = EventOption.fromJson(json);
       expect(restored.name, original.name);
       expect(restored.color, original.color);
     });
 
-    test('fromJson：缺少 color 欄位時使用預設顏色', () {
-      final e = EventOption.fromJson({'name': '復活節'});
-      expect(e.name, '復活節');
-      // 預設色要在色盤裡，設定頁才點得回來。
+    test('fromJson：缺少 color 栏位时使用预设颜色', () {
+      final e = EventOption.fromJson({'name': '复活节'});
+      expect(e.name, '复活节');
+      // 预设色要在色盘里，设定页才点得回来。
       expect(eventColorPalette, contains(e.color));
     });
 
-    test('fromJson：缺少 name 欄位時 name 為空字串', () {
+    test('fromJson：缺少 name 栏位时 name 为空字串', () {
       final e = EventOption.fromJson({'color': 0xFF123456});
       expect(e.name, '');
       expect(e.color, 0xFF123456);
     });
 
-    test('fromJson：name 非 String 時回退空字串', () {
+    test('fromJson：name 非 String 时回退空字串', () {
       final e = EventOption.fromJson({'name': 42, 'color': 0xFFF39C12});
       expect(e.name, '');
     });
 
-    test('fromJson：color 非 int 時回退預設顏色', () {
-      final e = EventOption.fromJson({'name': '聖誕', 'color': '紅色'});
-      // 預設色要在色盤裡，設定頁才點得回來。
+    test('fromJson：color 非 int 时回退预设颜色', () {
+      final e = EventOption.fromJson({'name': '圣诞', 'color': '红色'});
+      // 预设色要在色盘里，设定页才点得回来。
       expect(eventColorPalette, contains(e.color));
     });
 
-    test('copyWith 只更新 name 時 color 不變', () {
-      const original = EventOption(name: '舊名', color: 0xFF001122);
+    test('copyWith 只更新 name 时 color 不变', () {
+      const original = EventOption(name: '旧名', color: 0xFF001122);
       final updated = original.copyWith(name: '新名');
       expect(updated.name, '新名');
       expect(updated.color, 0xFF001122);
@@ -49,14 +49,14 @@ void main() {
 
   // ── RosterEntry ────────────────────────────────────────────────────────────
   group('RosterEntry', () {
-    test('copyWith 只更新 role 時其他欄位保持不變', () {
+    test('copyWith 只更新 role 时其他栏位保持不变', () {
       final original = RosterEntry(
-        role: '領會',
+        role: '领会',
         people: const ['A'],
         personIdsByName: const {'A': 'uid-a'},
       );
-      final updated = original.copyWith(role: '敬拜主領');
-      expect(updated.role, '敬拜主領');
+      final updated = original.copyWith(role: '敬拜主领');
+      expect(updated.role, '敬拜主领');
       expect(updated.people, ['A']);
       expect(updated.personIdsByName, {'A': 'uid-a'});
     });
@@ -78,49 +78,49 @@ void main() {
         duties:
             duties ??
             [
-              RosterEntry(role: '領會', people: const ['A']),
+              RosterEntry(role: '领会', people: const ['A']),
             ],
         specialEvents: specialEvents,
         customEventColors: customEventColors,
       );
     }
 
-    test('specialEvents 預設為空 List', () {
+    test('specialEvents 预设为空 List', () {
       final roster = makeRoster();
       expect(roster.specialEvents, isEmpty);
     });
 
-    test('customEventColors 預設為空 Map', () {
+    test('customEventColors 预设为空 Map', () {
       final roster = makeRoster();
       expect(roster.customEventColors, isEmpty);
     });
 
-    test('customEventColors 有值時可正確讀取', () {
-      final roster = makeRoster(customEventColors: {'復活節': 0xFFFFD700});
-      expect(roster.customEventColors['復活節'], 0xFFFFD700);
+    test('customEventColors 有值时可正确读取', () {
+      final roster = makeRoster(customEventColors: {'复活节': 0xFFFFD700});
+      expect(roster.customEventColors['复活节'], 0xFFFFD700);
     });
 
-    test('specialEvents 為空 list 時 copyWith 可加入事件', () {
+    test('specialEvents 为空 list 时 copyWith 可加入事件', () {
       final original = makeRoster(specialEvents: const []);
-      final updated = original.copyWith(specialEvents: ['聖餐主日']);
-      expect(updated.specialEvents, ['聖餐主日']);
-      // 原物件不受影響
+      final updated = original.copyWith(specialEvents: ['圣餐主日']);
+      expect(updated.specialEvents, ['圣餐主日']);
+      // 原物件不受影响
       expect(original.specialEvents, isEmpty);
     });
 
-    test('copyWith 只更新 customEventColors 時其他欄位不變', () {
+    test('copyWith 只更新 customEventColors 时其他栏位不变', () {
       final original = makeRoster(
-        specialEvents: const ['聖餐'],
-        customEventColors: const {'舊事件': 0xFF000001},
+        specialEvents: const ['圣餐'],
+        customEventColors: const {'旧事件': 0xFF000001},
       );
       final updated = original.copyWith(customEventColors: {'新事件': 0xFF000002});
       expect(updated.customEventColors, {'新事件': 0xFF000002});
-      expect(updated.specialEvents, ['聖餐']);
+      expect(updated.specialEvents, ['圣餐']);
       expect(updated.id, original.id);
       expect(updated.serviceName, original.serviceName);
     });
 
-    test('copyWith 對 duties 清空後為空 list', () {
+    test('copyWith 对 duties 清空后为空 list', () {
       final roster = makeRoster();
       final updated = roster.copyWith(duties: []);
       expect(updated.duties, isEmpty);

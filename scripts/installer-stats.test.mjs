@@ -50,8 +50,8 @@ async function counted(t, options, report) {
   await manager.connectGoogle();
   await manager.connectCloudflare();
   const plan = await manager.plan({
-    appName: '範例教會', shortName: '同工助手', timeZone: 'Asia/Taipei', region: 'asia-east1', siteName: 'example-staff',
-    services: [{ name: '主日崇拜', label: '主日', weekday: 7 }], adminName: '管理員', adminEmail: 'admin@example.invalid',
+    appName: '范例教会', shortName: '同工助手', timeZone: 'Asia/Taipei', region: 'asia-east1', siteName: 'example-staff',
+    services: [{ name: '主日崇拜', label: '主日', weekday: 7 }], adminName: '管理员', adminEmail: 'admin@example.invalid',
     cloudflareAccountId: '0123456789abcdef0123456789abcdef',
   });
   const confirm = { digest: plan.digest, confirmProject: plan.projectId, confirmAdmin: plan.admin.email, acknowledgeRegion: true, acknowledgeEmail: true };

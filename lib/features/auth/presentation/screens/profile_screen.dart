@@ -18,7 +18,7 @@ import 'group_settings_screen.dart' deferred as group_settings_screen;
 import '../../../services/presentation/screens/service_settings_screen.dart'
     deferred as service_settings_screen;
 
-/// 服事提醒的寄送端還不存在（見 build 裡的開關）。
+/// 服事提醒的寄送端还不存在（见 build 里的开关）。
 const _rosterReminderSenderExists = false;
 
 class ProfileScreen extends StatefulWidget {
@@ -29,7 +29,7 @@ class ProfileScreen extends StatefulWidget {
     this.releaseService = const ReleaseCheckService(),
   });
 
-  /// 這幾個注入點只是為了測試 —— 正式環境永遠是預設那個。
+  /// 这几个注入点只是为了测试 —— 正式环境永远是预设那个。
   final AppUpdateService updateService;
   final AppVersionService versionService;
   final ReleaseCheckService releaseService;
@@ -46,8 +46,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final Future<AppVersionInfo?> _versionInfoFuture = widget.versionService
       .fetchVersionInfo();
 
-  /// 精靈裝的網站、而且 GitHub 上有比較新的 release 時才有值。
-  /// 只給管理員看：一般同工看到「有新版本」也做不了什麼。
+  /// 精灵装的网站、而且 GitHub 上有比较新的 release 时才有值。
+  /// 只给管理员看：一般同工看到「有新版本」也做不了什么。
   late final Future<(ReleaseInfo, String)?> _newRelease = () async {
     final info = await _versionInfoFuture;
     if (info == null || !info.isInstallerSite) return null;
@@ -58,10 +58,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return (latest, info.release!);
   }();
 
-  /// 「檢查更新」。
+  /// 「检查更新」。
   ///
-  /// 找到新版的話 `web/app_update.js` 會把頁面重載，所以那條路徑上這裡什麼都
-  /// 不用收尾 —— 連 setState 都不必，widget 馬上就不在了。
+  /// 找到新版的话 `web/app_update.js` 会把页面重载，所以那条路径上这里什么都
+  /// 不用收尾 —— 连 setState 都不必，widget 马上就不在了。
   Future<void> _checkForUpdate() async {
     setState(() => _isCheckingUpdate = true);
     final messenger = ScaffoldMessenger.of(context);
@@ -71,17 +71,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            result == AppUpdateResult.updating ? '找到新版本，正在更新…' : '已經是最新版本',
+            result == AppUpdateResult.updating ? '找到新版本，正在更新…' : '已经是最新版本',
           ),
         ),
       );
     } catch (error, st) {
-      log('檢查更新失敗', error: error, stackTrace: st);
+      log('检查更新失败', error: error, stackTrace: st);
       if (!mounted) return;
-      // 這個按鈕存在的理由就是使用者已經不相信畫面上的版本了，失敗要說出來，
-      // 不能讓它看起來像「檢查過了，沒事」。
+      // 这个按钮存在的理由就是使用者已经不相信画面上的版本了，失败要说出来，
+      // 不能让它看起来像「检查过了，没事」。
       messenger.showSnackBar(
-        SnackBar(content: Text('檢查更新失敗：${mapErrorToUserMessage(error)}')),
+        SnackBar(content: Text('检查更新失败：${mapErrorToUserMessage(error)}')),
       );
     } finally {
       if (mounted) setState(() => _isCheckingUpdate = false);
@@ -108,14 +108,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       Navigator.push(context, MaterialPageRoute(builder: (_) => builder()));
     } catch (error, st) {
-      log('載入畫面失敗', error: error, stackTrace: st);
+      log('载入画面失败', error: error, stackTrace: st);
       if (context.mounted) {
         if (dialogShown) {
           Navigator.of(context, rootNavigator: true).pop();
           dialogShown = false;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入失敗：${mapErrorToUserMessage(error)}')),
+          SnackBar(content: Text('加载失败：${mapErrorToUserMessage(error)}')),
         );
       }
     } finally {
@@ -173,27 +173,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _isPushEnabled = enabled);
       if (value && !enabled) {
         final reasonMessage = switch (result.failureReason) {
-          PushToggleFailureReason.missingVapidKey => '系統設定缺少推播金鑰，請聯絡管理員。',
+          PushToggleFailureReason.missingVapidKey => '系统设置缺少推送密钥，请联系管理员。',
           PushToggleFailureReason.permissionDenied =>
-            '通知權限未開啟，請到 iPhone 設定允許此 App 通知。',
+            '通知权限未开启，请在系统设置中允许此 App 通知。',
           PushToggleFailureReason.tokenUnavailable =>
-            '目前裝置無法取得推播識別碼，請重新開啟 App 後再試。',
-          PushToggleFailureReason.saveTokenFailed => '已取得識別碼，但儲存失敗，請稍後再試。',
-          PushToggleFailureReason.savePreferenceFailed => '通知偏好儲存失敗，請稍後再試。',
-          PushToggleFailureReason.notInitialized => '推播服務尚未初始化完成，請重整後再試。',
-          PushToggleFailureReason.disabled => '推播通知未啟用。',
-          PushToggleFailureReason.notWeb => '目前環境不支援網頁推播。',
-          null => '通知未啟用，請確認瀏覽器通知權限設定。',
+            '当前设备无法获取推送标识码，请重新打开 App 后再试。',
+          PushToggleFailureReason.saveTokenFailed => '已获取标识码，但保存失败，请稍后再试。',
+          PushToggleFailureReason.savePreferenceFailed => '通知偏好保存失败，请稍后再试。',
+          PushToggleFailureReason.notInitialized => '推送服务尚未初始化完成，请刷新后再试。',
+          PushToggleFailureReason.disabled => '推送通知未启用。',
+          PushToggleFailureReason.notWeb => '当前环境不支持网页推送。',
+          null => '通知未启用，请确认浏览器通知权限设置。',
         };
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(reasonMessage)));
       }
     } catch (error, st) {
-      log('更新通知設定失敗', error: error, stackTrace: st);
+      log('更新通知设定失败', error: error, stackTrace: st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('更新通知設定失敗：${mapErrorToUserMessage(error)}')),
+        SnackBar(content: Text('更新通知设置失败：${mapErrorToUserMessage(error)}')),
       );
     } finally {
       if (mounted) {
@@ -210,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user == null) return const SizedBox.shrink();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('個人中心')),
+      appBar: AppBar(title: const Text('个人中心')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -237,12 +237,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
-                // 角色是身分，group 是編輯權限 —— 兩種不同的東西，所以用不同
-                // 的底色，而不是排成一串看起來同質的標籤。
+                // 角色是身分，group 是编辑权限 —— 两种不同的东西，所以用不同
+                // 的底色，而不是排成一串看起来同质的标签。
                 //
-                // 管理員不列 group：他隱含全部，逐項列出反而像是「被指定了這
-                // 幾項」，看起來比實際權限還小。Wrap 是為了窄螢幕會換行而不是
-                // 擠成一行溢出。
+                // 管理员不列 group：他隐含全部，逐项列出反而像是「被指定了这
+                // 几项」，看起来比实际权限还小。Wrap 是为了窄萤幕会换行而不是
+                // 挤成一行溢出。
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -283,8 +283,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.manage_accounts),
-              title: const Text('帳號管理'),
-              subtitle: const Text('新增、刪除或修改同工權限'),
+              title: const Text('账号管理'),
+              subtitle: const Text('新增、删除或修改同工权限'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _loadAndPush(
                 context,
@@ -294,8 +294,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.event_repeat),
-              title: const Text('聚會設定'),
-              subtitle: const Text('新增或修改每週的聚會'),
+              title: const Text('聚会设置'),
+              subtitle: const Text('新增或修改每周的聚会'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _loadAndPush(
                 context,
@@ -305,8 +305,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.groups),
-              title: const Text('小組管理'),
-              subtitle: const Text('設定各牧區小組清單'),
+              title: const Text('小组管理'),
+              subtitle: const Text('设置各牧区小组列表'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _loadAndPush(
                 context,
@@ -318,14 +318,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const Divider(),
 
-          // 先藏起來：App 只會記下「要提醒」，還沒有任何東西真的在週一寄出。
-          // 留著開關會讓同工以為打開就會收到。有寄送端之後把這個常數改回 true。
+          // 先藏起来：App 只会记下「要提醒」，还没有任何东西真的在周一寄出。
+          // 留著开关会让同工以为打开就会收到。有寄送端之后把这个常数改回 true。
           if (_rosterReminderSenderExists &&
               ChurchConfig.current.features.pushNotifications)
             SwitchListTile(
               secondary: const Icon(Icons.notifications_active),
               title: const Text('服事提醒'),
-              subtitle: const Text('每週一晚間發送提醒'),
+              subtitle: const Text('每周一晚间发送提醒'),
               value: _isPushEnabled,
               onChanged: _isPushLoading ? null : _togglePush,
             ),
@@ -333,13 +333,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Logout Button
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('登出', style: TextStyle(color: Colors.red)),
+            title: const Text('退出登录', style: TextStyle(color: Colors.red)),
             onTap: () async {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('登出確認'),
-                  content: const Text('確定要登出嗎？'),
+                  title: const Text('退出登录确认'),
+                  content: const Text('确定要退出登录吗？'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
@@ -348,7 +348,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
                       child: const Text(
-                        '登出',
+                        '退出登录',
                         style: TextStyle(color: Colors.red),
                       ),
                     ),
@@ -358,8 +358,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               if (confirm != true) return;
               await session.logout();
-              // 登出失敗時 session 會被保留（避免假登出），所以錯誤要在這裡
-              // 講清楚，否則使用者以為登出成功、畫面卻沒有變化。
+              // 登出失败时 session 会被保留（避免假登出），所以错误要在这里
+              // 讲清楚，否则使用者以为登出成功、画面却没有变化。
               final logoutError = session.error;
               if (logoutError == null) return;
               session.clearError();
@@ -375,41 +375,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
               future: _versionInfoFuture,
               builder: (context, snapshot) {
                 final info = snapshot.data;
-                // 頁尾的版本資訊。刻意都用同一個灰色小字：這裡是註腳，不是
-                // 功能入口 —— 平常載入與切回前景都會自己檢查更新，按鈕只是給
-                // 「我看起來還是舊版」的人一個不必被叫去滑掉 App 的出口。
-                // 一顆正常的 TextButton（主色、按鈕級字級）會比它上面那行還
-                // 搶眼，看起來像有什麼事該做。
+                // 页尾的版本资讯。刻意都用同一个灰色小字：这里是注脚，不是
+                // 功能入口 —— 平常载入与切回前景都会自己检查更新，按钮只是给
+                // 「我看起来还是旧版」的人一个不必被叫去滑掉 App 的出口。
+                // 一颗正常的 TextButton（主色、按钮级字级）会比它上面那行还
+                // 抢眼，看起来像有什么事该做。
                 final captionStyle = Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600);
 
-                // 兩行，各自置中。擠在同一行時「檢查更新」會把整組推得偏
-                // 左，看起來像沒對齊。
+                // 两行，各自置中。挤在同一行时「检查更新」会把整组推得偏
+                // 左，看起来像没对齐。
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 這是「這台裝置正在跑的版本」，不是伺服器的 ——
-                    // version.json 跟著 bundle 一起進快取（見 AppVersionService）。
+                    // 这是「这台装置正在跑的版本」，不是伺服器的 ——
+                    // version.json 跟著 bundle 一起进快取（见 AppVersionService）。
                     if (info != null)
                       Text(
-                        '更新於 ${_buildVersionDateText(info)}',
+                        '更新于 ${_buildVersionDateText(info)}',
                         textAlign: TextAlign.center,
                         style: captionStyle,
                       ),
                     if (widget.updateService.isSupported)
                       InkWell(
                         onTap: _isCheckingUpdate ? null : _checkForUpdate,
-                        // 字級小，靠 padding 把可點範圍撐到手指按得到。
+                        // 字级小，靠 padding 把可点范围撑到手指按得到。
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             vertical: 8,
                             horizontal: 12,
                           ),
                           child: Text(
-                            _isCheckingUpdate ? '檢查中…' : '檢查更新',
+                            _isCheckingUpdate ? '检查中…' : '检查更新',
                             textAlign: TextAlign.center,
-                            // 顏色跟上面那行一樣，只用底線表示按得下去。
+                            // 颜色跟上面那行一样，只用底线表示按得下去。
                             style: captionStyle?.copyWith(
                               decoration: _isCheckingUpdate
                                   ? null
@@ -429,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// 空字串直接取 [0] 會 RangeError（Firestore 上的 name 不保證非空）。
+  /// 空字串直接取 [0] 会 RangeError（Firestore 上的 name 不保证非空）。
   String _avatarLetter(String name) {
     final trimmed = name.trim();
     return trimmed.isEmpty ? '?' : trimmed[0];
@@ -442,7 +442,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-/// 「有新版本」。點下去開更新教學：更新要在 Cloud Shell 跑精靈，App 自己做不到。
+/// 「有新版本」。点下去开更新教学：更新要在 Cloud Shell 跑精灵，App 自己做不到。
 class _NewReleaseTile extends StatelessWidget {
   const _NewReleaseTile({required this.release, required this.current});
 
@@ -481,7 +481,7 @@ class _NewReleaseTile extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '目前 $current，最新 ${release.version}。只有管理員看得到這則提醒。',
+              '当前 $current，最新 ${release.version}。只有管理员看得到这则提醒。',
               style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
             ),
             if (release.notes.isNotEmpty) ...[
@@ -497,7 +497,7 @@ class _NewReleaseTile extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => openExternalLink(guideUrl),
-                  child: const Text('怎麼更新'),
+                  child: const Text('更新指南'),
                 ),
               ),
           ],

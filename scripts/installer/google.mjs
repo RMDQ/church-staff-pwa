@@ -41,45 +41,7 @@ export class ActionRequired extends Error {
 }
 
 function stop(code, message) { throw new ActionRequired(code, message); }
-
-const RETRY_AUTHORIZE = '請按「連接 Google」再試一次，接著立刻切到 Cloud Shell 分頁，在「Authorize Cloud Shell」視窗按 Authorize 並選擇這次要用的 Google 帳號。';
-const RESTART_CLOUD_SHELL = '請切到 Cloud Shell 分頁，按右上角的「⋮」→「重新啟動」，出現「Authorize Cloud Shell」就按 Authorize 並選擇這次要用的 Google 帳號，' +
-  '再按一次教學裡啟動精靈的指令卡，進度不會遺失。還是不行的話，在 Cloud Shell 按 Ctrl+C 停掉精靈，輸入 gcloud auth login 後按 Enter，照畫面登入同一個帳號，再啟動精靈。';
-
-// Turns gcloud's refusal to hand out a token into a step the church can take,
-// and always throws. Only gcloud's ERROR line is matched (later lines may echo
-// a server response) and shown: it is what a helper needs from a screenshot,
-// and it never holds the token. [waitMs] is how long connecting waited for
-// someone to press Authorize; it is unset during a run.
-function gcloudAuthFailure(error, { waitMs } = {}) {
-  const lines = String(error?.stderr ?? '').split('\n').map((text) => text.trim()).filter(Boolean);
-  const line = lines.find((text) => text.startsWith('ERROR:')) ?? lines[0] ?? '';
-  const reason = line.replace(/^ERROR:\s*(?:\([^)]*\)\s*)?/, '').replace(/ya29\.[\w.-]+|[\w-]{40,}/g, '…').slice(0, 300);
-  const detail = reason ? `\n\nGoogle 回報的原因：${reason}` : '';
-  if (/reauth|invalid_rapt/i.test(reason)) {
-    stop('GOOGLE_REAUTH_REQUIRED', 'Google 要求重新確認你的身分（學校或公司帳號常有這種安全設定）。請切到 Cloud Shell 分頁，按 Ctrl+C 停掉精靈，' +
-      '輸入 gcloud auth login 後按 Enter（問要不要繼續就輸入 Y），照畫面打開連結、登入同一個 Google 帳號並允許，再把網頁上的驗證碼貼回 Cloud Shell 按 Enter。' +
-      `完成後再按一次教學裡啟動精靈的指令卡，進度不會遺失。${detail}`);
-  }
-  // gcloud adds the Context Aware Access explanation on a later line.
-  if (/admin_policy_enforced/i.test(reason) || lines.some((text) => /Context Aware Access/i.test(text))) {
-    stop('GOOGLE_ORG_POLICY', '這個 Google 帳號屬於學校或公司，管理員的安全政策不允許在 Cloud Shell 使用。請改用個人 Gmail 安裝：' +
-      `關掉 Cloud Shell，在 Google 右上角頭像切換成個人帳號，再重新打開安裝教學。${detail}`);
-  }
-  if (waitMs && error?.timedOut) {
-    stop('GOOGLE_AUTH_REQUIRED', `等了 ${Math.round(waitMs / 60_000)} 分鐘都沒有收到 Cloud Shell 授權。${RETRY_AUTHORIZE}`);
-  }
-  // No account, an account without credentials, or Cloud Shell's own token
-  // service refusing: Cloud Shell has lost (or never got) its authorization.
-  if (/do not currently have an active account|does not have any valid credentials|metadata|Failed to retrieve|Connection (?:reset|refused|aborted)|Temporary failure|Network is unreachable/i.test(reason)) {
-    stop('GOOGLE_AUTH_REQUIRED', `Cloud Shell 目前沒有可用的 Google 授權。${RESTART_CLOUD_SHELL}${detail}`);
-  }
-  stop('GOOGLE_AUTH_REQUIRED', waitMs
-    ? `Cloud Shell 沒有完成 Google 授權。${RETRY_AUTHORIZE}一直不行的話：${RESTART_CLOUD_SHELL}${detail}`
-    : `無法取得 Google 短期授權。${RESTART_CLOUD_SHELL}${detail}`);
-}
-
-function conflict(message = '雲端資源已存在或被其他操作變更；為避免接管既有站，已停止。請核對本次安裝紀錄。') {
+function conflict(message = '云端资源已存在或被其他操作变更；为避免接管既有站，已停止。请核对本次安装纪录。') {
   stop('GOOGLE_RESOURCE_CONFLICT', message);
 }
 
@@ -87,32 +49,32 @@ function conflict(message = '雲端資源已存在或被其他操作變更；為
 function cloudError(status, error = {}, authSetup = false) {
   const reason = `${error.status ?? ''} ${error.message ?? ''} ${canonical(error.details ?? [])}`.toUpperCase();
   if (authSetup && (status === 404 || /CONFIGURATION_NOT_FOUND|PROJECT_NOT_FOUND|OPERATION_NOT_ALLOWED/.test(reason))) {
-    stop('AUTH_SETUP_REQUIRED', '請按下方「開啟官方設定頁」，在 Firebase 的 Authentication 頁按「Get started」。看到一排登入方式就完成了，不用再點任何一種，也不要升級付費方案；回到這裡按「核對後接續安裝」，精靈會自己設定 Email 登入。');
+    stop('AUTH_SETUP_REQUIRED', '请按下方「开启官方设定页」，在 Firebase 的 Authentication 页按「Get started」。看到一排登入方式就完成了，不用再点任何一种，也不要升级付费方案；回到这里按「核对后接续安装」，精灵会自己设定 Email 登入。');
   }
   if (/BILLING|BLAZE|IDENTITY_PLATFORM.*UPGRADE/.test(reason)) {
-    stop('GOOGLE_FREE_TIER_REQUIRED', 'Google 要求付費方案；安裝器不會綁定帳單或升級。請核對免費 Firebase 設定後再繼續。');
+    stop('GOOGLE_FREE_TIER_REQUIRED', 'Google 要求付费方案；安装器不会绑定帐单或升级。请核对免费 Firebase 设定后再继续。');
   }
   if (/TERMS|TOS_|TOS NOT ACCEPTED|AGREEMENT/.test(reason)) {
-    stop('GOOGLE_TERMS_REQUIRED', '請先在 Google Cloud／Firebase 官方網站接受帳號所需條款，再回到此處繼續。');
+    stop('GOOGLE_TERMS_REQUIRED', '请先在 Google Cloud／Firebase 官方网站接受帐号所需条款，再回到此处继续。');
   }
   // Right after services:batchEnable, Google can still answer 403 SERVICE_DISABLED
   // for a few minutes. It is not a permission problem; waiting fixes it.
   if (/SERVICE_DISABLED|ACCESS_NOT_CONFIGURED|API HAS NOT BEEN USED|IT IS DISABLED/.test(reason)) {
-    stop('GOOGLE_API_PROPAGATING', 'Google 剛啟用的服務還在生效中，通常需要 1–3 分鐘。請稍候再按「稍後接續安裝」；不需要改任何設定。');
+    stop('GOOGLE_API_PROPAGATING', 'Google 刚启用的服务还在生效中，通常需要 1–3 分钟。请稍候再按「稍后接续安装」；不需要改任何设定。');
   }
-  if (status === 401 || status === 16) stop('GOOGLE_AUTH_REQUIRED', 'Google 授權已過期或未完成；請重新完成 Cloud Shell 官方授權，再繼續本次安裝。');
+  if (status === 401 || status === 16) stop('GOOGLE_AUTH_REQUIRED', 'Google 授权已过期或未完成；请重新完成 Cloud Shell 官方授权，再继续本次安装。');
   // A per-minute request limit, not a quota to raise: waiting a minute clears it.
   if (/RATE_LIMIT_EXCEEDED/.test(reason)) {
-    stop('GOOGLE_RATE_LIMITED', 'Google 暫時擋下太多次請求，不用改任何設定。請等 5 分鐘後按「稍後接續安裝」。');
+    stop('GOOGLE_RATE_LIMITED', 'Google 暂时挡下太多次请求，不用改任何设定。请等 5 分钟后按「稍后接续安装」。');
   }
   if (status === 429 || status === 8 || /QUOTA|RESOURCE_EXHAUSTED/.test(reason)) {
-    stop('GOOGLE_QUOTA_REQUIRED', 'Google 專案或 API 配額不足；請到官方配額頁核對，稍後再繼續。安裝進度已保留。');
+    stop('GOOGLE_QUOTA_REQUIRED', 'Google 专案或 API 配额不足；请到官方配额页核对，稍后再继续。安装进度已保留。');
   }
   if (status === 403 || status === 7 || /ORG_POLICY|PERMISSION_DENIED/.test(reason)) {
-    stop('GOOGLE_PERMISSION_REQUIRED', '目前 Google 帳號缺少建立或設定此專案的權限，或受到組織政策限制。請由組織管理員核對權限；不會切換到其他憑證。');
+    stop('GOOGLE_PERMISSION_REQUIRED', '目前 Google 帐号缺少建立或设定此专案的权限，或受到组织政策限制。请由组织管理员核对权限；不会切换到其他凭证。');
   }
   if (status === 409 || status === 6 || /ALREADY_EXISTS|EMAIL_EXISTS|DUPLICATE_LOCAL_ID/.test(reason)) conflict();
-  stop('GOOGLE_API_FAILED', 'Google API 未完成操作；請稍後續跑以核對實際狀態。未自動刪除或覆寫既有資源。');
+  stop('GOOGLE_API_FAILED', 'Google API 未完成操作；请稍后续跑以核对实际状态。未自动删除或覆写既有资源。');
 }
 
 // One step's view of the plan: derived resource names, a short-lived token
@@ -125,7 +87,7 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
       !/^[a-z0-9][a-z0-9-]{0,57}[a-z0-9]$/.test(plan.pagesProject ?? '') ||
       (!update && (!/^[a-z][a-z0-9-]{1,40}$/.test(plan.region ?? '') ||
         !emailPattern.test(plan.admin?.email ?? '') || !plan.admin?.name || !plan.admin?.username))) {
-    stop('GOOGLE_INVALID_PLAN', '安裝計畫的專案、地區或管理員資料無效；未讀取憑證或連線。');
+    stop('GOOGLE_INVALID_PLAN', '安装计划的专案、地区或管理员资料无效；未读取凭证或连线。');
   }
   const serviceIds = enabledServiceIds(plan.churchConfig);
   const projectId = plan.projectId;
@@ -144,7 +106,7 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
   const pagesDomain = () => {
     const value = context.checkpoint.resources.pagesSubdomain;
     if (typeof value !== 'string' || !/^[a-z0-9][a-z0-9-]{0,62}\.pages\.dev$/.test(value) || !value.startsWith(plan.pagesProject)) {
-      stop('GOOGLE_INVALID_PLAN', '尚未取得已核對的網站網址，不能設定登入網域或寄送設定密碼信。');
+      stop('GOOGLE_INVALID_PLAN', '尚未取得已核对的网站网址，不能设定登入网域或寄送设定密码信。');
     }
     return value;
   };
@@ -167,19 +129,19 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
     if (token && now() - checkedAt < 60_000) return;
     const identity = await inspectIdentity({ signal });
     if (identity.email !== plan.googleEmail.toLowerCase()) {
-      stop('GOOGLE_ACCOUNT_CHANGED', '目前 Google 登入與確認安裝時不同；請回到原帳號再續跑，不會使用其他身分寫入。');
+      stop('GOOGLE_ACCOUNT_CHANGED', '目前 Google 登入与确认安装时不同；请回到原帐号再续跑，不会使用其他身分写入。');
     }
     try {
       token = (await command('gcloud', ['auth', 'print-access-token', `--account=${identity.email}`, '--quiet'], { signal })).stdout.trim();
     } catch (error) {
       signal?.throwIfAborted();
-      gcloudAuthFailure(error);
+      stop('GOOGLE_AUTH_REQUIRED', '无法取得 Google 短期授权；请重新完成 Cloud Shell 官方授权。');
     }
-    if (!token || /\s/.test(token)) stop('GOOGLE_AUTH_REQUIRED', 'Google 短期授權無效；請重新完成官方授權。');
+    if (!token || /\s/.test(token)) stop('GOOGLE_AUTH_REQUIRED', 'Google 短期授权无效；请重新完成官方授权。');
     checkedAt = now();
   }
   async function request(host, pathname, { method = 'GET', body, missing = false, authSetup = false, readOnly = method === 'GET', beforeSend, locale } = {}) {
-    if (!hosts.has(host) || !pathname.startsWith('/') || /[\r\n#]/.test(pathname)) stop('GOOGLE_INVALID_TARGET', 'Google API 目標無效。');
+    if (!hosts.has(host) || !pathname.startsWith('/') || /[\r\n#]/.test(pathname)) stop('GOOGLE_INVALID_TARGET', 'Google API 目标无效。');
     for (let attempt = 0; attempt < 4; attempt++) {
       signal?.throwIfAborted();
       await credentials();
@@ -196,12 +158,12 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
           signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000),
         });
         const text = await response.text();
-        if (text.length > 4 * 1024 * 1024) stop('GOOGLE_INVALID_RESPONSE', 'Google 回應超出預期大小；已停止操作。');
+        if (text.length > 4 * 1024 * 1024) stop('GOOGLE_INVALID_RESPONSE', 'Google 回应超出预期大小；已停止操作。');
         data = text ? JSON.parse(text) : {};
       } catch (error) {
         signal?.throwIfAborted();
         if (error instanceof ActionRequired) throw error;
-        stop('GOOGLE_CONNECTION_INTERRUPTED', 'Google 連線中斷；操作可能已被接受。請續跑核對狀態，不要另建第二個安裝。');
+        stop('GOOGLE_CONNECTION_INTERRUPTED', 'Google 连线中断；操作可能已被接受。请续跑核对状态，不要另建第二个安装。');
       }
       if (response.ok) return data;
       if (response.status === 404 && missing) return null;
@@ -219,7 +181,7 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
       catch (failure) {
         // Only the service, HTTP status and Google's reason enum: enough for
         // support, never a URL, body or credential.
-        if (failure instanceof ActionRequired) failure.message += `〔技術代碼：${host} ${response.status}${reasonCode ? ` ${reasonCode}` : ''}〕`;
+        if (failure instanceof ActionRequired) failure.message += `〔技术代码：${host} ${response.status}${reasonCode ? ` ${reasonCode}` : ''}〕`;
         // These answers are definite refusals: nothing was created. A 5xx may
         // still have been accepted, so only these let a create be retried.
         // 408 and 499 (cancelled) can still hide an accepted request.
@@ -240,11 +202,11 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
     const firestore = new RegExp(`^projects/${projectId}/databases/\\(default\\)/operations/[a-zA-Z0-9_.:-]+$`);
     const valid = host === 'firestore' ? firestore.test(name ?? '')
       : simple.test(name ?? '') || (host === 'firebase' && firebase.test(name ?? ''));
-    if (!valid) stop('GOOGLE_INVALID_RESPONSE', 'Google operation 目標與本次安裝不一致；已停止。');
+    if (!valid) stop('GOOGLE_INVALID_RESPONSE', 'Google operation 目标与本次安装不一致；已停止。');
     return encodedName(name);
   }
   async function wait(host, version, operation, key) {
-    if (!operation || typeof operation !== 'object') stop('GOOGLE_INVALID_RESPONSE', 'Google 未回傳預期的 operation。');
+    if (!operation || typeof operation !== 'object') stop('GOOGLE_INVALID_RESPONSE', 'Google 未回传预期的 operation。');
     if (operation.name) {
       operationPath(host, operation.name);
       await save('intents', key, { ...intent(key), operation: operation.name });
@@ -260,14 +222,14 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
           await save('intents', key, { ...previous, lastOperationFailed: true });
           cloudError(operation.error.code, operation.error);
         }
-        if (operation.response?.projectId !== undefined && operation.response.projectId !== projectId) conflict('Google operation 完成結果不屬於本次專案；已停止。');
+        if (operation.response?.projectId !== undefined && operation.response.projectId !== projectId) conflict('Google operation 完成结果不属于本次专案；已停止。');
         return operation.response;
       }
-      if (!operation.name) stop('GOOGLE_INVALID_RESPONSE', 'Google operation 缺少名稱；請續跑核對資源。');
-      if (attempt >= 45 || now() - started >= 180_000) stop('GOOGLE_OPERATION_PENDING', 'Google 仍在建立資源；本次 operation 已保存，請稍後續跑。');
+      if (!operation.name) stop('GOOGLE_INVALID_RESPONSE', 'Google operation 缺少名称；请续跑核对资源。');
+      if (attempt >= 45 || now() - started >= 180_000) stop('GOOGLE_OPERATION_PENDING', 'Google 仍在建立资源；本次 operation 已保存，请稍后续跑。');
       if (attempt % 5 === 0) {
-        const label = { googleProject: '新專案', googleServices: 'Firebase 所需 API', firebase: 'Firebase', database: 'Firestore 資料庫' }[key] ?? '雲端資源';
-        context.emit?.({ message: `Google 正在準備${label}（本階段已等待 ${Math.floor((now() - started) / 1000)} 秒）` });
+        const label = { googleProject: '新专案', googleServices: 'Firebase 所需 API', firebase: 'Firebase', database: 'Firestore 资料库' }[key] ?? '云端资源';
+        context.emit?.({ message: `Google 正在准备${label}（本阶段已等待 ${Math.floor((now() - started) / 1000)} 秒）` });
       }
       await delay(Math.min(1000 * 2 ** attempt, 8000), signal);
       operation = await request(host, `/${version}/${operationPath(host, operation.name)}`);
@@ -281,7 +243,7 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
       return wait(host, version, await request(host, `/${version}/${operationPath(host, intent(key).operation)}`), key);
     }
     if (intent(key)?.requested) {
-      stop('GOOGLE_REQUEST_UNCONFIRMED', 'Google 可能已接受上一次建立請求，但精靈沒有收到可核對的回覆。為避免重複建立，不會重送；請等 3–5 分鐘後按「核對後接續安裝」，精靈會先讀回實際資源。若多次接續仍停在這裡，請保留安裝識別碼並求助。');
+      stop('GOOGLE_REQUEST_UNCONFIRMED', 'Google 可能已接受上一次建立请求，但精灵没有收到可核对的回复。为避免重复建立，不会重送；请等 3–5 分钟后按「核对后接续安装」，精灵会先读回实际资源。若多次接续仍停在这里，请保留安装识别码并求助。');
     }
     const { lastRequestRejected: _previous, ...pending } = intent(key);
     let operation;
@@ -313,28 +275,28 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
     const db = await request('firestore', `/v1/${encodedName(database)}`);
     if (!intent('database')?.uid || db.name !== database || db.uid !== intent('database').uid ||
         (resource('database') && resource('database').uid !== db.uid) || db.locationId !== plan.region ||
-        db.type !== 'FIRESTORE_NATIVE' || (db.databaseEdition && db.databaseEdition !== 'STANDARD')) conflict('Firestore 資料庫身分或地區已變更；不會寫入替換後的資料庫。');
+        db.type !== 'FIRESTORE_NATIVE' || (db.databaseEdition && db.databaseEdition !== 'STANDARD')) conflict('Firestore 资料库身分或地区已变更；不会写入替换后的资料库。');
     const collections = await request('firestore', `/v1/${encodedName(documents)}:listCollectionIds`, { method: 'POST', body: { pageSize: 2 }, readOnly: true });
-    if (requireAdmin && !(collections.collectionIds ?? []).includes('users')) conflict('本次管理員 profile 已消失；不會自動重新建立或升權。');
-    if (collections.nextPageToken || (collections.collectionIds ?? []).some((id) => id !== 'users')) conflict('此專案已有其他 Firestore 資料；首次安裝不會接管或覆寫。');
+    if (requireAdmin && !(collections.collectionIds ?? []).includes('users')) conflict('本次管理员 profile 已消失；不会自动重新建立或升权。');
+    if (collections.nextPageToken || (collections.collectionIds ?? []).some((id) => id !== 'users')) conflict('此专案已有其他 Firestore 资料；首次安装不会接管或覆写。');
     if ((collections.collectionIds ?? []).includes('users')) {
       const result = await request('firestore', `/v1/${encodedName(documents)}/users?pageSize=2&showMissing=true`);
       if (!intent('adminProfile') || result.nextPageToken || (result.documents ?? []).length !== 1 ||
           result.documents[0].name !== `${documents}/users/${adminUid}` ||
-          documentFingerprint(result.documents[0].fields) !== intent('adminProfile').fieldsFingerprint) conflict('此專案已有其他使用者資料；不會覆寫或升權。');
+          documentFingerprint(result.documents[0].fields) !== intent('adminProfile').fieldsFingerprint) conflict('此专案已有其他使用者资料；不会覆写或升权。');
       const children = await request('firestore', `/v1/${encodedName(documents)}/users/${adminUid}:listCollectionIds`, { method: 'POST', body: { pageSize: 1 }, readOnly: true });
-      if (children.nextPageToken || children.collectionIds?.length) conflict('此專案已有使用者子集合資料；首次安裝已停止。');
+      if (children.nextPageToken || children.collectionIds?.length) conflict('此专案已有使用者子集合资料；首次安装已停止。');
     }
   }
   function checkAuthUser(user) {
     if (!user || user.localId !== adminUid || user.email?.toLowerCase() !== plan.admin.email.toLowerCase() ||
-        user.disabled || user.customAttributes || user.validSince && Number(user.validSince) < 0) conflict('管理員 Auth 身分與本次安裝不一致；不會使用或升權既有帳號。');
+        user.disabled || user.customAttributes || user.validSince && Number(user.validSince) < 0) conflict('管理员 Auth 身分与本次安装不一致；不会使用或升权既有帐号。');
     return { localId: user.localId, email: user.email, disabled: false };
   }
   async function onlyOwnAuth() {
     const data = await request('identitytoolkit', `${authPath}:batchGet?maxResults=2`, { authSetup: true });
     if (data.nextPageToken || (data.users ?? []).some((user) => !intent('adminAuth') || user.localId !== adminUid) || (data.users ?? []).length > 1) {
-      conflict('此專案已有其他 Firebase Auth 帳號；首次安裝不會接管。');
+      conflict('此专案已有其他 Firebase Auth 帐号；首次安装不会接管。');
     }
     return data.users?.length ? checkAuthUser(data.users[0]) : null;
   }
@@ -342,7 +304,7 @@ function openStepSession(context, { fetchImpl, command, delay, now, inspectIdent
     const config = await request('identitytoolkit', configPath, { authSetup: true });
     if (![`${project}/config`, `projects/${resource('googleProject')?.projectNumber}/config`].includes(config.name) || config.subtype === 'IDENTITY_PLATFORM' ||
         config.signIn?.phoneNumber?.enabled || config.signIn?.anonymous?.enabled || config.signIn?.allowDuplicateEmails) {
-      conflict('Firebase Auth 設定不是預期的免費首次安裝狀態；請核對官方設定，不會自動變更其他登入方式。');
+      conflict('Firebase Auth 设定不是预期的免费首次安装状态；请核对官方设定，不会自动变更其他登入方式。');
     }
     return config;
   }
@@ -367,10 +329,10 @@ async function createProject(s) {
     value = null;
   }
   if (!value) {
-    if (resource('googleProject')) conflict('本次建立的 Google 專案已消失；不會自動重新建立或切換目標。');
+    if (resource('googleProject')) conflict('本次建立的 Google 专案已消失；不会自动重新建立或切换目标。');
     const earlier = intent('googleProject');
     if (earlier && !earlier.operation && !earlier.requested && !earlier.lastOperationFailed && !earlier.lastRequestRejected) {
-      conflict('先前建立請求沒有保存 Google operation；無法安全判定專案所有權，不會重送或接管。請核對本次專案後求助。');
+      conflict('先前建立请求没有保存 Google operation；无法安全判定专案所有权，不会重送或接管。请核对本次专案后求助。');
     }
     await begin('googleProject', { projectId, runLabel });
     await createOrWait('cloudresourcemanager', 'v3', 'googleProject', '/v3/projects', {
@@ -388,7 +350,7 @@ async function createProject(s) {
   if (value && unconfirmed?.requested && !unconfirmed.operation && !unconfirmed.adoptedByLabel && !resource('googleProject')) {
     const created = Date.parse(value.createTime ?? '');
     if (value.labels?.['church-install'] !== runLabel || !(created >= Date.parse(unconfirmed.at) - 5 * 60_000)) {
-      conflict('Google 專案已存在，但不是這次安裝建立的；不會接管。請保留安裝識別碼並求助，不要另開新的安裝。');
+      conflict('Google 专案已存在，但不是这次安装建立的；不会接管。请保留安装识别码并求助，不要另开新的安装。');
     }
     await save('intents', 'googleProject', { ...unconfirmed, adoptedByLabel: true });
   }
@@ -403,25 +365,25 @@ async function enableFirebase(s) {
   const { owned, projectId, project, save, resource, intent, begin, request, createOrWait } = s;
   const services = ['firebase.googleapis.com', 'firestore.googleapis.com', 'identitytoolkit.googleapis.com', 'firebaserules.googleapis.com'];
   const missing = [];
-  s.context.emit?.({ message: '正在核對 Firebase 所需的 Google API…' });
+  s.context.emit?.({ message: '正在核对 Firebase 所需的 Google API…' });
   for (const service of services) {
     const state = await request('serviceusage', `/v1/${owned.name}/services/${service}`);
     if (state.state !== 'ENABLED') missing.push(service);
   }
   if (missing.length) {
-    s.context.emit?.({ message: '正在啟用 Firebase 所需的 Google API…' });
+    s.context.emit?.({ message: '正在启用 Firebase 所需的 Google API…' });
     await begin('googleServices', { services: missing });
     await createOrWait('serviceusage', 'v1', 'googleServices', `/v1/${owned.name}/services:batchEnable`, { serviceIds: missing });
-    s.context.emit?.({ message: '正在核對 Google API 是否已啟用…' });
+    s.context.emit?.({ message: '正在核对 Google API 是否已启用…' });
     for (const service of services) {
-      if ((await request('serviceusage', `/v1/${owned.name}/services/${service}`)).state !== 'ENABLED') stop('GOOGLE_OPERATION_PENDING', 'Google API 仍在啟用；請稍後續跑。');
+      if ((await request('serviceusage', `/v1/${owned.name}/services/${service}`)).state !== 'ENABLED') stop('GOOGLE_OPERATION_PENDING', 'Google API 仍在启用；请稍后续跑。');
     }
   }
-  s.context.emit?.({ message: '正在核對 Firebase 專案狀態…' });
+  s.context.emit?.({ message: '正在核对 Firebase 专案状态…' });
   let firebase = await request('firebase', `/v1beta1/${project}`, { missing: true });
   if (!firebase) {
     if (resource('firebase')) conflict();
-    s.context.emit?.({ message: '正在將 Firebase 加入新專案…' });
+    s.context.emit?.({ message: '正在将 Firebase 加入新专案…' });
     await begin('firebase', { projectId });
     await addFirebase(s);
     firebase = await request('firebase', `/v1beta1/${project}`);
@@ -433,7 +395,7 @@ async function enableFirebase(s) {
   }
   if (!intent('firebase') || firebase.projectId !== projectId || String(firebase.projectNumber) !== owned.name.split('/')[1]) conflict();
   await save('resources', 'firebase', { projectId });
-  s.context.emit?.({ message: 'Firebase 已準備完成' });
+  s.context.emit?.({ message: 'Firebase 已准备完成' });
   return { firebase: { projectId } };
 }
 
@@ -455,15 +417,15 @@ async function addFirebase(s) {
       !intent('firebase')?.requested && !intent('firebase')?.operation;
     if (!refused) throw error;
     // Keep Google's reason code for support; it never carries a URL or credential.
-    const code = error.message.match(/〔技術代碼：[^〕]*〕/)?.[0] ?? '';
+    const code = error.message.match(/〔技术代码：[^〕]*〕/)?.[0] ?? '';
     stop('GOOGLE_TERMS_REQUIRED', [
-      '這個 Google 帳號第一次用 Firebase，要先到 Firebase 官網同意條款（每個帳號只做一次）：',
-      '1. 按下方「開啟官方設定頁」',
-      '2. 按「如要開始使用，請設定 Firebase 專案」',
-      '3. 按最下面的「將 Firebase 新增到 Google Cloud 專案」（不要輸入專案名稱）',
-      `4. 選「Church Staff」（${projectId}），勾選同意條款，一路按繼續`,
-      '5. 看到專案首頁後，回來按「核對後接續安裝」',
-      '如果以前就用過 Firebase，等 2 分鐘再按「核對後接續安裝」即可。',
+      '这个 Google 帐号第一次用 Firebase，要先到 Firebase 官网同意条款（每个帐号只做一次）：',
+      '1. 按下方「开启官方设定页」',
+      '2. 按「如要开始使用，请设定 Firebase 专案」',
+      '3. 按最下面的「将 Firebase 新增到 Google Cloud 专案」（不要输入专案名称）',
+      `4. 选「Church Staff」（${projectId}），勾选同意条款，一路按继续`,
+      '5. 看到专案首页后，回来按「核对后接续安装」',
+      '如果以前就用过 Firebase，等 2 分钟再按「核对后接续安装」即可。',
       code,
     ].filter(Boolean).join('\n'));
   }
@@ -483,9 +445,9 @@ async function createDatabase(s) {
       const propagating = error instanceof ActionRequired && error.code === 'GOOGLE_PERMISSION_REQUIRED' && error.rejected && young();
       if (!propagating) throw error;
       if (attempt >= 11) {
-        stop('GOOGLE_API_PROPAGATING', 'Google 還在替剛建立的新專案開通權限，通常 1–3 分鐘。這不是你的帳號有問題，不用改任何設定；請稍候再按「稍後接續安裝」。');
+        stop('GOOGLE_API_PROPAGATING', 'Google 还在替刚建立的新专案开通权限，通常 1–3 分钟。这不是你的帐号有问题，不用改任何设定；请稍候再按「稍后接续安装」。');
       }
-      s.context.emit?.({ message: `Google 正在替新專案開通資料庫權限，稍候自動重試（第 ${attempt + 1} 次）…` });
+      s.context.emit?.({ message: `Google 正在替新专案开通资料库权限，稍候自动重试（第 ${attempt + 1} 次）…` });
       await s.delay(15_000);
     }
   }
@@ -495,7 +457,7 @@ async function createDatabase(s) {
 async function createDatabaseOnce(s) {
   const { plan, project, database, save, resource, intent, begin, request, operationPath, wait, createOrWait, noOtherData } = s;
   let listing = await request('firestore', `/v1/${project}/databases`);
-  if (listing.unreachable?.length || (listing.databases ?? []).some((db) => db.name !== database)) conflict('此專案已有非預期資料庫；首次安裝不會接管。');
+  if (listing.unreachable?.length || (listing.databases ?? []).some((db) => db.name !== database)) conflict('此专案已有非预期资料库；首次安装不会接管。');
   let db = listing.databases?.[0];
   if (!db) {
     if (resource('database')) conflict();
@@ -503,7 +465,7 @@ async function createDatabaseOnce(s) {
     const result = await createOrWait('firestore', 'v1', 'database', `/v1/${project}/databases?databaseId=%28default%29`, {
       locationId: plan.region, type: 'FIRESTORE_NATIVE', databaseEdition: 'STANDARD',
     });
-    if (!result?.uid || result.name !== database) stop('GOOGLE_INVALID_RESPONSE', 'Google 未回傳可核對的資料庫建立結果；已保留 operation。');
+    if (!result?.uid || result.name !== database) stop('GOOGLE_INVALID_RESPONSE', 'Google 未回传可核对的资料库建立结果；已保留 operation。');
     await save('intents', 'database', { ...intent('database'), uid: result.uid });
     db = await request('firestore', `/v1/${encodedName(database)}`);
   } else if (!intent('database')?.uid && intent('database')?.operation) {
@@ -558,7 +520,7 @@ async function registerWebApp(s) {
       (resource('webApp') && resource('webApp').appId !== app.appId)) conflict();
   const config = await request('firebase', `/v1beta1/${encodedName(app.name)}/config`);
   if (config.projectId !== projectId || config.appId !== app.appId || config.authDomain !== `${projectId}.firebaseapp.com` ||
-      typeof config.apiKey !== 'string' || !config.apiKey || String(config.messagingSenderId) !== owned.name.split('/')[1]) conflict('Firebase Web 設定與本次專案不一致；未繼續建置。');
+      typeof config.apiKey !== 'string' || !config.apiKey || String(config.messagingSenderId) !== owned.name.split('/')[1]) conflict('Firebase Web 设定与本次专案不一致；未继续建置。');
   context.transient.firebaseConfig = Object.fromEntries(['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId']
     .filter((key) => config[key] !== undefined).map((key) => [key, config[key]]));
   const metadata = { appId: app.appId, name: app.name };
@@ -569,7 +531,7 @@ async function registerWebApp(s) {
 const releaseNameOf = (s) => `${s.project}/releases/cloud.firestore`;
 
 function rulesetPath(s, name) {
-  if (!new RegExp(`^projects/${s.projectId}/rulesets/[a-zA-Z0-9_-]+$`).test(name ?? '')) conflict('Firestore ruleset 不屬於本次專案；已停止。');
+  if (!new RegExp(`^projects/${s.projectId}/rulesets/[a-zA-Z0-9_-]+$`).test(name ?? '')) conflict('Firestore ruleset 不属于本次专案；已停止。');
   return `/v1/${encodedName(name)}`;
 }
 
@@ -607,7 +569,7 @@ async function generatedRules(s) {
   const { plan, context } = s;
   const source = await readFile(path.join(context.transient.deploymentDir ?? path.join(context.runDir, 'deployment'), 'firestore.rules'), 'utf8');
   const expected = renderRules(await readFile(path.join(ROOT, 'firestore.rules'), 'utf8'), plan.churchConfig);
-  if (source !== expected) stop('GOOGLE_RULES_MISMATCH', '待發佈規則與本次教會設定產生的規則不同；已停止，請重新產生部署產物。');
+  if (source !== expected) stop('GOOGLE_RULES_MISMATCH', '待发布规则与本次教会设定产生的规则不同；已停止，请重新产生部署产物。');
   return [{ name: 'firestore.rules', content: `// church-install: ${s.runLabel}\n${source}` }];
 }
 
@@ -616,10 +578,10 @@ async function releaseRuleset(s, current, files, desiredFingerprint) {
   const { project, save, intent, begin, request, ownedProject } = s;
   const releaseName = releaseNameOf(s);
   if (!intent('rules')) {
-    if (!isInitialDenyAll(current)) conflict('Firestore 已有非初始閉鎖規則；首次安裝不會覆寫既有規則。');
+    if (!isInitialDenyAll(current)) conflict('Firestore 已有非初始闭锁规则；首次安装不会覆写既有规则。');
     await begin('rules', { fingerprint: desiredFingerprint, before: current, beforeFingerprint: fingerprint(current) });
   }
-  if (intent('rules').fingerprint !== desiredFingerprint || intent('rules').beforeFingerprint !== fingerprint(current)) conflict('Firestore 規則在安裝中被其他操作變更；未覆寫。');
+  if (intent('rules').fingerprint !== desiredFingerprint || intent('rules').beforeFingerprint !== fingerprint(current)) conflict('Firestore 规则在安装中被其他操作变更；未覆写。');
   let name = intent('rules').rulesetName;
   if (name) {
     const known = await request('firebaserules', rulesetPath(s, name));
@@ -631,7 +593,7 @@ async function releaseRuleset(s, current, files, desiredFingerprint) {
     await save('intents', 'rules', { ...intent('rules'), rulesetName: name });
   }
   await ownedProject();
-  if (fingerprint(await liveRules(s)) !== intent('rules').beforeFingerprint) conflict('Firestore 規則在發佈前已變更；未覆寫。');
+  if (fingerprint(await liveRules(s)) !== intent('rules').beforeFingerprint) conflict('Firestore 规则在发布前已变更；未覆写。');
   const release = { name: releaseName, rulesetName: name };
   // Rules releases have no CAS: updateTime is output-only. Only install into
   // the empty/deny-all state backed up above; never use this as an upgrader.
@@ -656,10 +618,10 @@ async function publishRules(s) {
     await releaseRuleset(s, current, files, desiredFingerprint);
   }
   const after = await liveRules(s);
-  if (fingerprint(after.ruleset?.source?.files) !== desiredFingerprint) conflict('規則發佈後的核對結果不同；請檢查 Firebase Console，勿繼續部署網站。');
+  if (fingerprint(after.ruleset?.source?.files) !== desiredFingerprint) conflict('规则发布后的核对结果不同；请检查 Firebase Console，勿继续部署网站。');
   const metadata = { rulesetName: after.release.rulesetName, fingerprint: desiredFingerprint, releaseFingerprint: fingerprint(after.release) };
   await save('resources', 'rules', metadata);
-  context.emit?.({ message: '已核對規則發佈；Firebase 規則仍可能需要數分鐘傳播，尚未代表登入權限驗收成功。' });
+  context.emit?.({ message: '已核对规则发布；Firebase 规则仍可能需要数分钟传播，尚未代表登入权限验收成功。' });
   return { rules: metadata };
 }
 
@@ -695,7 +657,7 @@ async function writeAdminProfileOnce(s, options) {
       getAccessToken: () => s.token(), readConfig: () => plan.churchConfig, log: () => {},
       fetchImpl: async (url, init) => {
         const target = allowed.get(url);
-        if (!target) stop('GOOGLE_INVALID_TARGET', '管理員建立要求非預期的 API 目標；已停止。');
+        if (!target) stop('GOOGLE_INVALID_TARGET', '管理员建立要求非预期的 API 目标；已停止。');
         const data = await request(...target, { method: init.method ?? 'GET', body: init.body ? JSON.parse(init.body) : undefined, missing: !init.method });
         return new Response(data === null ? null : JSON.stringify(data), { status: data === null ? 404 : 200 });
       },
@@ -703,7 +665,7 @@ async function writeAdminProfileOnce(s, options) {
   } catch (error) {
     if (error instanceof ActionRequired) throw error;
     signal?.throwIfAborted();
-    stop('GOOGLE_ADMIN_CREATE_FAILED', '管理員 create-only 建立未完成；既有 profile 不會覆寫。請續跑核對 Auth 身分與資料。');
+    stop('GOOGLE_ADMIN_CREATE_FAILED', '管理员 create-only 建立未完成；既有 profile 不会覆写。请续跑核对 Auth 身分与资料。');
   }
 }
 
@@ -711,7 +673,7 @@ async function writeAdminProfileOnce(s, options) {
 async function createAdmin(s) {
   const { plan, now, serviceIds, projectId, documents, adminUid, save, resource, intent, begin, request, ownedProject, noOtherData, getAuthConfig } = s;
   const config = await getAuthConfig();
-  if (!config.signIn?.email?.enabled || !config.signIn.email.passwordRequired) stop('AUTH_SETUP_REQUIRED', '請先完成 Email/Password 登入設定，再建立管理員。');
+  if (!config.signIn?.email?.enabled || !config.signIn.email.passwordRequired) stop('AUTH_SETUP_REQUIRED', '请先完成 Email/Password 登入设定，再建立管理员。');
   await noOtherData();
   const user = await ensureAdminAuthUser(s);
   const options = { project: projectId, uid: adminUid, email: plan.admin.email, name: plan.admin.name, username: plan.admin.username,
@@ -724,10 +686,10 @@ async function createAdmin(s) {
     // Resume: accept only the exact profile this run recorded before writing.
     if (!intent('adminProfile') || intent('adminProfile').fieldsFingerprint !== fieldsFingerprint ||
         existing.name !== `${documents}/users/${adminUid}` || documentFingerprint(existing.fields) !== fieldsFingerprint) {
-      conflict('管理員 profile 已存在或不符合本次安裝；不覆寫、不升權。');
+      conflict('管理员 profile 已存在或不符合本次安装；不覆写、不升权。');
     }
   } else {
-    if (resource('admin')) conflict('本次管理員 profile 已被移除；不會自動重新升權。');
+    if (resource('admin')) conflict('本次管理员 profile 已被移除；不会自动重新升权。');
     await begin('adminProfile', { uid: adminUid, fieldsFingerprint, before: { exists: false, checkedAt: new Date(now()).toISOString() } });
     if (intent('adminProfile').fieldsFingerprint !== fieldsFingerprint) conflict();
     await ownedProject();
@@ -747,12 +709,12 @@ async function authorizeDomain(s) {
   const before = config.authorizedDomains ?? [];
   if (!Array.isArray(before) || before.some((value) => typeof value !== 'string')) conflict();
   if (!intent('authDomains')) {
-    if (before.includes(domain)) conflict('本次 Pages 登入網域已由其他操作加入；請核對後再繼續，不會接管設定。');
+    if (before.includes(domain)) conflict('本次 Pages 登入网域已由其他操作加入；请核对后再继续，不会接管设定。');
     await begin('authDomains', { before: { authorizedDomains: before }, desired: [...before, domain] });
   }
   const desired = intent('authDomains').desired;
   if (canonical(before) !== canonical(desired)) {
-    if (canonical(before) !== canonical(intent('authDomains').before.authorizedDomains)) conflict('Auth 登入網域在安裝中被其他操作變更；未覆寫。');
+    if (canonical(before) !== canonical(intent('authDomains').before.authorizedDomains)) conflict('Auth 登入网域在安装中被其他操作变更；未覆写。');
     await ownedProject();
     const current = await getAuthConfig();
     if (canonical(current.authorizedDomains ?? []) !== canonical(before)) conflict();
@@ -779,14 +741,14 @@ async function nameMailSender(s) {
     });
   } catch (error) {
     if (!(error instanceof ActionRequired)) throw error;
-    s.context.emit?.({ message: '寄件者名稱沒有設定成功，信件會用 Firebase 預設的寄件者；不影響安裝。' });
+    s.context.emit?.({ message: '寄件者名称没有设定成功，信件会用 Firebase 预设的寄件者；不影响安装。' });
   }
 }
 
 // Ask Firebase to send the admin a password-setup email, at most once.
 async function sendActivation(s) {
   const { plan, authPath, adminUid, pagesDomain, save, resource, intent, begin, request, noOtherData, onlyOwnAuth, getAuthConfig } = s;
-  if (plan.activationEmailConfirmed !== true) stop('ACTIVATION_CONFIRMATION_REQUIRED', '寄送 Firebase 設定密碼信前，需要本人確認管理員 email 並同意寄信。');
+  if (plan.activationEmailConfirmed !== true) stop('ACTIVATION_CONFIRMATION_REQUIRED', '寄送 Firebase 设定密码信前，需要本人确认管理员 email 并同意寄信。');
   const domain = pagesDomain();
   const user = await onlyOwnAuth();
   if (!user || resource('admin')?.uid !== user.localId) conflict();
@@ -794,7 +756,7 @@ async function sendActivation(s) {
   if (!(await getAuthConfig()).authorizedDomains?.includes(domain)) conflict();
   if (!resource('activation')?.sent) {
     await nameMailSender(s);
-    if (intent('activation')) stop('ACTIVATION_DELIVERY_UNKNOWN', '上次寄信是否被接受無法確定，為避免重複寄信已停止。請先檢查信箱和垃圾郵件；若仍未收到，打開網站登入頁按「忘記密碼？」，輸入管理員 email 再寄一次。不要另建管理員。');
+    if (intent('activation')) stop('ACTIVATION_DELIVERY_UNKNOWN', '上次寄信是否被接受无法确定，为避免重复寄信已停止。请先检查信箱和垃圾邮件；若仍未收到，打开网站登入页按「忘记密码？」，输入管理员 email 再寄一次。不要另建管理员。');
     await begin('activation', { uid: adminUid, state: 'sending' });
     // Firebase sends its own message. Never request/retain an OOB link/code.
     // zh-TW picks Firebase's Chinese template; the default is English, which
@@ -963,7 +925,7 @@ async function installedProject(s) {
   const value = await s.request('cloudresourcemanager', `/v3/${s.project}`);
   if (value.projectId !== s.projectId || value.labels?.['church-install'] !== s.runLabel || value.state !== 'ACTIVE' ||
       !/^projects\/\d+$/.test(value.name ?? '')) {
-    conflict('這個 Google 專案不是安裝精靈為這個網站建立的，或已被關閉；不會更新。');
+    conflict('这个 Google 专案不是安装精灵为这个网站建立的，或已被关闭；不会更新。');
   }
   return value;
 }
@@ -972,16 +934,16 @@ async function installedProject(s) {
 async function inspectInstalled(s) {
   const { context, owned, projectId, project, database, runLabel, request } = s;
   const db = await request('firestore', `/v1/${encodedName(database)}`);
-  if (db.name !== database || db.type !== 'FIRESTORE_NATIVE') conflict('Firestore 資料庫不是安裝精靈建立的樣子；不會更新。');
+  if (db.name !== database || db.type !== 'FIRESTORE_NATIVE') conflict('Firestore 资料库不是安装精灵建立的样子；不会更新。');
   const apps = await request('firebase', `/v1beta1/${project}/webApps?pageSize=2`);
   const app = apps.apps?.length === 1 ? apps.apps[0] : null;
   if (apps.nextPageToken || !app || app.displayName !== `Church install ${runLabel}` || app.state !== 'ACTIVE' ||
       !/^[a-zA-Z0-9:_-]+$/.test(app.appId ?? '') || app.name !== `${project}/webApps/${app.appId}`) {
-    conflict('Firebase 網站設定不是安裝精靈建立的樣子；不會更新。');
+    conflict('Firebase 网站设定不是安装精灵建立的样子；不会更新。');
   }
   const config = await request('firebase', `/v1beta1/${encodedName(app.name)}/config`);
   if (config.projectId !== projectId || config.appId !== app.appId || typeof config.apiKey !== 'string' || !config.apiKey ||
-      String(config.messagingSenderId) !== owned.name.split('/')[1]) conflict('Firebase Web 設定與這個專案不一致；未繼續建置。');
+      String(config.messagingSenderId) !== owned.name.split('/')[1]) conflict('Firebase Web 设定与这个专案不一致；未继续建置。');
   context.transient.firebaseConfig = Object.fromEntries(['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId']
     .filter((key) => config[key] !== undefined).map((key) => [key, config[key]]));
   return { region: db.locationId };
@@ -996,19 +958,19 @@ async function updateRules(s) {
   const current = await liveRules(s);
   const first = current.ruleset?.source?.files?.[0]?.content ?? '';
   if (!current.release || current.ruleset.source.files.length !== 1 || !first.startsWith(`// church-install: ${runLabel}\n`)) {
-    conflict('Firestore 規則不是安裝精靈發布的（可能被手動改過）；為避免蓋掉別人的設定，已停止。');
+    conflict('Firestore 规则不是安装精灵发布的（可能被手动改过）；为避免盖掉别人的设定，已停止。');
   }
   if (fingerprint(current.ruleset.source.files) === desired) return { rules: { unchanged: true } };
   const created = await request('firebaserules', `/v1/${project}/rulesets`, { method: 'POST', body: { source: { files } } });
   rulesetPath(s, created.name);
   await installedProject(s);
   // No compare-and-set exists for releases: re-read right before replacing.
-  if (fingerprint(await liveRules(s)) !== fingerprint(current)) conflict('Firestore 規則在更新中被其他操作變更；未覆寫。');
+  if (fingerprint(await liveRules(s)) !== fingerprint(current)) conflict('Firestore 规则在更新中被其他操作变更；未覆写。');
   const releaseName = releaseNameOf(s);
   await request('firebaserules', `/v1/${releaseName}`, { method: 'PATCH', body: { release: { name: releaseName, rulesetName: created.name } } });
   const after = await liveRules(s);
-  if (fingerprint(after.ruleset?.source?.files) !== desired) conflict('規則更新後的核對結果不同；請檢查 Firebase Console。');
-  context.emit?.({ message: '已更新資料存取規則；Firebase 可能需要幾分鐘才完全生效。' });
+  if (fingerprint(after.ruleset?.source?.files) !== desired) conflict('规则更新后的核对结果不同；请检查 Firebase Console。');
+  context.emit?.({ message: '已更新资料存取规则；Firebase 可能需要几分钟才完全生效。' });
   return { rules: { unchanged: false } };
 }
 
@@ -1016,14 +978,14 @@ async function updateRules(s) {
 async function authorizeCustomDomain(s) {
   const { plan, configPath, request, getAuthConfig } = s;
   const domain = plan.customDomain;
-  if (typeof domain !== 'string' || !/^[a-z0-9.-]{4,253}$/.test(domain)) stop('GOOGLE_INVALID_PLAN', '自訂網址格式不符。');
+  if (typeof domain !== 'string' || !/^[a-z0-9.-]{4,253}$/.test(domain)) stop('GOOGLE_INVALID_PLAN', '自订网址格式不符。');
   const before = (await getAuthConfig()).authorizedDomains ?? [];
   if (!Array.isArray(before) || before.some((value) => typeof value !== 'string')) conflict();
   if (!before.includes(domain)) {
     await installedProject(s);
     await request('identitytoolkit', `${configPath}?updateMask=authorizedDomains`, { method: 'PATCH', body: { authorizedDomains: [...before, domain] }, authSetup: true });
     const after = (await getAuthConfig()).authorizedDomains ?? [];
-    if (!after.includes(domain) || before.some((value) => !after.includes(value))) conflict('登入網域更新後的核對結果不同；請檢查 Firebase Console。');
+    if (!after.includes(domain) || before.some((value) => !after.includes(value))) conflict('登入网域更新后的核对结果不同；请检查 Firebase Console。');
   }
   return { authDomains: { domain } };
 }
@@ -1053,7 +1015,7 @@ export function createGoogleInstaller({
     signal?.throwIfAborted();
     if (['CLOUDSDK_AUTH_ACCESS_TOKEN', 'CLOUDSDK_AUTH_ACCESS_TOKEN_FILE', 'CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE',
       'CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT'].some((key) => process.env[key])) {
-      stop('GOOGLE_AUTH_REQUIRED', '請使用 Cloud Shell 本人的官方登入，不支援環境變數覆寫憑證或服務帳號模擬。');
+      stop('GOOGLE_AUTH_REQUIRED', '请使用 Cloud Shell 本人的官方登入，不支援环境变数覆写凭证或服务帐号模拟。');
     }
     let accounts;
     let config;
@@ -1062,15 +1024,15 @@ export function createGoogleInstaller({
       config = JSON.parse((await command('gcloud', ['config', 'list', '--format=json', '--quiet'], { signal })).stdout);
     } catch {
       signal?.throwIfAborted();
-      stop('GOOGLE_AUTH_REQUIRED', '無法讀取 Google 登入身分；請先完成 Cloud Shell 官方授權。');
+      stop('GOOGLE_AUTH_REQUIRED', '无法读取 Google 登入身分；请先完成 Cloud Shell 官方授权。');
     }
     const overrides = config.auth ?? {};
     if (['impersonate_service_account', 'credential_file_override', 'access_token_file'].some((key) => overrides[key])) {
-      stop('GOOGLE_AUTH_REQUIRED', '目前 gcloud 使用覆寫憑證或服務帳號模擬；請改用 Cloud Shell 本人的官方登入。');
+      stop('GOOGLE_AUTH_REQUIRED', '目前 gcloud 使用覆写凭证或服务帐号模拟；请改用 Cloud Shell 本人的官方登入。');
     }
     if (!Array.isArray(accounts) || accounts.length !== 1 || accounts[0].status !== 'ACTIVE' ||
         !emailPattern.test(accounts[0].account ?? '') || accounts[0].account.endsWith('.gserviceaccount.com')) {
-      stop('GOOGLE_AUTH_REQUIRED', '找不到唯一有效的 Google 個人登入；請先完成 Cloud Shell 官方授權。');
+      stop('GOOGLE_AUTH_REQUIRED', '找不到唯一有效的 Google 个人登入；请先完成 Cloud Shell 官方授权。');
     }
     return { email: accounts[0].account.toLowerCase() };
   }
@@ -1085,20 +1047,20 @@ export function createGoogleInstaller({
     let identity;
     try { identity = await inspectIdentity({ signal }); }
     catch (error) { if (error.code !== 'GOOGLE_AUTH_REQUIRED' || signal?.aborted) throw error; }
-    if (!identity && process.env.TRUSTED_ENVIRONMENT === 'false') {
-      stop('GOOGLE_AUTH_REQUIRED', '這個 Cloud Shell 是「暫時模式」，沒有你的 Google 授權。按 Cloud Shell 右上角的「⋮」，點選單裡打勾的「暫時模式」，再按「停用」。Cloud Shell 重新啟動並請你按「授權」後，回到安裝說明頁重新按「Open in Cloud Shell」，勾選「信任存放區」再照教學做。精靈會重新開始，尚未建立任何雲端資源。');
+    if (process.env.TRUSTED_ENVIRONMENT === 'false') {
+      stop('GOOGLE_AUTH_REQUIRED', '这个 Cloud Shell 是「暂时模式」，没有你的 Google 授权。按 Cloud Shell 右上角的「⋮」，点选单里打勾的「暂时模式」，再按「停用」。Cloud Shell 重新启动并请你按「授权」后，回到安装说明页重新按「Open in Cloud Shell」，勾选「信任存放区」再照教学做。精灵会重新开始，尚未建立任何云端资源。');
     }
     const account = identity ? [`--account=${identity.email}`] : [];
     try { await command('gcloud', ['auth', 'print-access-token', ...account, '--quiet'], { signal, timeoutMs: authorizeTimeoutMs }); }
     catch (error) {
       signal?.throwIfAborted();
-      gcloudAuthFailure(error, { waitMs: authorizeTimeoutMs });
+      stop('GOOGLE_AUTH_REQUIRED', 'Cloud Shell 没有完成 Google 授权。请按「连接 Google」再试一次，接著立刻切到 Cloud Shell 分页，在「Authorize Cloud Shell」视窗按 Authorize 并选择这次要用的 Google 帐号。');
     }
     return identity ?? inspectIdentity({ signal });
   }
 
   async function executeStep(step, context) {
-    if (!steps.has(step)) stop('GOOGLE_INVALID_STEP', '不支援的 Google 安裝步驟。');
+    if (!steps.has(step)) stop('GOOGLE_INVALID_STEP', '不支援的 Google 安装步骤。');
     const s = openStepSession(context, { fetchImpl, command, delay, now, inspectIdentity });
     await s.credentials();
     if (step === 'google-project') return createProject(s);
@@ -1107,7 +1069,7 @@ export function createGoogleInstaller({
     return STEP_HANDLERS[step](s);
   }
   async function updateStep(step, context) {
-    if (!UPDATE_HANDLERS[step]) stop('GOOGLE_INVALID_STEP', '不支援的更新步驟。');
+    if (!UPDATE_HANDLERS[step]) stop('GOOGLE_INVALID_STEP', '不支援的更新步骤。');
     const s = openStepSession(context, { fetchImpl, command, delay, now, inspectIdentity }, { update: true });
     await s.credentials();
     s.owned = await installedProject(s);

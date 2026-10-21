@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// 編輯模式一列服事的最小高度。
+/// 编辑模式一列服事的最小高度。
 ///
-/// 48 是那顆刪除 IconButton 的觸控目標高度，給長輩按的，不能再縮。檢視模式
-/// 沒有按鈕，不吃這個下限（見 [DutyRow.dense]）—— 切換模式時的位移是靠錨定
-/// 日期修的（見 `ScrollAnchor`），不是靠兩邊列高一樣。
+/// 48 是那颗删除 IconButton 的触控目标高度，给长辈按的，不能再缩。检视模式
+/// 没有按钮，不吃这个下限（见 [DutyRow.dense]）—— 切换模式时的位移是靠锚定
+/// 日期修的（见 `ScrollAnchor`），不是靠两边列高一样。
 const double kDutyRowMinHeight = 48.0;
 
-/// 服事項目的一列：左邊項目名稱、中間人名、右邊（編輯模式才有的）操作按鈕。
+/// 服事项目的一列：左边项目名称、中间人名、右边（编辑模式才有的）操作按钮。
 ///
-/// 檢視卡片與編輯卡片共用這一份配置，差別只有 [dense]。
+/// 检视卡片与编辑卡片共用这一份配置，差别只有 [dense]。
 class DutyRow extends StatelessWidget {
   const DutyRow({
     super.key,
@@ -22,18 +22,18 @@ class DutyRow extends StatelessWidget {
 
   final String role;
 
-  /// 這一項的人。刻意收一份清單而不是排好的字串 —— 中文預設每個字都可以斷
-  /// 行，接成一串丟給 Text 的話，欄寬不夠時會從名字中間切開（「陳美／麗」）。
+  /// 这一项的人。刻意收一份清单而不是排好的字串 —— 中文预设每个字都可以断
+  /// 行，接成一串丢给 Text 的话，栏宽不够时会从名字中间切开（「陈美／丽」）。
   final List<String> people;
 
   final Color? roleColor;
 
-  /// 放在最右邊的操作按鈕。檢視模式留空。
+  /// 放在最右边的操作按钮。检视模式留空。
   final List<Widget> trailing;
 
-  /// 檢視模式的排法：列高跟著文字走，不撐到 [kDutyRowMinHeight]。這個畫面是
-  /// 拿來讀的，一頁看得到幾天比每列多出 25px 的留白重要。文字靠上對齊，名字
-  /// 換行時項目名稱才不會跟著往下飄。
+  /// 检视模式的排法：列高跟著文字走，不撑到 [kDutyRowMinHeight]。这个画面是
+  /// 拿来读的，一页看得到几天比每列多出 25px 的留白重要。文字靠上对齐，名字
+  /// 换行时项目名称才不会跟著往下飘。
   final bool dense;
 
   @override
@@ -56,7 +56,7 @@ class DutyRow extends StatelessWidget {
           ),
         ),
         Expanded(
-          // 一個名字一段（頓號跟在名字後面），斷行機會就只剩名字之間。
+          // 一个名字一段（顿号跟在名字后面），断行机会就只剩名字之间。
           child: Wrap(
             children: [
               for (var i = 0; i < people.length; i++)

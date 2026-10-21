@@ -22,19 +22,19 @@ class EventOption {
   }
 }
 
-/// 活動清單裡找不到、服事表也沒自己指定顏色的活動用這個色。
+/// 活动清单里找不到、服事表也没自己指定颜色的活动用这个色。
 const int fallbackEventColor = 0xFF7F8C8D;
 
-/// 活動可以選的顏色。活動設定頁的色盤跟匯入時自動配色用同一份，
-/// 不然自動配出來的顏色會是設定頁點不回去的顏色。
+/// 活动可以选的颜色。活动设定页的色盘跟汇入时自动配色用同一份，
+/// 不然自动配出来的颜色会是设定页点不回去的颜色。
 ///
-/// Tailwind 的 600 色階，照色相排成兩排各五個（見 EventColorPicker）。標籤
-/// 是拿這個顏色當字色、再鋪一層 12% 的同色底，所以要同一個深淺：Google
-/// 日曆那套的黃、粉當字色幾乎看不見，最早用的 Flat UI 那套也偏淡。
-/// 2026-09-24 換過一次，線上活動清單裡的舊色碼一起換成了最接近的新色。
+/// Tailwind 的 600 色阶，照色相排成两排各五个（见 EventColorPicker）。标签
+/// 是拿这个颜色当字色、再铺一层 12% 的同色底，所以要同一个深浅：Google
+/// 日历那套的黄、粉当字色几乎看不见，最早用的 Flat UI 那套也偏淡。
+/// 2026-09-24 换过一次，线上活动清单里的旧色码一起换成了最接近的新色。
 ///
-/// 沒有灰色：灰色是「沒設顏色」的 [fallbackEventColor]，選了它的活動看起來
-/// 就像沒設。
+/// 没有灰色：灰色是「没设颜色」的 [fallbackEventColor]，选了它的活动看起来
+/// 就像没设。
 const List<int> eventColorPalette = [
   0xFFDC2626, // red
   0xFFEA580C, // orange
@@ -48,10 +48,10 @@ const List<int> eventColorPalette = [
   0xFFDB2777, // pink
 ];
 
-/// 幫新活動挑一個顏色：這個崇拜目前用得最少的那個，同樣少就照色盤順序。
+/// 帮新活动挑一个颜色：这个崇拜目前用得最少的那个，同样少就照色盘顺序。
 ///
-/// 全部都用過時也不會跟前一個撞色 —— 挑最少的而不是固定第一個，是為了讓
-/// 同一季一次加進來的幾個活動彼此分得開。
+/// 全部都用过时也不会跟前一个撞色 —— 挑最少的而不是固定第一个，是为了让
+/// 同一季一次加进来的几个活动彼此分得开。
 int pickEventColor(List<EventOption> existing) {
   final useCount = <int, int>{for (final color in eventColorPalette) color: 0};
   for (final option in existing) {

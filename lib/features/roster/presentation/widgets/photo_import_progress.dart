@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../../data/roster_import_service.dart';
 
-/// 照片辨識進行中，按鈕底下那一行「現在在幹嘛」。
+/// 照片辨识进行中，按钮底下那一行「现在在干嘛」。
 ///
-/// 辨識是一個請求送出去、一分鐘後才回來，中間 app 什麼都不知道 —— worker 在
-/// 重試也不會告訴我們。所以這裡說的只有兩件確定的事：已經等了多久，以及照
-/// 過去的量測，這個時間算不算正常。只有一顆轉圈的話，等到第 90 秒的人分不出
-/// 是卡住了還是快好了，就會關掉重來，把當天的免費額度又燒掉一次。
+/// 辨识是一个请求送出去、一分钟后才回来，中间 app 什么都不知道 —— worker 在
+/// 重试也不会告诉我们。所以这里说的只有两件确定的事：已经等了多久，以及照
+/// 过去的量测，这个时间算不算正常。只有一颗转圈的话，等到第 90 秒的人分不出
+/// 是卡住了还是快好了，就会关掉重来，把当天的免费额度又烧掉一次。
 ///
-/// 計時自己管：出現在畫面上就開始，拿掉就停。呼叫端只要決定畫不畫它。
+/// 计时自己管：出现在画面上就开始，拿掉就停。呼叫端只要决定画不画它。
 class PhotoImportProgress extends StatefulWidget {
   const PhotoImportProgress({super.key});
 
@@ -51,15 +51,15 @@ class _PhotoImportProgressState extends State<PhotoImportProgress> {
   }
 }
 
-/// 抽出來是為了測：文字只跟經過的時間有關。
+/// 抽出来是为了测：文字只跟经过的时间有关。
 String photoImportProgressText(Duration elapsed) {
   final seconds = elapsed.inSeconds;
   if (elapsed < RosterImportService.usualDuration) {
-    return '正在讀照片，已經 $seconds 秒\n'
-        '通常要一分鐘左右；服務忙碌時伺服器會自動重試';
+    return '正在读照片，已经 $seconds 秒\n'
+        '通常要一分钟左右；服务忙碌时伺服器会自动重试';
   }
   final remaining = (RosterImportService.timeout - elapsed).inSeconds;
-  if (remaining <= 0) return '快要逾時了，已經 $seconds 秒';
-  return '比平常久，仍在等待辨識結果\n'
-      '已經 $seconds 秒，最多再等 $remaining 秒';
+  if (remaining <= 0) return '快要逾时了，已经 $seconds 秒';
+  return '比平常久，仍在等待辨识结果\n'
+      '已经 $seconds 秒，最多再等 $remaining 秒';
 }

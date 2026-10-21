@@ -13,8 +13,8 @@ import 'support/in_memory_service_settings.dart';
 
 const _prayer = ServiceDefinition(
   id: 'prayer',
-  label: '禱告',
-  name: '週三禱告會',
+  label: '祷告',
+  name: '周三祷告会',
   weekday: 3,
   enabled: true,
 );
@@ -29,26 +29,26 @@ void main() {
   });
   tearDown(() => ServiceCatalog.resetForTesting(deployed));
 
-  test('Firestore 的清單取代部署設定的聚會，其他設定不動', () {
+  test('Firestore 的清单取代部署设定的聚会，其他设定不动', () {
     final services = [...deployed.services, _prayer];
     expect(ServiceCatalog.apply(services), isTrue);
     expect(ServiceType.values.map((t) => t.name), contains('prayer'));
-    expect(const ServiceType('prayer').label, '禱告');
+    expect(const ServiceType('prayer').label, '祷告');
     expect(const ServiceType('prayer').weekday, 3);
     expect(ChurchConfig.current.appName, deployed.appName);
-    expect(ServiceCatalog.apply(services), isFalse, reason: '同一份清單不算改變');
-    expect(ServiceCatalog.apply(null), isTrue, reason: 'null 回到部署設定');
+    expect(ServiceCatalog.apply(services), isFalse, reason: '同一份清单不算改变');
+    expect(ServiceCatalog.apply(null), isTrue, reason: 'null 回到部署设定');
     expect(ServiceType.values.map((t) => t.name), isNot(contains('prayer')));
   });
 
-  test('停用的聚會留在 values，但不在 active', () {
+  test('停用的聚会留在 values，但不在 active', () {
     final first = deployed.services.first;
     ServiceCatalog.apply([first.copyWith(enabled: false), _prayer]);
     expect(ServiceType.values.map((t) => t.name), [first.id, 'prayer']);
     expect(ServiceType.active.map((t) => t.name), ['prayer']);
   });
 
-  test('格式不對的 settings/services 當作沒有', () {
+  test('格式不对的 settings/services 当作没有', () {
     expect(ServiceCatalog.parseDocument({'services': []}), isNull);
     expect(
       ServiceCatalog.parseDocument({
@@ -72,7 +72,7 @@ void main() {
     );
   });
 
-  test('ids 只增不減：舊的、部署設定的、這次的都在', () {
+  test('ids 只增不减：旧的、部署设定的、这次的都在', () {
     final ids = ServiceCatalog.knownIds(['old-one'], [_prayer]);
     expect(
       ids,
@@ -80,7 +80,7 @@ void main() {
     );
   });
 
-  test('啟動時先套用本機記下的清單，不等網路', () async {
+  test('启动时先套用本机记下的清单，不等网路', () async {
     SharedPreferences.setMockInitialValues({
       ServiceCatalog.cacheKey: jsonEncode([_prayer.toJson()]),
     });
@@ -89,7 +89,7 @@ void main() {
   });
 
   group('ServiceCatalogProvider', () {
-    test('登入後讀到不同的清單：套用、記下、重新載入一次', () async {
+    test('登入后读到不同的清单：套用、记下、重新载入一次', () async {
       final reloads = <String>[];
       final repo = InMemoryServiceSettings(
         ServiceSettings(
@@ -110,12 +110,12 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString(ServiceCatalog.cacheKey), contains('prayer'));
 
-      // 重新載入後讀到一樣的清單，不會再重載。
+      // 重新载入后读到一样的清单，不会再重载。
       await provider.refresh();
       expect(reloads, hasLength(1));
     });
 
-    test('沒有 settings/services：沿用部署設定，不重載', () async {
+    test('没有 settings/services：沿用部署设定，不重载', () async {
       final reloads = <String>[];
       final provider = ServiceCatalogProvider(
         InMemoryServiceSettings(),
@@ -129,7 +129,7 @@ void main() {
       expect(ServiceType.values.length, deployed.services.length);
     });
 
-    test('存檔寫入清單，ids 保留部署設定的聚會', () async {
+    test('存档写入清单，ids 保留部署设定的聚会', () async {
       final repo = InMemoryServiceSettings();
       final provider = ServiceCatalogProvider(repo, reload: (_) async => false);
       await provider.save([deployed.services.first, _prayer]);

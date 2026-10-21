@@ -1,8 +1,8 @@
-/// 首頁「本季服事」涵蓋的日期範圍。
+/// 首页「本季服事」涵盖的日期范围。
 ///
-/// 只看本季的話，季末最後幾天常常一場聚會都沒有（例如 9/28–9/30），首頁就
-/// 顯示「本季尚無排到服事」，但下一季的服事表早就排好了。所以最後兩週一併
-/// 列出下一季；服事表在季末那個月本來就會讀到下一季底。
+/// 只看本季的话，季末最后几天常常一场聚会都没有（例如 9/28–9/30），首页就
+/// 显示「本季尚无排到服事」，但下一季的服事表早就排好了。所以最后两周一并
+/// 列出下一季；服事表在季末那个月本来就会读到下一季底。
 class SeasonWindow {
   const SeasonWindow({
     required this.start,
@@ -14,14 +14,14 @@ class SeasonWindow {
   final DateTime end;
   final bool includesNextQuarter;
 
-  // 範圍照樣是本季（季末兩週含下季），但不寫在標題上：同工在意的是「我接下來
-  // 要服事什麼」，不是季度怎麼切。
+  // 范围照样是本季（季末两周含下季），但不写在标题上：同工在意的是「我接下来
+  // 要服事什么」，不是季度怎么切。
   String get title => '我的服事';
 
-  String get emptyText => '最近還沒有排到你的服事';
+  String get emptyText => '最近还没有排到你的服事';
 }
 
-/// [today] 是教會時區的日期（見 ChurchTime.today）。
+/// [today] 是教会时区的日期（见 ChurchTime.today）。
 SeasonWindow seasonWindow(DateTime today) {
   final startMonth = ((today.month - 1) ~/ 3) * 3 + 1;
   final start = DateTime.utc(today.year, startMonth, 1);

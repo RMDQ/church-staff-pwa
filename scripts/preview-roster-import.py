@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""拿真實資料對一份匯入 JSON 做乾式匯入，事先看到 app 會回報什麼。
+"""拿真实资料对一份汇入 JSON 做干式汇入，事先看到 app 会回报什么。
 
-不重寫比對邏輯 —— 從 Firestore 抓現況之後，產生一支暫時的 Dart 測試去呼叫
-app 真正在用的 parseRosterImportJson 與 orderDutiesByTemplate，所以這裡看到
-的結果就是按下匯入會看到的結果。
+不重写比对逻辑 —— 从 Firestore 抓现况之后，产生一支暂时的 Dart 测试去呼叫
+app 真正在用的 parseRosterImportJson 与 orderDutiesByTemplate，所以这里看到
+的结果就是按下汇入会看到的结果。
 
 用法：
     uv run scripts/preview-roster-import.py youth roster.json
     uv run scripts/preview-roster-import.py sundayService roster.json
     uv run scripts/preview-roster-import.py children roster.json
 
-只讀 Firestore，不寫入任何東西，也不會碰服事表。
+只读 Firestore，不写入任何东西，也不会碰服事表。
 """
 
 import json
@@ -37,8 +37,8 @@ def paged(path: str, tok: str) -> list[dict]:
 
 
 def dart_literal(value) -> str:
-    """把 Python 資料轉成 Dart 字面值。JSON 字串跟 Dart 字串語法夠接近，
-    但單引號與 $ 要跳脫（Dart 的字串內插用 $）。"""
+    """把 Python 资料转成 Dart 字面值。JSON 字串跟 Dart 字串语法够接近，
+    但单引号与 $ 要跳脱（Dart 的字串内插用 $）。"""
     if isinstance(value, str):
         escaped = value.replace("\\", "\\\\").replace("'", "\\'").replace("$", "\\$")
         return f"'{escaped}'"
@@ -66,13 +66,13 @@ def main() -> None:
     try:
         rows = json.loads(raw)
     except json.JSONDecodeError as e:
-        sys.exit(f"這份 JSON 本身就解析不了：{e}")
+        sys.exit(f"这份 JSON 本身就解析不了：{e}")
     if not isinstance(rows, list):
-        sys.exit("最外層必須是陣列")
+        sys.exit("最外层必须是阵列")
 
     tok = token()
 
-    # ── 名單與「誰能做哪個服事」──────────────────────────────────────────
+    # ── 名单与「谁能做哪个服事」──────────────────────────────────────────
     users = paged("users?pageSize=300", tok)
     candidate_names, name_to_id, allowed = [], {}, {}
     for doc in users:
@@ -93,7 +93,7 @@ def main() -> None:
                 if role:
                     allowed.setdefault(role, set()).add(name)
 
-    # ── 服事項目樣板與活動選單 ────────────────────────────────────────────
+    # ── 服事项目样板与活动选单 ────────────────────────────────────────────
     templates = get("settings/roster_templates", tok).get("fields", {})
     template_roles = [
         v["stringValue"]
@@ -105,12 +105,12 @@ def main() -> None:
         for v in options.get(service_type, {}).get("arrayValue", {}).get("values", [])
     ]
 
-    # ── app 看得到的服事表日期（決定哪幾天匯不進去）──────────────────────
+    # ── app 看得到的服事表日期（决定哪几天汇不进去）──────────────────────
     #
-    # 光看 Firestore 有沒有那份文件是不夠的：app 只載入
-    # 「今天 ~ 下一季末」這個區間（firestore_roster_repository 的
-    # _filterAndSortRosters），過去的文件還在資料庫裡但匯入時看不到，
-    # 一樣會被算成「這幾天沒有匯入」。這裡照同一個區間過濾。
+    # 光看 Firestore 有没有那份文件是不够的：app 只载入
+    # 「今天 ~ 下一季末」这个区间（firestore_roster_repository 的
+    # _filterAndSortRosters），过去的文件还在资料库里但汇入时看不到，
+    # 一样会被算成「这几天没有汇入」。这里照同一个区间过滤。
     church_zone = ZoneInfo(CONFIG["timeZone"])
     today = datetime.now(church_zone).date()
     quarter_start_month = ((today.month - 1) // 3) * 3 + 1
@@ -140,10 +140,10 @@ def main() -> None:
         if today <= when <= window_end:
             existing.add(when.isoformat())
 
-    # ── 產生一支暫時的 Dart 測試，呼叫真正的 parser ──────────────────────
+    # ── 产生一支暂时的 Dart 测试，呼叫真正的 parser ──────────────────────
     test_path = ROOT / "test" / "zz_import_preview_test.dart"
     test_path.write_text(
-        f"""// 由 scripts/preview-roster-import.py 產生，跑完會自動刪掉。
+        f"""// 由 scripts/preview-roster-import.py 产生，跑完会自动删掉。
 import 'package:flutter_test/flutter_test.dart';
 import 'package:church_staff_pwa/features/roster/domain/entities/event_option.dart';
 import 'package:church_staff_pwa/features/roster/domain/roster_import_parser.dart';
@@ -179,7 +179,7 @@ void main() {{
     for (final n in result.notInEventCatalog) {{ print('OUT|noColor|$n'); }}
     for (final d in result.dutiesProvidedDates) {{ print('OUT|dutiesDate|$d'); }}
     for (final d in result.eventsProvidedDates) {{ print('OUT|eventsDate|$d'); }}
-    // 排序後的樣子，確認每天的項目順序
+    // 排序后的样子，确认每天的项目顺序
     for (final e in result.dutiesByDate.entries) {{
       final ordered = orderDutiesByTemplate(e.value, {dart_literal(template_roles)});
       print('OUT|order|${{e.key}}|${{ordered.map((d) => d.role).join(' > ')}}');
@@ -204,7 +204,7 @@ void main() {{
     ]
     if not lines:
         sys.exit(
-            "parser 沒有跑起來，flutter test 的輸出：\n"
+            "parser 没有跑起来，flutter test 的输出：\n"
             + (run.stdout[-3000:] or run.stderr[-3000:])
         )
 
@@ -214,7 +214,7 @@ void main() {{
         buckets.setdefault(kind, []).append(rest)
 
     if "error" in buckets:
-        print(f"✗ 整份會被擋下來：{buckets['error'][0]}")
+        print(f"✗ 整份会被挡下来：{buckets['error'][0]}")
         sys.exit(1)
 
     dates = sorted(set(buckets.get("dutiesDate", []) + buckets.get("eventsDate", [])))
@@ -222,8 +222,8 @@ void main() {{
         d for d in dates if d not in existing
     ]
 
-    print(f"=== 乾式匯入：{TYPES[service_type]} / {json_path.name} ===")
-    print(f"共 {len(dates)} 天，其中 {len(dates) - len(missing)} 天匯得進去")
+    print(f"=== 干式汇入：{TYPES[service_type]} / {json_path.name} ===")
+    print(f"共 {len(dates)} 天，其中 {len(dates) - len(missing)} 天汇得进去")
 
     def section(title: str, items: list[str], note: str = "") -> None:
         if not items:
@@ -233,27 +233,27 @@ void main() {{
             print(f"  ・{item}")
 
     section(
-        "名單裡有很像的",
+        "名单里有很像的",
         [r.replace("|", " ≈ ") for r in buckets.get("nearMatch", [])],
-        "（只是提示，名字照原文寫進去，沒有自動換）",
+        "（只是提示，名字照原文写进去，没有自动换）",
     )
-    section("這幾天沒有匯入", missing, "（服事表裡沒有這些日期）")
+    section("这几天没有汇入", missing, "（服事表里没有这些日期）")
     section(
-        "沒有設定這個服事",
+        "没有设定这个服事",
         [r.replace("|", "：") for r in buckets.get("roleMismatch", [])],
-        "（會照樣排進去）",
+        "（会照样排进去）",
     )
-    section("名單裡沒有這個人", buckets.get("notInList", []), "（會照樣排進去，但收不到提醒）")
-    section("不確定是哪一位", buckets.get("ambiguous", []), "（沒有對到帳號）")
-    section("活動沒有固定顏色", buckets.get("noColor", []))
+    section("名单里没有这个人", buckets.get("notInList", []), "（会照样排进去，但收不到提醒）")
+    section("不确定是哪一位", buckets.get("ambiguous", []), "（没有对到帐号）")
+    section("活动没有固定颜色", buckets.get("noColor", []))
 
     if not any(
         buckets.get(k)
         for k in ("roleMismatch", "notInList", "ambiguous", "nearMatch", "noColor")
     ) and not missing:
-        print("\n✓ 全部對得上，匯入後不會有任何未匹配")
+        print("\n✓ 全部对得上，汇入后不会有任何未匹配")
 
-    print("\n--- 排序後每天的服事項目 ---")
+    print("\n--- 排序后每天的服事项目 ---")
     for entry in sorted(buckets.get("order", [])):
         day, _, roles = entry.partition("|")
         print(f"  {day}  {roles}")

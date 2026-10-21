@@ -3,10 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/services/install_hint_service.dart';
 
-/// 提醒還在瀏覽器裡用的同工把網站加到手機主畫面。
+/// 提醒还在浏览器里用的同工把网站加到手机主画面。
 ///
-/// 沒加的話每次都要找那則 LINE 訊息、關掉分頁常常就登出了，同工只會覺得
-/// 「這個 App 很難用」。按「不用了」之後這台裝置就不再提醒。
+/// 没加的话每次都要找那则 LINE 讯息、关掉分页常常就登出了，同工只会觉得
+/// 「这个 App 很难用」。按「不用了」之后这台装置就不再提醒。
 class AddToHomeCard extends StatefulWidget {
   const AddToHomeCard({super.key, this.service = const InstallHintService()});
 
@@ -19,7 +19,7 @@ class AddToHomeCard extends StatefulWidget {
 }
 
 class _AddToHomeCardState extends State<AddToHomeCard> {
-  // 讀到 SharedPreferences 之前先不顯示，免得已經按過「不用了」的人看到閃一下。
+  // 读到 SharedPreferences 之前先不显示，以免已经按过「不用了」的人看到闪一下。
   bool _dismissed = true;
   bool _installing = false;
 
@@ -49,7 +49,7 @@ class _AddToHomeCardState extends State<AddToHomeCard> {
     if (!mounted) return;
     setState(() {
       _installing = false;
-      // 裝好了就不用再提醒；按了取消就留著卡片，說明文字還是有用。
+      // 装好了就不用再提醒；按了取消就留著卡片，说明文字还是有用。
       if (accepted) _dismissed = true;
     });
   }
@@ -82,16 +82,16 @@ class _AddToHomeCardState extends State<AddToHomeCard> {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    '把這個網站加到手機桌面',
+                    '把这个网站加到手机桌面',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              const Text('桌面會多一個圖示，之後點一下就能打開，不用再去 LINE 找連結。'),
+              const Text('桌面会多一个图示，之后点一下就能打开，不用再去 LINE 找连结。'),
               const SizedBox(height: 12),
               if (canInstall)
-                const Text('按下面的「安裝到手機」，再按「安裝」就好了。')
+                const Text('按下面的「安装到手机」，再按「安装」就好了。')
               else
                 ..._steps(hint, theme),
               const SizedBox(height: 4),
@@ -103,7 +103,7 @@ class _AddToHomeCardState extends State<AddToHomeCard> {
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: _installing ? null : _install,
-                      child: const Text('安裝到手機'),
+                      child: const Text('安装到手机'),
                     ),
                   ],
                 ],
@@ -115,7 +115,7 @@ class _AddToHomeCardState extends State<AddToHomeCard> {
     );
   }
 
-  /// 照著點就會的步驟。圖示直接畫出來，因為「分享鈕」是哪一個很多人不知道。
+  /// 照着点就会的步骤。图示直接画出来，因为「分享钮」是哪一个很多人不知道。
   List<Widget> _steps(InstallHint hint, ThemeData theme) {
     WidgetSpan icon(IconData data) => WidgetSpan(
       alignment: PlaceholderAlignment.middle,
@@ -126,25 +126,24 @@ class _AddToHomeCardState extends State<AddToHomeCard> {
       InstallPlatform.ios => [
         switch (hint.browser) {
           InstallBrowser.chrome => [
-            const TextSpan(text: '點網址列右邊的分享圖示 '),
+            const TextSpan(text: '点网址列右边的分享图示 '),
             share,
           ],
           InstallBrowser.safari => [
-            // iOS 26 起 Safari 有三種版面：「下方」「上方」的工具列直接有分享
-            // 鈕；預設的「精簡」只剩網址列，分享收在網址列右邊的「⋯」裡。
-            const TextSpan(text: '點下方工具列的分享圖示 '),
+            // iOS 26 起 Safari 有三种版面：「下方」「上方」的工具列直接有分享钮；预设的「精简」只剩网址列，分享收在网址列右边的「⋯」里。
+            const TextSpan(text: '点下方工具列的分享图示 '),
             share,
-            const TextSpan(text: '。下方只有網址列的話，先點網址列右邊的「⋯」，再點「分享」'),
+            const TextSpan(text: '。下方只有网址列的话，先点网址列右边的「⋯」，再点「分享」'),
           ],
-          InstallBrowser.other => [const TextSpan(text: '點瀏覽器的分享圖示 '), share],
+          InstallBrowser.other => [const TextSpan(text: '点浏览器的分享图示 '), share],
         },
-        [const TextSpan(text: '往下滑，點「加入主畫面」')],
-        [const TextSpan(text: '點右上角的「加入」，之後從桌面的圖示打開')],
+        [const TextSpan(text: '往下滑，点「加入主画面」')],
+        [const TextSpan(text: '点右上角的「加入」，之后从桌面的图示打开')],
       ],
       _ => [
-        [const TextSpan(text: '點瀏覽器右上角的選單 '), icon(Icons.more_vert)],
-        [const TextSpan(text: '點「安裝應用程式」或「加到主畫面」')],
-        [const TextSpan(text: '點「安裝」，之後從桌面的圖示打開')],
+        [const TextSpan(text: '点浏览器右上角的选单 '), icon(Icons.more_vert)],
+        [const TextSpan(text: '点「安装应用程序」或「加到主画面」')],
+        [const TextSpan(text: '点「安装」，之后从桌面的图示打开')],
       ],
     };
     return [

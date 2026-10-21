@@ -16,11 +16,11 @@ import 'package:church_staff_pwa/features/roster/presentation/widgets/roster_car
 import 'support/in_memory_roster_repository.dart';
 import 'support/signed_in_auth_repository.dart';
 
-/// 同工排序：每一天的名字照「這個服事項目誰是主要同工」排，而不是照那一天
-/// 當初怎麼存。
+/// 同工排序：每一天的名字照「这个服事项目谁是主要同工」排，而不是照那一天
+/// 当初怎么存。
 ///
-/// 以前每一天各存一份順序，交換是就地頂替 —— 主要同工換到別天就排到第二個。
-/// 這組測試守的是：不管名字是匯入、勾選還是交換進來的，排出來都一樣。
+/// 以前每一天各存一份顺序，交换是就地顶替 —— 主要同工换到别天就排到第二个。
+/// 这组测试守的是：不管名字是汇入、勾选还是交换进来的，排出来都一样。
 
 const _type = ServiceType.sundayService;
 
@@ -69,52 +69,52 @@ void main() {
       '招待': ['志豪', '美玉', '小明'],
     });
 
-    test('照排序排，不看原本的先後', () {
+    test('照排序排，不看原本的先后', () {
       expect(order.sort('招待', ['小明', '志豪']), ['志豪', '小明']);
     });
 
-    test('排序裡沒有的人接在後面，彼此維持原本的先後', () {
-      expect(order.sort('招待', ['外請乙', '小明', '外請甲', '志豪']), [
+    test('排序里没有的人接在后面，彼此维持原本的先后', () {
+      expect(order.sort('招待', ['外请乙', '小明', '外请甲', '志豪']), [
         '志豪',
         '小明',
-        '外請乙',
-        '外請甲',
+        '外请乙',
+        '外请甲',
       ]);
     });
 
-    test('已經排好時回傳同一個 List', () {
+    test('已经排好时回传同一个 List', () {
       final people = ['志豪', '小明'];
       expect(identical(order.sort('招待', people), people), isTrue);
     });
 
-    test('沒排過的服事項目原樣回傳', () {
+    test('没排过的服事项目原样回传', () {
       final people = ['小明', '志豪'];
       expect(identical(order.sort('司琴', people), people), isTrue);
     });
 
-    test('名字前後有空白也認得', () {
+    test('名字前后有空白也认得', () {
       expect(order.sort('招待', ['小明 ', ' 志豪']), [' 志豪', '小明 ']);
     });
   });
 
   group('StaffOrder.learnFrom', () {
-    test('照平均位置排：一次寫反不會蓋掉其他幾週', () {
+    test('照平均位置排：一次写反不会盖掉其他几周', () {
       final learned = StaffOrder.learnFrom([
         _roster('1', 4, {
-          'Vocal': ['雅婷', '阿華'],
+          'Vocal': ['雅婷', '阿华'],
         }),
         _roster('2', 11, {
-          'Vocal': ['阿華', '雅婷'],
+          'Vocal': ['阿华', '雅婷'],
         }),
         _roster('3', 18, {
-          'Vocal': ['阿華', '雅婷'],
+          'Vocal': ['阿华', '雅婷'],
         }),
       ]);
-      expect(learned.rankingOf('Vocal'), ['阿華', '雅婷']);
+      expect(learned.rankingOf('Vocal'), ['阿华', '雅婷']);
     });
 
-    test('沒有直接同一天過的人也排得出前後', () {
-      // 圖片上的招待：負責人每次都寫第一個，其他人兩兩出現。
+    test('没有直接同一天过的人也排得出前后', () {
+      // 图片上的招待：负责人每次都写第一个，其他人两两出现。
       final learned = StaffOrder.learnFrom([
         _roster('1', 4, {
           '招待': ['志豪', '美玉', '小明'],
@@ -131,7 +131,7 @@ void main() {
       expect(ranking.indexOf('美玉'), lessThan(ranking.indexOf('小明')));
     });
 
-    test('只有一個人或待定的那幾天不算', () {
+    test('只有一个人或待定的那几天不算', () {
       final learned = StaffOrder.learnFrom([
         _roster('1', 4, {
           '司琴': ['美玉'],
@@ -142,13 +142,13 @@ void main() {
     });
   });
 
-  group('StaffOrder 的組合', () {
-    test('mergedWith：新的照新的排，沒提到的人留在原位', () {
-      // 主要同工甲這一季請假、不在圖片上。擠到最後的話他回來那天就排在新人
-      // 後面。
+  group('StaffOrder 的组合', () {
+    test('mergedWith：新的照新的排，没提到的人留在原位', () {
+      // 主要同工甲这一季请假、不在图片上。挤到最后的话他回来那天就排在新人
+      // 后面。
       final stored = StaffOrder({
         '招待': ['志豪', '美玉', '小明', '阿德'],
-        '司琴': ['雅婷', '阿華'],
+        '司琴': ['雅婷', '阿华'],
       });
       final next = stored.mergedWith(
         StaffOrder({
@@ -156,10 +156,10 @@ void main() {
         }),
       );
       expect(next.rankingOf('招待'), ['志豪', '阿德', '美玉', '小明']);
-      expect(next.rankingOf('司琴'), ['雅婷', '阿華']);
+      expect(next.rankingOf('司琴'), ['雅婷', '阿华']);
     });
 
-    test('mergedWith：新面孔插在圖片上他前一位的後面', () {
+    test('mergedWith：新面孔插在图片上他前一位的后面', () {
       final stored = StaffOrder({
         '招待': ['志豪', '美玉', '小明'],
       });
@@ -171,7 +171,7 @@ void main() {
       expect(next.rankingOf('招待'), ['志豪', '美玉', '新人', '小明']);
     });
 
-    test('mergedWith：新面孔排第一時插在後面第一個認得的人前面', () {
+    test('mergedWith：新面孔排第一时插在后面第一个认得的人前面', () {
       final stored = StaffOrder({
         '招待': ['志豪', '美玉', '小明'],
       });
@@ -183,7 +183,7 @@ void main() {
       expect(next.rankingOf('招待'), ['志豪', '美玉', '新人', '小明']);
     });
 
-    test('mergedWith：原本沒排過的服事項目直接照新的', () {
+    test('mergedWith：原本没排过的服事项目直接照新的', () {
       final next = StaffOrder().mergedWith(
         StaffOrder({
           '招待': ['美玉', '小明'],
@@ -192,11 +192,11 @@ void main() {
       expect(next.rankingOf('招待'), ['美玉', '小明']);
     });
 
-    test('changesTo 只列有變的服事項目，拿掉的給 null', () {
+    test('changesTo 只列有变的服事项目，拿掉的给 null', () {
       final before = StaffOrder({
         '招待': ['美玉', '小明'],
         '司琴': ['雅婷'],
-        '鼓': ['阿華'],
+        '鼓': ['阿华'],
       });
       final after = StaffOrder({
         '招待': ['小明', '美玉'],
@@ -212,11 +212,11 @@ void main() {
       expect(before.withChanges(changes), after);
     });
 
-    test('where 只留認得的人', () {
+    test('where 只留认得的人', () {
       final order = StaffOrder({
-        '講道': ['外請甲', '志豪'],
-      }).where((name) => name != '外請甲');
-      expect(order.rankingOf('講道'), ['志豪']);
+        '讲道': ['外请甲', '志豪'],
+      }).where((name) => name != '外请甲');
+      expect(order.rankingOf('讲道'), ['志豪']);
     });
 
     test('withRolesRenamed 把排序搬到新名字', () {
@@ -227,27 +227,27 @@ void main() {
       expect(renamed.rankingOf('接待'), ['美玉', '小明']);
     });
 
-    test('toJson / fromJson 來回一樣', () {
+    test('toJson / fromJson 来回一样', () {
       final order = StaffOrder({
         '招待': ['美玉', '小明'],
       });
       expect(StaffOrder.fromJson(order.toJson()), order);
     });
 
-    test('fromJson 丟掉不是字串的東西與待定', () {
+    test('fromJson 丢掉不是字串的东西与待定', () {
       final order = StaffOrder.fromJson({
         'roles': {
           '招待': ['美玉', 3, '待定', '小明'],
-          '壞掉': 'not a list',
+          '坏掉': 'not a list',
         },
       });
       expect(order.rankingOf('招待'), ['美玉', '小明']);
-      expect(order.rankingOf('壞掉'), isEmpty);
+      expect(order.rankingOf('坏掉'), isEmpty);
     });
   });
 
   group('RosterProvider', () {
-    test('讀進來的服事表照存著的排序排', () async {
+    test('读进来的服事表照存著的排序排', () async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -265,29 +265,29 @@ void main() {
       expect(_peopleOf(provider, 'a'), ['志豪', '小明']);
     });
 
-    test('沒存過排序時照服事表上多數的先後排', () async {
-      // 這個功能上線前的資料沒有排序可讀，照圖片匯進來的順序學。
+    test('没存过排序时照服事表上多数的先后排', () async {
+      // 这个功能上线前的资料没有排序可读，照图片汇进来的顺序学。
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
-            'Vocal': ['雅婷', '阿華'],
+            'Vocal': ['雅婷', '阿华'],
           }),
           _roster('b', 11, {
-            'Vocal': ['阿華', '雅婷'],
+            'Vocal': ['阿华', '雅婷'],
           }),
           _roster('c', 18, {
-            'Vocal': ['阿華', '雅婷'],
+            'Vocal': ['阿华', '雅婷'],
           }),
         ],
       );
       final provider = await _loaded(repo);
 
-      expect(_peopleOf(provider, 'a'), ['阿華', '雅婷']);
+      expect(_peopleOf(provider, 'a'), ['阿华', '雅婷']);
     });
 
-    test('交換之後主要同工還是排第一個', () async {
-      // 1/4 的志豪（主要）跟 1/11 排第二的阿德交換。就地頂替的話志豪到了
-      // 1/11 會排在美玉後面，阿德則跑到 1/4 的第一個。
+    test('交换之后主要同工还是排第一个', () async {
+      // 1/4 的志豪（主要）跟 1/11 排第二的阿德交换。就地顶替的话志豪到了
+      // 1/11 会排在美玉后面，阿德则跑到 1/4 的第一个。
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -316,7 +316,7 @@ void main() {
 
       expect(_peopleOf(provider, 'a'), ['小明', '阿德']);
       expect(_peopleOf(provider, 'b'), ['志豪', '美玉']);
-      // 寫進去的也是排好的，不是只有畫面上排。
+      // 写进去的也是排好的，不是只有画面上排。
       final written = repo.atomicBatches.single;
       expect(written.firstWhere((r) => r.id == 'b').duties.first.people, [
         '志豪',
@@ -324,7 +324,7 @@ void main() {
       ]);
     });
 
-    test('updateRoster 寫進去之前先排好', () async {
+    test('updateRoster 写进去之前先排好', () async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -349,7 +349,7 @@ void main() {
       expect(_peopleOf(provider, 'a'), ['志豪', '小明']);
     });
 
-    test('updateStaffRanking 重排每一天並存起來', () async {
+    test('updateStaffRanking 重排每一天并存起来', () async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -377,7 +377,7 @@ void main() {
       expect(repo.staffOrders[_type]!.rankingOf('招待'), ['小明', '美玉', '志豪']);
     });
 
-    test('updateStaffRanking 失敗時往上丟，畫面不動', () async {
+    test('updateStaffRanking 失败时往上丢，画面不动', () async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -404,8 +404,8 @@ void main() {
       expect(provider.staffOrderFor(_type).rankingOf('招待'), ['志豪', '小明']);
     });
 
-    test('讀不到排序時拖一次，不會把其他服事項目存過的排序刪掉', () async {
-      // 例如 rules 還沒部署、或載入那一下剛好斷線：本機以為什麼都沒存過。
+    test('读不到排序时拖一次，不会把其他服事项目存过的排序删掉', () async {
+      // 例如 rules 还没部署、或载入那一下刚好断线：本机以为什么都没存过。
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -414,7 +414,7 @@ void main() {
         ],
         staffOrders: {
           _type: StaffOrder({
-            '敬拜': ['雅婷', '阿華'],
+            '敬拜': ['雅婷', '阿华'],
             '招待': ['志豪', '小明'],
           }),
         },
@@ -426,11 +426,11 @@ void main() {
         const StaffRanking('招待', ['小明', '志豪']),
       );
 
-      expect(repo.staffOrders[_type]!.rankingOf('敬拜'), ['雅婷', '阿華']);
+      expect(repo.staffOrders[_type]!.rankingOf('敬拜'), ['雅婷', '阿华']);
       expect(repo.staffOrders[_type]!.rankingOf('招待'), ['小明', '志豪']);
     });
 
-    test('updateRoster 帶排序：排序存失敗時這一天也不寫', () async {
+    test('updateRoster 带排序：排序存失败时这一天也不写', () async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -453,7 +453,7 @@ void main() {
       expect(_peopleOf(provider, 'a'), ['志豪']);
     });
 
-    test('applyRosterImport：圖片上的人照圖片排，沒出現的主要同工留在原位', () async {
+    test('applyRosterImport：图片上的人照图片排，没出现的主要同工留在原位', () async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -487,7 +487,7 @@ void main() {
       expect(repo.rosters.single.duties.first.people, ['美玉', '小明']);
     });
 
-    test('applyRosterImport：排序沒變就不寫排序', () async {
+    test('applyRosterImport：排序没变就不写排序', () async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -518,7 +518,7 @@ void main() {
       expect(repo.staffOrderWrites, 0);
     });
 
-    test('applyRosterImport：排序寫失敗時一張服事表都不寫', () async {
+    test('applyRosterImport：排序写失败时一张服事表都不写', () async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -548,7 +548,7 @@ void main() {
       expect(_peopleOf(provider, 'a'), ['志豪']);
     });
 
-    test('服事項目改名時排序跟著搬', () async {
+    test('服事项目改名时排序跟著搬', () async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -580,10 +580,10 @@ void main() {
     });
   });
 
-  group('選人視窗', () {
+  group('选人视窗', () {
     setUpAll(() => initializeDateFormatting('zh_TW'));
 
-    testWidgets('拖曳順序後儲存：存成整個服事項目的排序', (tester) async {
+    testWidgets('拖曳顺序后储存：存成整个服事项目的排序', (tester) async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -606,22 +606,22 @@ void main() {
 
       await tester.tap(find.text('招待'));
       await tester.pumpAndSettle();
-      expect(find.text('選擇同工（拖曳排序會套用到每一週）'), findsOneWidget);
+      expect(find.text('选择同工（拖曳排序会套用到每一周）'), findsOneWidget);
 
-      // 把小明拖到最上面（待定的上面就是頂，待定本身拖不動）。
+      // 把小明拖到最上面（待定的上面就是顶，待定本身拖不动）。
       final sheet = find.byType(ReorderableListView);
       await _drag(tester, sheet, '小明', '志豪');
       final options = tester
           .widgetList<CheckboxListTile>(find.byType(CheckboxListTile))
           .map((t) => (t.title as Text).data)
           .toList();
-      expect(options, ['待定', '小明', '志豪', '美玉'], reason: '拖曳沒生效');
+      expect(options, ['待定', '小明', '志豪', '美玉'], reason: '拖曳没生效');
 
-      await tester.tap(find.widgetWithText(FilledButton, '儲存'));
+      await tester.tap(find.widgetWithText(FilledButton, '储存'));
       await tester.pumpAndSettle();
 
       expect(repo.staffOrders[_type]!.rankingOf('招待').first, '小明');
-      // 另一天沒打開過，也照新的排序重排。
+      // 另一天没打开过，也照新的排序重排。
       expect(_peopleOf(provider, 'a'), ['小明', '志豪']);
       expect(_peopleOf(provider, 'b').first, '志豪');
       expect(
@@ -630,11 +630,11 @@ void main() {
       );
     });
 
-    testWidgets('名單外的人拖不動，也不會寫進排序', (tester) async {
+    testWidgets('名单外的人拖不动，也不会写进排序', (tester) async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
-            '招待': ['志豪', '外請甲'],
+            '招待': ['志豪', '外请甲'],
           }),
         ],
         templates: {
@@ -658,22 +658,22 @@ void main() {
           .map((t) => (t.title as Text).data)
           .toList();
       final before = options();
-      expect(before.last, '外請甲');
+      expect(before.last, '外请甲');
 
-      await _drag(tester, sheet, '外請甲', '志豪');
-      expect(options(), before, reason: '外請甲不該被拖動');
+      await _drag(tester, sheet, '外请甲', '志豪');
+      expect(options(), before, reason: '外请甲不该被拖动');
 
-      // 拖一個名單上的人，排序才會寫；寫進去的也不含外請甲。
+      // 拖一个名单上的人，排序才会写；写进去的也不含外请甲。
       await _drag(tester, sheet, '小明', '志豪');
-      await tester.tap(find.widgetWithText(FilledButton, '儲存'));
+      await tester.tap(find.widgetWithText(FilledButton, '储存'));
       await tester.pumpAndSettle();
 
       final ranking = repo.staffOrders[_type]!.rankingOf('招待');
       expect(ranking.first, '小明');
-      expect(ranking, isNot(contains('外請甲')));
+      expect(ranking, isNot(contains('外请甲')));
     });
 
-    testWidgets('只改勾選、沒拖過就不寫排序', (tester) async {
+    testWidgets('只改勾选、没拖过就不写排序', (tester) async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -700,14 +700,14 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, '儲存'));
+      await tester.tap(find.widgetWithText(FilledButton, '储存'));
       await tester.pumpAndSettle();
 
       expect(repo.staffOrderWrites, 0);
       expect(repo.rosters.single.duties.first.people, ['志豪']);
     });
 
-    testWidgets('沒有同工可選時，說明要去哪裡勾參與服事', (tester) async {
+    testWidgets('没有同工可选时，说明要去哪里勾参与服事', (tester) async {
       final repo = InMemoryRosterRepository(
         rosters: [
           _roster('a', 4, {
@@ -724,23 +724,23 @@ void main() {
       await tester.tap(find.text('司琴'));
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('還沒有同工可排「司琴」。請到「我的」→「帳號管理」編輯同工'),
+        find.textContaining('还没有同工可排「司琴」。请到「我的」→「帐号管理」编辑同工'),
         findsOneWidget,
       );
-      expect(find.textContaining('勾選「司琴」'), findsOneWidget);
+      expect(find.textContaining('勾选「司琴」'), findsOneWidget);
 
       await tester.tap(find.text('取消'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('招待'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('還沒有同工可排'), findsNothing);
+      expect(find.textContaining('还没有同工可排'), findsNothing);
     });
   });
 }
 
 const _kEditor = User(
   id: 'u1',
-  name: '編輯者',
+  name: '编辑者',
   email: 'a@b.c',
   username: 'editor',
   role: UserRole.admin,
@@ -759,7 +759,7 @@ User _staff(String id, String name) => User(
   ],
 );
 
-/// 志豪、美玉、小明在同工名單上；外請甲不在。
+/// 志豪、美玉、小明在同工名单上；外请甲不在。
 SignedInAuthRepository _auth() => SignedInAuthRepository(
   _kEditor,
   users: [
@@ -770,7 +770,7 @@ SignedInAuthRepository _auth() => SignedInAuthRepository(
   ],
 );
 
-/// 在 [sheet] 裡長按 [name] 拖到 [onto] 的上方。
+/// 在 [sheet] 里长按 [name] 拖到 [onto] 的上方。
 Future<void> _drag(
   WidgetTester tester,
   Finder sheet,
@@ -793,7 +793,7 @@ Future<void> _drag(
   await tester.pumpAndSettle();
 }
 
-/// 掛第一天那張卡片，已經在編輯模式。
+/// 挂第一天那张卡片，已经在编辑模式。
 Future<RosterProvider> _pumpCard(
   WidgetTester tester,
   InMemoryRosterRepository repo,
@@ -801,7 +801,7 @@ Future<RosterProvider> _pumpCard(
   final provider = await _loaded(repo);
   provider.toggleEditMode();
 
-  // session 要先還原完，UserAdminProvider.getUsers() 才過得了 canEditRoster。
+  // session 要先还原完，UserAdminProvider.getUsers() 才过得了 canEditRoster。
   final session = SessionProvider(_auth());
   await tester.pumpWidget(
     ChangeNotifierProvider<SessionProvider>.value(

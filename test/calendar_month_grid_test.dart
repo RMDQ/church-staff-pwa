@@ -38,7 +38,7 @@ Future<void> _pumpCalendar(WidgetTester tester) async {
         SignedInAuthRepository(
           User(
             id: 'u1',
-            name: '測試者',
+            name: '测试者',
             email: 'a@b.c',
             username: 'tester',
             role: UserRole.member,
@@ -84,7 +84,7 @@ void main() {
     // A year is enough to cover both five- and six-row months wherever "now"
     // happens to fall.
     for (var offset = 1; offset <= 12; offset++) {
-      await tester.tap(find.byTooltip('下個月'));
+      await tester.tap(find.byTooltip('下个月'));
       await tester.pumpAndSettle();
 
       final month = DateTime(now.year, now.month + offset);
@@ -120,13 +120,13 @@ void main() {
     var offset = 0;
     while (_expectedRows(DateTime(now.year, now.month + offset + 1)) != 6) {
       offset++;
-      expect(offset, lessThan(12), reason: '一年內找不到六列的月份');
-      await tester.tap(find.byTooltip('下個月'));
+      expect(offset, lessThan(12), reason: '一年内找不到六列的月份');
+      await tester.tap(find.byTooltip('下个月'));
       await tester.pumpAndSettle();
     }
     expect(_gridHeight(tester), lessThan(sixRowHeight));
 
-    await tester.tap(find.byTooltip('下個月'));
+    await tester.tap(find.byTooltip('下个月'));
     // Mid-animation the six-row month is partly on screen, so the box has to
     // be tall enough for it already rather than clipping its last row. Two
     // pumps: the controller notifies during the first frame's animation phase,
@@ -157,8 +157,8 @@ void main() {
     while (!(_expectedRows(DateTime(now.year, now.month + offset)) == 6 &&
         _expectedRows(DateTime(now.year, now.month + offset + 1)) < 6)) {
       offset++;
-      expect(offset, lessThan(24), reason: '兩年內找不到六列接五列的月份');
-      await tester.tap(find.byTooltip('下個月'));
+      expect(offset, lessThan(24), reason: '两年内找不到六列接五列的月份');
+      await tester.tap(find.byTooltip('下个月'));
       await tester.pumpAndSettle();
     }
 
@@ -168,7 +168,7 @@ void main() {
     );
     expect(_gridHeight(tester), closeTo(tallHeight, 0.5));
 
-    await tester.tap(find.byTooltip('下個月'));
+    await tester.tap(find.byTooltip('下个月'));
     await tester.pump();
     // Two thirds through the 260ms page animation the box is already on its
     // way down, rather than waiting for the page to land and then animating.

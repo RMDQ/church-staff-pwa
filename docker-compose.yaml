@@ -1,10 +1,10 @@
-# 建置參數從同目錄的 .env 讀（照 .env.example 建立）。
-# Firebase 設定必須在 build 時就注入，執行期沒有機會補。
+# 建置参数从同目录的 .env 读（照 .env.example 建立）。
+# Firebase 设定必须在 build 时就注入，执行期没有机会补。
 #
-# Firebase.initializeApp 的必填欄位在這裡就用 :? 擋掉，清單與 Dockerfile 內
-# 的檢查一致。Dockerfile 那道防線是最後保險，但它要等 clone Flutter SDK、
-# pub get、COPY 都跑完才輪到 —— 少填一個值卻要等好幾分鐘才看到錯誤訊息。
-# 在 compose 這層擋等於秒回。
+# Firebase.initializeApp 的必填栏位在这里就用 :? 挡掉，清单与 Dockerfile 内
+# 的检查一致。Dockerfile 那道防线是最后保险，但它要等 clone Flutter SDK、
+# pub get、COPY 都跑完才轮到 —— 少填一个值却要等好几分钟才看到错误讯息。
+# 在 compose 这层挡等于秒回。
 services:
   web:
     build:

@@ -2,7 +2,7 @@ import 'package:church_staff_pwa/core/config/church_config.dart';
 import 'package:church_staff_pwa/core/config/service_catalog.dart';
 import 'package:church_staff_pwa/features/services/data/service_settings_repository.dart';
 
-/// settings/services 的記憶體版本，跟 Firestore 那份一樣只增不減 ids。
+/// settings/services 的记忆体版本，跟 Firestore 那份一样只增不减 ids。
 class InMemoryServiceSettings implements ServiceSettingsRepository {
   InMemoryServiceSettings([this.document]);
 

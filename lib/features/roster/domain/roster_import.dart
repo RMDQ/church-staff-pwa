@@ -7,22 +7,22 @@ import 'roster_import_parser.dart';
 import 'staff_directory.dart';
 import 'staff_order.dart';
 
-/// 一次匯入的結果：要嘛不能匯，要嘛是要寫的服事表加上寫完之後的報告。
+/// 一次汇入的结果：要嘛不能汇，要嘛是要写的服事表加上写完之后的报告。
 sealed class RosterImportPlan {
   const RosterImportPlan();
 }
 
-/// 整份匯入不能進行。[message] 直接給使用者看。
+/// 整份汇入不能进行。[message] 直接给使用者看。
 class RosterImportRejected extends RosterImportPlan {
   const RosterImportRejected(this.message);
 
   final String message;
 }
 
-/// 可以寫了。
+/// 可以写了。
 ///
-/// [summary] 是**假設 [updates] 全部寫成功**的報告 —— 寫入失敗時呼叫端改報
-/// 失敗，不顯示它。
+/// [summary] 是**假设 [updates] 全部写成功**的报告 —— 写入失败时呼叫端改报
+/// 失败，不显示它。
 class RosterImportReady extends RosterImportPlan {
   const RosterImportReady({
     required this.updates,
@@ -33,22 +33,22 @@ class RosterImportReady extends RosterImportPlan {
   final List<ServiceRoster> updates;
   final RosterImportSummary summary;
 
-  /// 從這次匯入的服事學到的同工排序：圖片上誰寫前面，誰就排前面。名單外
-  /// 的人（外請講員）不在裡面，見 [StaffOrder.where]。
+  /// 从这次汇入的服事学到的同工排序：图片上谁写前面，谁就排前面。名单外
+  /// 的人（外请讲员）不在里面，见 [StaffOrder.where]。
   ///
-  /// 要在 [updates] 之前寫（`RosterProvider.applyRosterImport` 照這個順序寫）：
-  /// 服事表寫入時照排序重排，先寫服事表的話，會照
-  /// 舊的排序把圖片上的順序打亂。只帶活動的匯入沒有東西可學，是空的。
+  /// 要在 [updates] 之前写（`RosterProvider.applyRosterImport` 照这个顺序写）：
+  /// 服事表写入时照排序重排，先写服事表的话，会照
+  /// 旧的排序把图片上的顺序打乱。只带活动的汇入没有东西可学，是空的。
   final StaffOrder staffOrder;
 }
 
-/// 把貼上（或照片辨識出來）的 JSON 對到 [type] 現有的服事表上。
+/// 把贴上（或照片辨识出来）的 JSON 对到 [type] 现有的服事表上。
 ///
-/// 不碰 Firestore：輸入是現況，輸出是要寫的東西。畫面只剩「讀現況、呼叫、
-/// 寫入、顯示」—— 以前這段編排寫在 widget 的 State 裡，樣板排序、報告漏人
-/// 那幾個 bug 都出在這裡，卻沒有任何測試碰得到。
+/// 不碰 Firestore：输入是现况，输出是要写的东西。画面只剩「读现况、呼叫、
+/// 写入、显示」—— 以前这段编排写在 widget 的 State 里，样板排序、报告漏人
+/// 那几个 bug 都出在这里，却没有任何测试碰得到。
 ///
-/// [templates] 為 null 代表樣板還沒載入。[rosters] 只要 [type] 這個崇拜的。
+/// [templates] 为 null 代表样板还没载入。[rosters] 只要 [type] 这个崇拜的。
 RosterImportPlan planRosterImport({
   required String input,
   required ServiceType type,
@@ -65,22 +65,22 @@ RosterImportPlan planRosterImport({
   );
   if (parsed.error case final error?) return RosterImportRejected(error);
 
-  // 服事項目的順序完全由樣板決定，樣板不可靠就不能匯 —— 缺席時所有角色
-  // 並列，會退回 JSON 的順序寫進 Firestore，畫面上看不出哪裡不對。
+  // 服事项目的顺序完全由样板决定，样板不可靠就不能汇 —— 缺席时所有角色
+  // 并列，会退回 JSON 的顺序写进 Firestore，画面上看不出哪里不对。
   //
-  // 只擋含 duties 的匯入：只帶 events 的 JSON 根本不排序，沒有理由一起擋。
+  // 只挡含 duties 的汇入：只带 events 的 JSON 根本不排序，没有理由一起挡。
   //
-  // 「載入過」不夠：寫入空樣板之後也算載入過，但這個崇拜的鍵可能根本不存
-  // 在。真正要問的是「這個崇拜的樣板拿得到嗎」。
+  // 「载入过」不够：写入空样板之后也算载入过，但这个崇拜的键可能根本不存
+  // 在。真正要问的是「这个崇拜的样板拿得到吗」。
   final templateRoles = templates?[type];
   if (parsed.dutiesProvidedDates.isNotEmpty) {
     if (templates == null) {
-      return const RosterImportRejected('服事項目樣板尚未載入，順序會排錯。請重新整理後再匯入');
+      return const RosterImportRejected('服事项目样板尚未载入，顺序会排错。请重新整理后再汇入');
     }
     if (templateRoles == null) {
-      // 服事項目設定是 admin only，非 admin 連那顆按鈕都看不到，所以這裡
-      // 講「請管理員」而不是「請先到」—— 後者對他是一條走不通的路。
-      return RosterImportRejected('${type.label}還沒有服事項目樣板，順序會排錯。請管理員到服事項目設定新增');
+      // 服事项目设定是 admin only，非 admin 连那颗按钮都看不到，所以这里
+      // 讲「请管理员」而不是「请先到」—— 后者对他是一条走不通的路。
+      return RosterImportRejected('${type.label}还没有服事项目样板，顺序会排错。请管理员到服事项目设定新增');
     }
   }
 
@@ -89,7 +89,7 @@ RosterImportPlan planRosterImport({
   };
   final updates = <ServiceRoster>[];
   final missingDates = <String>[];
-  // 只從這次真的有帶服事的日期學，只帶活動的那幾天還是舊的服事。
+  // 只从这次真的有带服事的日期学，只带活动的那几天还是旧的服事。
   final importedDuties = <ServiceRoster>[];
 
   for (final key in {
@@ -102,9 +102,9 @@ RosterImportPlan planRosterImport({
       continue;
     }
 
-    // 只帶 duties 的那天不動活動，只帶 events 的那天不動服事 —— JSON 裡沒有
-    // 那個鍵就是「這次不改」，不是「清空」。有帶 events 的那天則整批換成
-    // JSON 的活動與顏色：匯入是在重寫那一天，不是往上疊。
+    // 只带 duties 的那天不动活动，只带 events 的那天不动服事 —— JSON 里没有
+    // 那个键就是「这次不改」，不是「清空」。有带 events 的那天则整批换成
+    // JSON 的活动与颜色：汇入是在重写那一天，不是往上叠。
     final hasDuties = parsed.dutiesProvidedDates.contains(key);
     final hasEvents = parsed.eventsProvidedDates.contains(key);
     final updated = roster.copyWith(
@@ -134,8 +134,8 @@ RosterImportPlan planRosterImport({
       missingDates: missingDates,
       notInRosterNames: parsed.notInRosterNames,
       guestSpeakerNames: parsed.guestSpeakerNames,
-      // 刻意從 roleMismatchNames 反向長出來，而不是直接沿用 details：報告只
-      // 畫得出這裡的人，兩份清單若對不齊，對不齊的那個人會從報告上整個消失。
+      // 刻意从 roleMismatchNames 反向长出来，而不是直接沿用 details：报告只
+      // 画得出这里的人，两份清单若对不齐，对不齐的那个人会从报告上整个消失。
       roleMismatchDetails: {
         for (final name in parsed.roleMismatchNames)
           name: (parsed.roleMismatchDetails[name]?.toList() ?? [])..sort(),
@@ -147,7 +147,7 @@ RosterImportPlan planRosterImport({
   );
 }
 
-/// 服事表在匯入 JSON 裡的日期寫法：`YYYY-MM-DD`。
+/// 服事表在汇入 JSON 里的日期写法：`YYYY-MM-DD`。
 String rosterDateKey(DateTime date) {
   final y = date.year.toString().padLeft(4, '0');
   final m = date.month.toString().padLeft(2, '0');
@@ -155,14 +155,14 @@ String rosterDateKey(DateTime date) {
   return '$y-$m-$d';
 }
 
-/// 匯入之後的結果報告。
+/// 汇入之后的结果报告。
 ///
-/// 沒對到的名字**已經照樣寫進服事表了**，列在這裡是讓你知道，不是要你回去
-/// 補打名字，也不是叫你去改設定 —— 臨時支援別的崇拜是常態，那些人一年可能
-/// 就來這麼一次，把他們設成固定班底反而會弄髒名單。
+/// 没对到的名字**已经照样写进服事表了**，列在这里是让你知道，不是要你回去
+/// 补打名字，也不是叫你去改设定 —— 临时支援别的崇拜是常态，那些人一年可能
+/// 就来这么一次，把他们设成固定班底反而会弄脏名单。
 ///
-/// 所以文案一律只陳述事實，不寫祈使句。「新增服事至同工」那顆按鈕是備著的，不是
-/// 建議的動作：真的多了一位固定班底時按一下省得跑一趟帳號管理，其餘時候
+/// 所以文案一律只陈述事实，不写祈使句。「新增服事至同工」那颗按钮是备著的，不是
+/// 建议的动作：真的多了一位固定班底时按一下省得跑一趟帐号管理，其余时候
 /// 放著就好。
 class RosterImportSummary {
   const RosterImportSummary({
@@ -180,22 +180,22 @@ class RosterImportSummary {
   final List<String> missingDates;
   final List<String> notInRosterNames;
 
-  /// 人名 → 他被排到、但設定裡沒有的服事。
+  /// 人名 → 他被排到、但设定里没有的服事。
   final Map<String, List<String>> roleMismatchDetails;
 
   final List<String> otherNames;
 
-  /// 表上原字 → 名單裡跟它只差一個字的那幾位。**只是提示，沒有套用。**
+  /// 表上原字 → 名单里跟它只差一个字的那几位。**只是提示，没有套用。**
   ///
-  /// 這裡的名字同時在 [notInRosterNames] 裡（沒有 uid），所以不必另外算進
-  /// [hasIssues] —— 它跟著「名單裡沒有這個人」那一段一起顯示。
+  /// 这里的名字同时在 [notInRosterNames] 里（没有 uid），所以不必另外算进
+  /// [hasIssues] —— 它跟著「名单里没有这个人」那一段一起显示。
   final Map<String, List<String>> nearMatchSuggestions;
 
   final List<String> notInEventCatalog;
 
-  /// 外來講員：只排在信息、名單裡沒有也沒有很像的。**不算問題**，所以不進
-  /// [hasIssues] 也不進 [hasUnmatchedNames] —— 列出來只是讓人知道這幾個名字
-  /// 沒有連到帳號，而那對講員來說是正常的。
+  /// 外来讲员：只排在信息、名单里没有也没有很像的。**不算问题**，所以不进
+  /// [hasIssues] 也不进 [hasUnmatchedNames] —— 列出来只是让人知道这几个名字
+  /// 没有连到帐号，而那对讲员来说是正常的。
   final List<String> guestSpeakerNames;
 
   bool get hasIssues =>
@@ -203,18 +203,18 @@ class RosterImportSummary {
       missingDates.isNotEmpty ||
       notInEventCatalog.isNotEmpty;
 
-  /// 有沒有「人」沒對到。日期與活動不算 —— 那兩類跟「這些人已經排進去了」
-  /// 那句安撫無關，不該一起把那句話帶出來。
+  /// 有没有「人」没对到。日期与活动不算 —— 那两类跟「这些人已经排进去了」
+  /// 那句安抚无关，不该一起把那句话带出来。
   bool get hasUnmatchedNames =>
       notInRosterNames.isNotEmpty ||
       roleMismatchDetails.isNotEmpty ||
       otherNames.isNotEmpty;
 
-  /// 能不能講「下面的名字都已經排進表裡了」。
+  /// 能不能讲「下面的名字都已经排进表里了」。
   ///
-  /// 未匹配的名單是整份 JSON 的統計，但日期找不到的那幾筆根本沒寫進去 ——
-  /// 那些人名照樣會出現在清單上。只要有任何一天沒匯入，這句話就可能是假的；
-  /// 一筆都沒更新時更是徹底的謊話。寧可不講，也不要讓管理者以為排好了。
+  /// 未匹配的名单是整份 JSON 的统计，但日期找不到的那几笔根本没写进去 ——
+  /// 那些人名照样会出现在清单上。只要有任何一天没汇入，这句话就可能是假的；
+  /// 一笔都没更新时更是彻底的谎话。宁可不讲，也不要让管理者以为排好了。
   bool get canPromiseAllImported =>
       hasUnmatchedNames && updated > 0 && missingDates.isEmpty;
 }

@@ -12,7 +12,7 @@ import 'package:http/testing.dart';
 final _endpoint = Uri.parse('https://app.example/api/calendar/events');
 
 CalendarEventDraft _draft({
-  String title = '青年小組',
+  String title = '青年小组',
   bool allDay = true,
   DateTime? start,
   DateTime? end,
@@ -50,7 +50,7 @@ class _Recorder {
 http.Response _googleItem({String id = 'evt-1'}) => http.Response(
   jsonEncode({
     'id': id,
-    'summary': '青年小組',
+    'summary': '青年小组',
     'start': {'date': '2026-08-20'},
     'end': {'date': '2026-08-21'},
   }),
@@ -102,13 +102,13 @@ void main() {
     });
 
     test('trims the text fields', () {
-      final body = _draft(title: '  聚會  ', location: ' 教會 ').toJson();
-      expect(body['title'], '聚會');
-      expect(body['location'], '教會');
+      final body = _draft(title: '  聚会  ', location: ' 教会 ').toJson();
+      expect(body['title'], '聚会');
+      expect(body['location'], '教会');
     });
 
     test('rejects an empty title', () {
-      expect(_draft(title: '   ').validate(), '請填寫標題');
+      expect(_draft(title: '   ').validate(), '请填写标题');
     });
 
     test('rejects an end date before the start', () {
@@ -116,7 +116,7 @@ void main() {
         start: DateTime.utc(2026, 8, 20),
         end: DateTime.utc(2026, 8, 19),
       );
-      expect(invalid.validate(), '結束日期不能早於開始日期');
+      expect(invalid.validate(), '结束日期不能早于开始日期');
     });
 
     test('accepts an equal start and end date', () {
@@ -129,7 +129,7 @@ void main() {
         startTime: const TimeOfDay(hour: 19, minute: 0),
         endTime: const TimeOfDay(hour: 18, minute: 59),
       );
-      expect(invalid.validate(), '結束時間不能早於開始時間');
+      expect(invalid.validate(), '结束时间不能早于开始时间');
     });
 
     // A retreat running 19:00 Friday to 12:00 Sunday has an "earlier" clock
@@ -163,7 +163,7 @@ void main() {
     test('fromEvent restores the inclusive end date of an all-day event', () {
       final event = calendarEventFromGoogleItem({
         'id': 'x',
-        'summary': '夏令營',
+        'summary': '夏令营',
         'start': {'date': '2026-08-20'},
         'end': {'date': '2026-08-23'},
       })!;
@@ -186,7 +186,7 @@ void main() {
     test('fromEvent keeps a timed event ending at midnight editable', () {
       final event = CalendarEvent(
         id: 'x',
-        title: '跨夜禱告',
+        title: '跨夜祷告',
         isAllDay: false,
         startTime: DateTime.utc(2026, 8, 20, 22),
         endTime: DateTime.utc(2026, 8, 21),
@@ -202,7 +202,7 @@ void main() {
     test('fromEvent clamps a timed event whose end precedes its start', () {
       final event = CalendarEvent(
         id: 'x',
-        title: '壞資料',
+        title: '坏资料',
         isAllDay: false,
         startTime: DateTime.utc(2026, 8, 20, 19),
         endTime: DateTime.utc(2026, 8, 19, 19),
@@ -215,15 +215,15 @@ void main() {
     test('fromEvent restores the times of a timed event', () {
       final event = calendarEventFromGoogleItem({
         'id': 'x',
-        'summary': '禱告會',
-        'location': '教會',
+        'summary': '祷告会',
+        'location': '教会',
         'start': {'dateTime': '2026-08-20T19:00:00+08:00'},
         'end': {'dateTime': '2026-08-20T21:00:00+08:00'},
       })!;
 
       final draft = CalendarEventDraft.fromEvent(event);
       expect(draft.allDay, isFalse);
-      expect(draft.location, '教會');
+      expect(draft.location, '教会');
       expect(draft.startTime, TimeOfDay.fromDateTime(event.startTime));
     });
   });
@@ -243,7 +243,7 @@ void main() {
         recorder.requests.single.headers['Authorization'],
         'Bearer test-token',
       );
-      expect(jsonDecode(recorder.requests.single.body)['title'], '青年小組');
+      expect(jsonDecode(recorder.requests.single.body)['title'], '青年小组');
     });
 
     test('refuses without sending anything when there is no token', () async {
@@ -259,7 +259,7 @@ void main() {
           isA<CalendarWriteException>().having(
             (e) => e.message,
             'message',
-            '請先登入',
+            '请先登入',
           ),
         ),
       );
@@ -270,7 +270,7 @@ void main() {
       final service = _service(
         _Recorder().client(
           (_) => http.Response(
-            jsonEncode({'error': '沒有編輯行事曆的權限'}),
+            jsonEncode({'error': '没有编辑行事历的权限'}),
             403,
             headers: {'content-type': 'application/json; charset=utf-8'},
           ),
@@ -283,7 +283,7 @@ void main() {
           isA<CalendarWriteException>().having(
             (e) => e.message,
             'message',
-            '沒有編輯行事曆的權限',
+            '没有编辑行事历的权限',
           ),
         ),
       );
@@ -304,7 +304,7 @@ void main() {
             isA<CalendarWriteException>().having(
               (e) => e.message,
               'message',
-              '伺服器忙碌中，請稍後再試',
+              '伺服器忙碌中，请稍后再试',
             ),
           ),
         );
@@ -322,7 +322,7 @@ void main() {
           isA<CalendarWriteException>().having(
             (e) => e.message,
             'message',
-            '連線失敗，請檢查網路後再試一次',
+            '连线失败，请检查网路后再试一次',
           ),
         ),
       );
@@ -332,7 +332,7 @@ void main() {
       final service = _service(
         _Recorder().client(
           (_) => http.Response.bytes(
-            utf8.encode(jsonEncode({'error': '沒有權限寫入這本日曆，請聯絡管理員'})),
+            utf8.encode(jsonEncode({'error': '没有权限写入这本日历，请联络管理员'})),
             502,
           ),
         ),
@@ -344,7 +344,7 @@ void main() {
           isA<CalendarWriteException>().having(
             (e) => e.message,
             'message',
-            '沒有權限寫入這本日曆，請聯絡管理員',
+            '没有权限写入这本日历，请联络管理员',
           ),
         ),
       );
@@ -394,7 +394,7 @@ void main() {
       final service = _service(
         _Recorder().client(
           (_) => http.Response(
-            jsonEncode({'error': '這個活動已經不存在了'}),
+            jsonEncode({'error': '这个活动已经不存在了'}),
             404,
             headers: {'content-type': 'application/json; charset=utf-8'},
           ),
@@ -407,7 +407,7 @@ void main() {
           isA<CalendarWriteException>().having(
             (e) => e.message,
             'message',
-            '這個活動已經不存在了',
+            '这个活动已经不存在了',
           ),
         ),
       );

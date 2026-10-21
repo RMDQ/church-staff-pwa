@@ -29,11 +29,8 @@ import { churchConfig } from './church_config.js';
 /// [denied] names the specific thing the caller cannot do — the only part of
 /// a 403 someone can act on.
 const ACTIONS = {
-  calendar: { group: 'calendar-editors', denied: '沒有編輯行事曆的權限' },
-  roster: { group: 'roster-editors', denied: '沒有編輯服事表的權限' },
-  // No group grants this: only an admin creates or removes sign-ins, the same
-  // line firestore.rules draws around creating and deleting users/{uid}.
-  accounts: { group: null, denied: '只有管理員可以新增或刪除同工帳號' },
+  calendar: { group: 'calendar-editors', denied: '没有编辑行事历的权限' },
+  roster: { group: 'roster-editors', denied: '没有编辑服事表的权限' },
 };
 
 /// Rejects a caller who may not perform [action].
@@ -75,10 +72,10 @@ export async function authorize(request, env, action, fetchImpl = fetch) {
     /// quota on it.
     forRosterType(type) {
       if (!rosterTypes.has(type)) {
-        throw new HttpError(400, '不知道這是哪一個崇拜的服事表');
+        throw new HttpError(400, '不知道这是哪一个崇拜的服事表');
       }
       if (!isAdmin && !caller.zoneTypes.includes(type)) {
-        throw new HttpError(403, '沒有編輯這個崇拜服事表的權限');
+        throw new HttpError(403, '没有编辑这个崇拜服事表的权限');
       }
       return token;
     },

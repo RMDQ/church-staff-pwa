@@ -17,7 +17,7 @@ import { ENABLED_CONFIG, ADMIN_UID, ROSTER_EDITOR_UID, fakeFetch, request, testE
 const fixture = () => ({
   ...structuredClone(ENABLED_CONFIG),
   appName: 'Example Community', shortName: 'Community', timeZone: 'America/New_York',
-  services: [...structuredClone(defaults.services), { id: 'midweek', label: '週中', name: '週中聚會', weekday: 3, enabled: true }],
+  services: [...structuredClone(defaults.services), { id: 'midweek', label: '周中', name: '周中聚会', weekday: 3, enabled: true }],
 });
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -182,7 +182,7 @@ test('disabled APIs reject before auth/body parsing and perform no network reque
       request: request('POST', { body: { CHURCH_CONFIG_JSON: JSON.stringify(fixture()) } }), env: {}, params: { id: 'id' },
     }));
     assert.equal(response.status, 403);
-    assert.match((await response.json()).error, /尚未啟用/);
+    assert.match((await response.json()).error, /尚未启用/);
   }
   await assert.rejects(() => callGemini({}, { images: [], prompt: 'x', fetchImpl: noFetch }), { status: 403 });
   await notifyN8n({ NOTIFY_WEBHOOK_URL: 'https://example.com', NOTIFY_WEBHOOK_SECRET: 'test' }, {}, noFetch);

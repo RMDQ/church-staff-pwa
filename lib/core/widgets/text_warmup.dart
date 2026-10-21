@@ -4,45 +4,45 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-/// 把清單將來會顯示的字串，提前在畫面外排版一次。
+/// 把清单将来会显示的字串，提前在画面外排版一次。
 ///
-/// 為什麼是「字串」而不是「字元」：Flutter Web 的文字排版有兩層成本，而且
-/// 兩層都以字串為單位快取。
+/// 为什么是「字串」而不是「字元」：Flutter Web 的文字排版有两层成本，而且
+/// 两层都以字串为单位快取。
 ///
-///   1. 字型 —— CanvasKit 內建字型沒有中文。排版遇到缺字會去 gstatic 抓
-///      Noto subset，抓回來之後再通知框架重排一次。
-///   2. 斷行與字元邊界分析 —— 引擎的 segmentation cache 是以整個字串當 key
-///      的（見 text_fragmenter.dart：短字串 10 萬筆、中等字串 1 萬筆），
-///      同一個字串排版過第二次就便宜得多。
+///   1. 字型 —— CanvasKit 内建字型没有中文。排版遇到缺字会去 gstatic 抓
+///      Noto subset，抓回来之后再通知框架重排一次。
+///   2. 断行与字元边界分析 —— 引擎的 segmentation cache 是以整个字串当 key
+///      的（见 text_fragmenter.dart：短字串 10 万笔、中等字串 1 万笔），
+///      同一个字串排版过第二次就便宜得多。
 ///
-/// 只預熱字元只解決第 1 層。實測（?bench=1）：同一批中文字串第一次捲是紅
-/// 的，換到另一個變體重捲同樣的字串就變綠 —— 貴的是「第一次排版這個字串」，
-/// 跟 widget 用 ListTile 還是手寫 Row 幾乎無關。
+/// 只预热字元只解决第 1 层。实测（?bench=1）：同一批中文字串第一次卷是红
+/// 的，换到另一个变体重卷同样的字串就变绿 —— 贵的是「第一次排版这个字串」，
+/// 跟 widget 用 ListTile 还是手写 Row 几乎无关。
 ///
-/// 分批進行：一次把幾百個字串塞進同一幀會換來一次明顯的頓挫，所以每幀只處
-/// 理 [_chunkSize] 個，攤平在載入階段。全部做完就把自己從樹上移除 —— 常駐
-/// 只會讓每一幀白白多背這些 paragraph。
+/// 分批进行：一次把几百个字串塞进同一帧会换来一次明显的顿挫，所以每帧只处
+/// 理 [_chunkSize] 个，摊平在载入阶段。全部做完就把自己从树上移除 —— 常驻
+/// 只会让每一帧白白多背这些 paragraph。
 ///
-/// 必須放在 [Stack] 裡：內容被放到可視範圍外，而 Stack 預設會裁切，所以不
-/// 會有實際的繪製成本，但 layout 一定會發生，這正是我們要的。
+/// 必须放在 [Stack] 里：内容被放到可视范围外，而 Stack 预设会裁切，所以不
+/// 会有实际的绘制成本，但 layout 一定会发生，这正是我们要的。
 ///
-/// 對輔助科技完全隱形（[ExcludeSemantics]）：這些字只是拿來逼引擎排版的，
-/// 使用者看不到也不該聽到。少了這層，VoiceOver／TalkBack 會把整份名單的每
-/// 個名字都念出來。
+/// 对辅助科技完全隐形（[ExcludeSemantics]）：这些字只是拿来逼引擎排版的，
+/// 使用者看不到也不该听到。少了这层，VoiceOver／TalkBack 会把整份名单的每
+/// 个名字都念出来。
 class TextWarmup extends StatefulWidget {
   const TextWarmup({super.key, required this.strings});
 
-  /// 要預熱的字串（會自行去重）。
+  /// 要预热的字串（会自行去重）。
   final List<String> strings;
 
-  /// 每一幀處理幾個字串。
+  /// 每一帧处理几个字串。
   static const int _chunkSize = 24;
 
-  /// 全部排版完之後，再等這麼久才移除 —— 字型是非同步抓回來的，太早撤掉會
-  /// 來不及觸發字型變更後的重排。
+  /// 全部排版完之后，再等这么久才移除 —— 字型是非同步抓回来的，太早撤掉会
+  /// 来不及触发字型变更后的重排。
   static const Duration _settleDuration = Duration(seconds: 4);
 
-  /// 從任意來源取出不重複、非空白的字串。
+  /// 从任意来源取出不重复、非空白的字串。
   static List<String> uniqueStringsOf(Iterable<String> sources) {
     final seen = <String>{};
     final result = <String>[];
@@ -73,11 +73,11 @@ class _TextWarmupState extends State<TextWarmup> {
   @override
   void didUpdateWidget(TextWarmup oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 資料換了（切換帳號、名單重抓）就重來一次。
+    // 资料换了（切换帐号、名单重抓）就重来一次。
     //
-    // 不能只看 identity：呼叫端若在 build 裡現算 List，每次 rebuild 都會是
-    // 新 instance，光看 identity 會讓預熱永遠從頭來過 —— 那些 off-screen
-    // paragraph 就再也撤不掉，每一幀都白排一次版。內容一樣就當作沒變。
+    // 不能只看 identity：呼叫端若在 build 里现算 List，每次 rebuild 都会是
+    // 新 instance，光看 identity 会让预热永远从头来过 —— 那些 off-screen
+    // paragraph 就再也撤不掉，每一帧都白排一次版。内容一样就当作没变。
     if (!identical(oldWidget.strings, widget.strings) &&
         !listEquals(oldWidget.strings, widget.strings)) {
       _settleTimer?.cancel();
@@ -86,8 +86,8 @@ class _TextWarmupState extends State<TextWarmup> {
       _scheduleNextChunk();
       return;
     }
-    // identity 沒變不代表內容沒變：呼叫端就地改寫並縮短清單時，_warmed 會
-    // 停在界外。夾回長度內，讓排程與 build 都在合法區間運作。
+    // identity 没变不代表内容没变：呼叫端就地改写并缩短清单时，_warmed 会
+    // 停在界外。夹回长度内，让排程与 build 都在合法区间运作。
     if (_warmed > widget.strings.length) {
       _warmed = widget.strings.length;
     }
@@ -101,7 +101,7 @@ class _TextWarmupState extends State<TextWarmup> {
       if (!mounted) return;
 
       if (_warmed >= widget.strings.length) {
-        // 全部排版完，等字型下載與重排落地之後把自己撤掉。
+        // 全部排版完，等字型下载与重排落地之后把自己撤掉。
         _settleTimer?.cancel();
         _settleTimer = Timer(TextWarmup._settleDuration, () {
           if (mounted) setState(() => _settled = true);
@@ -129,17 +129,17 @@ class _TextWarmupState extends State<TextWarmup> {
   Widget build(BuildContext context) {
     if (_settled) return const SizedBox.shrink();
 
-    // 只放「這一批」：已經排版過的字串留在樹上沒有意義，那些成本已經付過了。
+    // 只放「这一批」：已经排版过的字串留在树上没有意义，那些成本已经付过了。
     //
-    // 結束點也要夾，不能只夾起點：清單被就地改短時 identity 不變，state 裡
-    // 的 _warmed 會超出長度，sublist 就會拋 RangeError。
+    // 结束点也要夹，不能只夹起点：清单被就地改短时 identity 不变，state 里
+    // 的 _warmed 会超出长度，sublist 就会抛 RangeError。
     final total = widget.strings.length;
     final end = _warmed.clamp(0, total);
     final start = (end - TextWarmup._chunkSize).clamp(0, total);
     if (start == end) return const SizedBox.shrink();
 
     return Positioned(
-      // 放在畫面外。Stack 預設 Clip.hardEdge，所以不會真的被畫出來。
+      // 放在画面外。Stack 预设 Clip.hardEdge，所以不会真的被画出来。
       left: -100000,
       top: 0,
       child: ExcludeSemantics(
@@ -153,7 +153,7 @@ class _TextWarmupState extends State<TextWarmup> {
                   softWrap: false,
                   maxLines: 1,
                   overflow: TextOverflow.clip,
-                  // segmentation cache 以字串為 key，跟字級無關，所以用小字級。
+                  // segmentation cache 以字串为 key，跟字级无关，所以用小字级。
                   style: const TextStyle(fontSize: 8),
                 ),
             ],

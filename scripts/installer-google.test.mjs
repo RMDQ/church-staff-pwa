@@ -32,7 +32,7 @@ async function setup(t, overrides = {}) {
   await writeFile(path.join(runDir, 'deployment/firestore.rules'), rules);
   const context = {
     plan: { runId, projectId, region: 'asia-east1', pagesProject: 'demo-church-site', googleEmail: 'operator@example.invalid',
-      churchConfig: config, admin: { name: '測試管理員', username: '測試', email: 'admin@example.invalid' }, activationEmailConfirmed: true },
+      churchConfig: config, admin: { name: '测试管理员', username: '测试', email: 'admin@example.invalid' }, activationEmailConfirmed: true },
     runDir, checkpoint: { resources: { pagesSubdomain: 'demo-church-site.pages.dev' }, intents: {} }, transient: {},
     snapshots: [], events: [],
     save: async (patch) => {
@@ -413,7 +413,7 @@ test('a bare addFirebase 403 is not retried: the next resume sends it again once
   await h.through('google-project');
   let denied = 0;
   h.setInterceptor((call) => call.pathname.endsWith(':addFirebase') && denied++ < 1 ? error(403, 'PERMISSION_DENIED') : undefined);
-  await assert.rejects(h.adapter.execute('firebase', h.context), (err) => err.code === 'GOOGLE_TERMS_REQUIRED' && err.message.includes('以前就用過 Firebase'));
+  await assert.rejects(h.adapter.execute('firebase', h.context), (err) => err.code === 'GOOGLE_TERMS_REQUIRED' && err.message.includes('以前就用过 Firebase'));
   assert.equal(creates(h, ':addFirebase'), 1);
   assert.deepEqual(h.state.delays, []);
   await h.adapter.execute('firebase', h.context);
@@ -427,7 +427,7 @@ test('a rate-limited addFirebase asks to resume in a minute, not to raise a quot
   h.setInterceptor((call) => call.pathname.endsWith(':addFirebase') ? response(429, { error: { status: 'RESOURCE_EXHAUSTED',
     message: 'Quota exceeded', details: [{ reason: 'RATE_LIMIT_EXCEEDED' }] } }) : undefined);
   await assert.rejects(h.adapter.execute('firebase', h.context), (err) =>
-    err.code === 'GOOGLE_RATE_LIMITED' && !err.helpUrl && err.message.endsWith('〔技術代碼：firebase 429 RESOURCE_EXHAUSTED RATE_LIMIT_EXCEEDED〕'));
+    err.code === 'GOOGLE_RATE_LIMITED' && !err.helpUrl && err.message.endsWith('〔技术代码：firebase 429 RESOURCE_EXHAUSTED RATE_LIMIT_EXCEEDED〕'));
   assert.equal(h.context.checkpoint.intents.firebase.requested, undefined);
   h.setInterceptor(undefined);
   await h.adapter.execute('firebase', h.context);
@@ -440,7 +440,7 @@ test('an account that never accepted the Firebase terms is sent to the console, 
   h.setInterceptor((call) => call.pathname.endsWith(':addFirebase') ? error(403, 'PERMISSION_DENIED') : undefined);
   await assert.rejects(h.adapter.execute('firebase', h.context), (err) =>
     err.code === 'GOOGLE_TERMS_REQUIRED' && err.helpUrl === 'https://console.firebase.google.com/' && err.message.includes(projectId) &&
-    err.message.endsWith('〔技術代碼：firebase 403〕'));
+    err.message.endsWith('〔技术代码：firebase 403〕'));
   assert.equal(creates(h, ':addFirebase'), 1);
   // The person adds Firebase in the console; the resume adopts it without another create.
   h.setInterceptor(undefined);
@@ -456,8 +456,8 @@ test('an addFirebase refused with "Firebase Tos Not Accepted" asks for the conso
   h.setInterceptor((call) => call.pathname.endsWith(':addFirebase') ? response(403, { error: { status: 'PERMISSION_DENIED',
     message: 'The caller does not have permission', details: [{ detail: '[ORIGINAL ERROR] generic::permission_denied: Firebase Tos Not Accepted' }] } }) : undefined);
   await assert.rejects(h.adapter.execute('firebase', h.context), (err) =>
-    err.code === 'GOOGLE_TERMS_REQUIRED' && err.message.includes('將 Firebase 新增到 Google Cloud 專案') && err.message.includes(projectId) &&
-    err.message.endsWith('〔技術代碼：firebase 403 PERMISSION_DENIED〕'));
+    err.code === 'GOOGLE_TERMS_REQUIRED' && err.message.includes('将 Firebase 新增到 Google Cloud 专案') && err.message.includes(projectId) &&
+    err.message.endsWith('〔技术代码：firebase 403 PERMISSION_DENIED〕'));
   assert.equal(creates(h, ':addFirebase'), 1);
   assert.deepEqual(h.state.delays, []);
   h.setInterceptor(undefined);
@@ -579,7 +579,7 @@ test('a just-enabled API answering SERVICE_DISABLED is waited out, not reported 
   assert.ok(h.state.delays.includes(5000) && h.state.delays.includes(10000));
   h.setInterceptor((call) => call.host === 'firestore' && call.method === 'GET' ? disabled() : undefined);
   await assert.rejects(h.adapter.execute('rules', h.context), (err) => err.code === 'GOOGLE_API_PROPAGATING' &&
-    err.message.includes('〔技術代碼：firestore 403 PERMISSION_DENIED SERVICE_DISABLED〕') && !/http|googleapis|Bearer/.test(err.message));
+    err.message.includes('〔技术代码：firestore 403 PERMISSION_DENIED SERVICE_DISABLED〕') && !/http|googleapis|Bearer/.test(err.message));
 });
 
 test('a project create refused with 403 can be retried; it is still never adopted', async (t) => {
@@ -648,7 +648,7 @@ test('an untrusted (ephemeral) Cloud Shell explains how to leave ephemeral mode'
       assert.fail('no token request in an untrusted Cloud Shell');
     },
   });
-  await assert.rejects(adapter.authorize(), (err) => err.code === 'GOOGLE_AUTH_REQUIRED' && /暫時模式.*停用/.test(err.message));
+  await assert.rejects(adapter.authorize(), (err) => err.code === 'GOOGLE_AUTH_REQUIRED' && /暂时模式.*停用/.test(err.message));
 });
 
 test('a declined Cloud Shell authorization explains how to retry', async () => {
@@ -867,9 +867,9 @@ test('activation needs explicit consent and ambiguous delivery never auto-resend
   await assert.rejects(h.adapter.execute('activation', h.context), (err) => {
     assert.equal(err.code, 'ACTIVATION_DELIVERY_UNKNOWN');
     // The site is published before this step, so its login page already
-    // offers 忘記密碼 — simpler than the Firebase console, and no link needed.
+    // offers 忘记密码 — simpler than the Firebase console, and no link needed.
     assert.equal(err.helpUrl, undefined);
-    assert.match(err.message, /忘記密碼/);
+    assert.match(err.message, /忘记密码/);
     assert.doesNotMatch(err.message, /Authentication → Users/);
     return true;
   });
@@ -916,7 +916,7 @@ test('long operations have bounded backoff, persist their ID and map provider fa
       assert.ok(clock - fixedNow >= 180_000);
       assert.ok(h.state.delays.every((ms) => ms <= 8000));
       const messages = h.context.events.map((event) => event.message);
-      assert.ok(messages.some((message) => message.includes('正在核對 Firebase 所需')));
+      assert.ok(messages.some((message) => message.includes('正在核对 Firebase 所需')));
       assert.ok(messages.some((message) => message.includes('已等待') && /[1-9]\d* 秒/.test(message)));
       assert.doesNotMatch(JSON.stringify(messages), /never-log-this-google-token|never-persist-api-key|services-pending|firebase-pending/);
       completed = true;
@@ -1066,7 +1066,7 @@ test('update reads back the web config and replaces only this install\'s rules, 
   assert.equal(state.rulesets.size, rulesetsBefore, 'identical rules are not republished');
 
   // A new service changes the generated rules; the update releases them.
-  context.plan.churchConfig = { ...config, services: [...config.services, { id: 'service9', label: '禱告', name: '禱告會', weekday: 3, enabled: true }] };
+  context.plan.churchConfig = { ...config, services: [...config.services, { id: 'service9', label: '祷告', name: '祷告会', weekday: 3, enabled: true }] };
   const changed = renderRules(await readFile(new URL('../firestore.rules', import.meta.url), 'utf8'), context.plan.churchConfig);
   await writeFile(path.join(context.runDir, 'deployment/firestore.rules'), changed);
   assert.deepEqual(await adapter.update('rules', context), { rules: { unchanged: false } });
@@ -1121,7 +1121,7 @@ test('a new project whose Firestore IAM is still propagating waits and retries i
   assert.equal(denied, 2);
   assert.ok(state.db, 'database created after the retries');
   assert.equal(state.delays.filter((ms) => ms === 15_000).length, 2);
-  assert.ok(context.events.some((event) => event.message?.includes('自動重試')));
+  assert.ok(context.events.some((event) => event.message?.includes('自动重试')));
 });
 
 test('a 403 that outlasts the grace retries says to resume later, not to ask an administrator', async (t) => {
@@ -1147,7 +1147,7 @@ test('the password mail names the church as its sender, and a refusal does not s
   refused.setInterceptor((call) => call.method === 'PATCH' && call.body?.notification ? error(400, 'INVALID_CONFIG') : undefined);
   await refused.through('activation');
   assert.equal(refused.state.sent, 1);
-  assert.ok(refused.context.events.some((event) => event.message?.includes('寄件者名稱沒有設定成功')));
+  assert.ok(refused.context.events.some((event) => event.message?.includes('寄件者名称没有设定成功')));
 });
 
 // ---------------------------------------------------------------------------

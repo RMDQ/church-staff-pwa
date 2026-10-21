@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../../domain/sign_in_account_exception.dart';
+import '../../domain/signup_request.dart';
 import '../cached_user_storage.dart';
 import '../sign_in_admin_service.dart';
 
@@ -29,15 +29,30 @@ class FirebaseAuthRepository implements AuthRepository {
     // Don't catch — let FirebaseAuthException propagate so SessionProvider can
     // map it to a user-friendly message. Returning null here would erase the
     // distinction between "wrong password" and "network unreachable" and
-    // make every failure look like '帳號或密碼錯誤'.
+    // make every failure look like '帐号或密码错误'.
     final credential = await _auth.signInWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
     if (credential.user == null) return null;
-    final user = await _fetchUserFromFirestore(credential.user!.uid);
-    if (user != null) await _cachedUserStorage.write(user);
+    final uid = credential.user!.uid;
+    final user = await _fetchUserFromFirestore(uid);
+    if (user == null) {
+      // 登入成功但没有正式成员资料：可能是待审的注册申请。
+      // 这种情况要告诉使用者「等待确认」，而不是「密码错误」。
+      await _auth.signOut();
+      if (await _hasPendingSignup(uid)) {
+        throw const SignupPendingException();
+      }
+      throw const SignupIncompleteException();
+    }
+    await _cachedUserStorage.write(user);
     return user;
+  }
+
+  Future<bool> _hasPendingSignup(String uid) async {
+    final doc = await _firestore.collection('signup_requests').doc(uid).get();
+    return doc.exists;
   }
 
   @override
@@ -82,23 +97,23 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {
-    // signOut 先做：它才是真正終結 session 的那一步。反過來的話，本地快取
-    // 清除一失敗（例如儲存被瀏覽器封鎖）就會讓 signOut 根本不會執行，
-    // 而使用者已經看到自己回到登入畫面 —— 共用裝置上等於把帳號留給下一個人。
+    // signOut 先做：它才是真正终结 session 的那一步。反过来的话，本地快取
+    // 清除一失败（例如储存被浏览器封锁）就会让 signOut 根本不会执行，
+    // 而使用者已经看到自己回到登入画面 —— 共用装置上等于把帐号留给下一个人。
     await _auth.signOut();
 
-    // 本地快取清除屬於盡力而為：Auth session 已經沒了，就算這裡失敗，
-    // 下次啟動時的背景 profile 更新也會發現 session 失效並登出。
+    // 本地快取清除属于尽力而为：Auth session 已经没了，就算这里失败，
+    // 下次启动时的背景 profile 更新也会发现 session 失效并登出。
     try {
       await _cachedUserStorage.clear();
     } catch (e, st) {
-      log('清除本地使用者快取失敗（session 已登出）', error: e, stackTrace: st);
+      log('清除本地使用者快取失败（session 已登出）', error: e, stackTrace: st);
     }
   }
 
   @override
   Future<void> sendPasswordResetEmail(String email) async {
-    // 信件用 Firebase 內建範本；不設語言的話是英文，同工看到會以為是垃圾信。
+    // 信件用 Firebase 内建范本；不设语言的话是英文，同工看到会以为是垃圾信。
     await _auth.setLanguageCode('zh-TW');
     await _auth.sendPasswordResetEmail(email: email.trim());
   }
@@ -177,35 +192,57 @@ class FirebaseAuthRepository implements AuthRepository {
       final secondaryAuth = firebase_auth.FirebaseAuth.instanceFor(
         app: secondaryApp,
       );
+
+      // 使用 User 物件中携带的完整 Email
       final credential = await secondaryAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return credential.user!.uid;
-    } on firebase_auth.FirebaseAuthException catch (e) {
-      log('Create sign-in error: ${e.code}');
-      if (e.code != 'email-already-in-use') rethrow;
-      throw await _emailTakenInBrowser(email);
+
+      final uid = credential.user!.uid;
+
+      final newUser = user.copyWith(id: uid);
+      await _usersCollection.doc(uid).set(newUser.toJson());
+    } catch (e) {
+      log('Add User Error: $e');
+      throw Exception('无法新增使用者: $e');
     } finally {
       await secondaryApp?.delete();
     }
   }
 
-  /// Why [email] cannot get a sign-in here: another staff member uses it, or a
-  /// delete left the sign-in behind. Only the second needs the Firebase console,
-  /// since the browser cannot remove someone else's sign-in.
-  Future<SignInAccountException> _emailTakenInBrowser(String email) async {
-    final owners = await _usersCollection
-        .where('email', isEqualTo: email)
-        .limit(1)
-        .get();
-    if (owners.docs.isNotEmpty) {
-      final name = (owners.docs.first.data() as Map<String, dynamic>)['name'];
-      return SignInAccountException(
-        name is String && name.trim().isNotEmpty
-            ? '這個 Email 已經是「${name.trim()}」的帳號'
-            : '這個 Email 已經有同工在用了',
-      );
+  @override
+  Future<void> updateUser(User user, {String? password}) async {
+    final email = user.email.trim();
+    if (email.isNotEmpty && password != null) {
+      FirebaseApp? secondaryApp;
+      try {
+        secondaryApp = await Firebase.initializeApp(
+          name: 'SecondaryApp',
+          options: Firebase.app().options,
+        );
+
+        final secondaryAuth = firebase_auth.FirebaseAuth.instanceFor(
+          app: secondaryApp,
+        );
+        final credential = await secondaryAuth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+
+        final uid = credential.user!.uid;
+        final newUser = user.copyWith(id: uid);
+        await _usersCollection.doc(uid).set(newUser.toJson());
+        if (uid != user.id) {
+          await _usersCollection.doc(user.id).delete();
+        }
+        return;
+      } catch (e) {
+        log('Update User Error: $e');
+        throw Exception('无法建立登入帐号: $e');
+      } finally {
+        await secondaryApp?.delete();
+      }
     }
     final projectId = Firebase.app().options.projectId;
     return SignInAccountException(

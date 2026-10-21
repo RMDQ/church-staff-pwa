@@ -22,7 +22,7 @@ export function devotionalFetchSettings(rawConfig) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') throw new Error('不允許停用 TLS 驗證。');
+    if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') throw new Error('不允许停用 TLS 验证。');
     const [output, ...extra] = process.argv.slice(2);
     if (!output || extra.length || (output.startsWith('--') && output !== '--check-config')) {
       throw new Error('Usage: CHURCH_CONFIG_JSON=<public-config-json> node scripts/fetch-daily-verse.mjs OUTPUT.json|--check-config');
@@ -31,15 +31,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (output === '--check-config') {
       console.log(`enabled=${settings.enabled}`);
     } else if (!settings.enabled) {
-      console.log('未啟用靈糧抓取或 fetchUrl 為空；沒有網路請求，也未寫檔。');
+      console.log('未启用灵粮抓取或 fetchUrl 为空；没有网路请求，也未写档。');
     } else {
       const data = await fetchDailyVerse(settings.url, { timeZone: settings.timeZone, format: settings.format });
       writeFileSync(output, `${JSON.stringify(data, null, 2)}\n`);
-      console.log(`已驗證靈糧來源；日期 ${data.date}。內容與再散布授權仍須部署者確認。`);
+      console.log(`已验证灵粮来源；日期 ${data.date}。内容与再散布授权仍须部署者确认。`);
     }
   } catch (error) {
-    // URL 可能含 feed 的 access token，避免直接印出 fetch 的錯誤或 payload。
-    console.error(error instanceof SyntaxError ? '設定或來源不是有效 JSON；只有明確選擇 dailyBibleHtml 才會使用專用 HTML adapter。' : error.message);
+    // URL 可能含 feed 的 access token，避免直接印出 fetch 的错误或 payload。
+    console.error(error instanceof SyntaxError ? '设定或来源不是有效 JSON；只有明确选择 dailyBibleHtml 才会使用专用 HTML adapter。' : error.message);
     process.exitCode = 1;
   }
 }

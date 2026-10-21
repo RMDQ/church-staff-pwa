@@ -2,13 +2,13 @@ import 'install_hint_service_stub.dart'
     if (dart.library.js_interop) 'install_hint_service_web.dart'
     as impl;
 
-/// 這支手機要怎麼把網站加到主畫面。
+/// 这支手机要怎么把网站加到主画面。
 enum InstallPlatform { ios, android, other }
 
-/// iPhone 上分享鈕在哪裡要看瀏覽器：Safari 在下方，Chrome 在網址列右邊。
+/// iPhone 上分享钮在哪里要看浏览器：Safari 在下方，Chrome 在网址列右边。
 enum InstallBrowser { safari, chrome, other }
 
-/// 首頁「加到手機主畫面」卡片需要知道的事，讀自 `web/install_hint.js`。
+/// 首页「加到手机主画面」卡片需要知道的事，读自 `web/install_hint.js`。
 class InstallHint {
   const InstallHint({
     required this.platform,
@@ -21,13 +21,13 @@ class InstallHint {
 
   final InstallBrowser browser;
 
-  /// 已經是從主畫面開的（不是在瀏覽器分頁裡）。
+  /// 已经是从主画面开的（不是在浏览器分页里）。
   final bool isStandalone;
 
-  /// Android Chrome 給了 beforeinstallprompt，可以直接跳出安裝視窗。
+  /// Android Chrome 给了 beforeinstallprompt，可以直接跳出安装视窗。
   final bool canPrompt;
 
-  /// 手機、還在瀏覽器裡開：值得提醒一下。桌機不提醒，那裡沒有主畫面。
+  /// 手机、还在浏览器里开：值得提醒一下。桌机不提醒，那里没有主画面。
   bool get shouldSuggest => platform != InstallPlatform.other && !isStandalone;
 }
 
@@ -36,6 +36,6 @@ class InstallHintService {
 
   InstallHint read() => impl.readInstallHint();
 
-  /// 跳出 Chrome 的安裝視窗。回傳 true 代表使用者按了安裝。
+  /// 跳出 Chrome 的安装视窗。回传 true 代表使用者按了安装。
   Future<bool> prompt() async => await impl.promptInstall() == 'accepted';
 }

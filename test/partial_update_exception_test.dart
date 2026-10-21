@@ -9,7 +9,7 @@ import 'support/in_memory_roster_repository.dart';
 InMemoryRosterRepository _repo({required Set<String> failureRosterIds}) =>
     InMemoryRosterRepository()..failRosterIds = failureRosterIds;
 
-// ── Fake repository：可指定哪些 roster id 的 updateRoster 應該失敗 ──────────────
+// ── Fake repository：可指定哪些 roster id 的 updateRoster 应该失败 ──────────────
 
 void main() {
   group('PartialUpdateException', () {
@@ -19,7 +19,7 @@ void main() {
       type: ServiceType.sundayService,
       serviceName: '主日崇拜',
       duties: [
-        RosterEntry(role: '領會', people: const ['A']),
+        RosterEntry(role: '领会', people: const ['A']),
       ],
     );
     final roster2 = ServiceRoster(
@@ -28,7 +28,7 @@ void main() {
       type: ServiceType.youth,
       serviceName: '青年崇拜',
       duties: [
-        RosterEntry(role: '領會', people: const ['B']),
+        RosterEntry(role: '领会', people: const ['B']),
       ],
     );
     final cause = Exception('Firestore write failed');
@@ -46,28 +46,28 @@ void main() {
       );
     });
 
-    test('successCount getter 回傳正確值', () {
+    test('successCount getter 回传正确值', () {
       expect(exception.successCount, 3);
     });
 
-    test('failureCount getter 回傳正確值', () {
+    test('failureCount getter 回传正确值', () {
       expect(exception.failureCount, 2);
     });
 
-    test('failedRosters getter 回傳正確列表', () {
+    test('failedRosters getter 回传正确列表', () {
       expect(exception.failedRosters, [roster1, roster2]);
       expect(exception.failedRosters.length, 2);
     });
 
-    test('cause getter 回傳傳入的原始例外', () {
+    test('cause getter 回传传入的原始例外', () {
       expect(exception.cause, same(cause));
     });
 
-    test('causeStackTrace getter 回傳傳入的 StackTrace', () {
+    test('causeStackTrace getter 回传传入的 StackTrace', () {
       expect(exception.causeStackTrace, same(stackTrace));
     });
 
-    test('causeStackTrace 未傳時為 null', () {
+    test('causeStackTrace 未传时为 null', () {
       final e = PartialUpdateException(
         successCount: 1,
         failureCount: 1,
@@ -77,14 +77,14 @@ void main() {
       expect(e.causeStackTrace, isNull);
     });
 
-    test('toString 包含 successCount、failureCount 與 cause 資訊', () {
+    test('toString 包含 successCount、failureCount 与 cause 资讯', () {
       final str = exception.toString();
       expect(str, contains('3'));
       expect(str, contains('2'));
-      expect(str, contains('筆'));
+      expect(str, contains('笔'));
     });
 
-    test('toString 符合「N 筆寫入成功，M 筆失敗（首個錯誤：...）」格式', () {
+    test('toString 符合「N 笔写入成功，M 笔失败（首个错误：...）」格式', () {
       final causeMsg = Exception('Firestore write failed');
       final e = PartialUpdateException(
         successCount: 5,
@@ -92,10 +92,10 @@ void main() {
         failedRosters: [roster1],
         cause: causeMsg,
       );
-      expect(e.toString(), '5 筆寫入成功，1 筆失敗（首個錯誤：$causeMsg）');
+      expect(e.toString(), '5 笔写入成功，1 笔失败（首个错误：$causeMsg）');
     });
 
-    test('failedRosters 為空列表時不拋例外', () {
+    test('failedRosters 为空列表时不抛例外', () {
       final e = PartialUpdateException(
         successCount: 5,
         failureCount: 0,
@@ -107,7 +107,7 @@ void main() {
     });
   });
 
-  // ── Integration test：RosterProvider.updateRosters 部分失敗 ──────────────────
+  // ── Integration test：RosterProvider.updateRosters 部分失败 ──────────────────
 
   group('RosterProvider.updateRosters partial failure integration', () {
     final rosterA = ServiceRoster(
@@ -116,7 +116,7 @@ void main() {
       type: ServiceType.sundayService,
       serviceName: '主日崇拜',
       duties: [
-        RosterEntry(role: '領會', people: const ['Alice']),
+        RosterEntry(role: '领会', people: const ['Alice']),
       ],
     );
     final rosterB = ServiceRoster(
@@ -125,7 +125,7 @@ void main() {
       type: ServiceType.sundayService,
       serviceName: '主日崇拜',
       duties: [
-        RosterEntry(role: '講員', people: const ['Bob']),
+        RosterEntry(role: '讲员', people: const ['Bob']),
       ],
     );
     final rosterC = ServiceRoster(
@@ -134,21 +134,21 @@ void main() {
       type: ServiceType.youth,
       serviceName: '青年崇拜',
       duties: [
-        RosterEntry(role: '領會', people: const ['Carol']),
+        RosterEntry(role: '领会', people: const ['Carol']),
       ],
     );
 
     test(
-      'updateRosters 部分失敗時拋出 PartialUpdateException，successCount/failureCount/failedRosters 正確',
+      'updateRosters 部分失败时抛出 PartialUpdateException，successCount/failureCount/failedRosters 正确',
       () async {
-        // b1 和 c1 會失敗，a1 成功 → successCount=1, failureCount=2
+        // b1 和 c1 会失败，a1 成功 → successCount=1, failureCount=2
         final repo = _repo(failureRosterIds: {'b1', 'c1'});
         final provider = RosterProvider(repo);
 
         late Object caughtError;
         try {
           await provider.updateRosters([rosterA, rosterB, rosterC]);
-          fail('應拋出 PartialUpdateException');
+          fail('应抛出 PartialUpdateException');
         } catch (e) {
           caughtError = e;
         }
@@ -162,14 +162,14 @@ void main() {
       },
     );
 
-    test('updateRosters 全部失敗時 successCount=0、failureCount=3', () async {
+    test('updateRosters 全部失败时 successCount=0、failureCount=3', () async {
       final repo = _repo(failureRosterIds: {'a1', 'b1', 'c1'});
       final provider = RosterProvider(repo);
 
       late Object caughtError;
       try {
         await provider.updateRosters([rosterA, rosterB, rosterC]);
-        fail('應拋出 PartialUpdateException');
+        fail('应抛出 PartialUpdateException');
       } catch (e) {
         caughtError = e;
       }
@@ -181,7 +181,7 @@ void main() {
       expect(ex.failedRosters.length, 3);
     });
 
-    test('updateRosters 全部成功時不拋例外', () async {
+    test('updateRosters 全部成功时不抛例外', () async {
       final repo = _repo(failureRosterIds: {});
       final provider = RosterProvider(repo);
 

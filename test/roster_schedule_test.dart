@@ -19,8 +19,8 @@ void configure({
     'services': [
       {
         'id': 'midweek',
-        'label': '週間',
-        'name': '週間聚會',
+        'label': '周间',
+        'name': '周间聚会',
         'weekday': weekday,
         'enabled': enabled,
       },
@@ -92,7 +92,7 @@ void main() {
         isTrue,
       );
       expect(result.map((r) => r.type.name), everyElement('midweek'));
-      expect(result.first.serviceName, '週間聚會');
+      expect(result.first.serviceName, '周间聚会');
       expect(result.first.duties.single.people, ['待定']);
       expect(result.first.id, endsWith('_midweek'));
     }
@@ -106,11 +106,11 @@ void main() {
         id: 'old',
         date: DateTime.utc(2026, 10, 7),
         type: const ServiceType('midweek'),
-        serviceName: '舊名稱',
+        serviceName: '旧名称',
         duties: [],
       );
       expect(plan(DateTime.utc(2026, 10, 1), existing: [old]), isEmpty);
-      expect(old.serviceName, '舊名稱');
+      expect(old.serviceName, '旧名称');
     },
   );
 
@@ -122,7 +122,7 @@ void main() {
         id: '20261007_midweek',
         date: DateTime.utc(2026, 10, 7),
         type: const ServiceType('midweek'),
-        serviceName: '舊名稱',
+        serviceName: '旧名称',
         duties: [
           RosterEntry(role: '招待', people: ['Test Person']),
         ],
@@ -144,7 +144,7 @@ void main() {
       id: '20260930_midweek',
       date: DateTime.utc(2026, 9, 30),
       type: const ServiceType('midweek'),
-      serviceName: '週間',
+      serviceName: '周间',
       duties: [],
     );
     expect(

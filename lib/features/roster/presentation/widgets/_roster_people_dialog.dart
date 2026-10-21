@@ -4,10 +4,10 @@ part of 'roster_card.dart';
 // _PeopleOptions – data class used by RosterCard and _RosterPeopleDialog
 // ---------------------------------------------------------------------------
 
-/// 選人視窗送出的一項服事。
+/// 选人视窗送出的一项服事。
 ///
-/// [ranking] 只在有人拖過順序時才有值：候選名單裡名單上的同工由前到後，要
-/// 存成這個服事項目的同工排序。沒拖過就是 null，不必寫排序。
+/// [ranking] 只在有人拖过顺序时才有值：候选名单里名单上的同工由前到后，要
+/// 存成这个服事项目的同工排序。没拖过就是 null，不必写排序。
 typedef _PeopleSelection = ({
   String role,
   List<String> people,
@@ -38,7 +38,7 @@ class _RosterPeopleDialog extends StatefulWidget {
   final List<String> roleOptions;
   final String? initialRole;
 
-  /// 候選名單，已經照同工排序排好（見 [RosterProvider.staffOrderFor]）。
+  /// 候选名单，已经照同工排序排好（见 [RosterProvider.staffOrderFor]）。
   final Future<_PeopleOptions> Function(String? role) peopleLoader;
   final List<String> initialPeople;
   final Map<String, String> initialPersonIdsByName;
@@ -48,8 +48,8 @@ class _RosterPeopleDialog extends StatefulWidget {
   final bool roleEditable;
   final bool useBottomSheet;
 
-  /// 有值時，視窗裡會多一顆「與其他日期交換」。編輯既有服事項目才給 ——
-  /// 還不存在的項目沒有東西可以拿去換。
+  /// 有值时，视窗里会多一颗「与其他日期交换」。编辑既有服事项目才给 ——
+  /// 还不存在的项目没有东西可以拿去换。
   final VoidCallback? onSwap;
 
   const _RosterPeopleDialog({
@@ -79,7 +79,7 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
   List<String> _options = const [placeholderPerson];
   bool _optionsInitialized = false;
 
-  /// 拖過順序了嗎。拖曳改的是這個服事項目在每一週的順序，不只這一天。
+  /// 拖过顺序了吗。拖曳改的是这个服事项目在每一周的顺序，不只这一天。
   bool _orderChanged = false;
   Set<String> _allUserNames = const {};
   Map<String, String> _userIdsByName = const {};
@@ -111,18 +111,18 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
     _initialSelection = Set<String>.from(_selectedPeople);
   }
 
-  /// 進場時勾了誰。按「與其他日期交換」會關掉這張視窗，關掉之前要拿它比對
-  /// 有沒有還沒存的改動。
+  /// 进场时勾了谁。按「与其他日期交换」会关掉这张视窗，关掉之前要拿它比对
+  /// 有没有还没存的改动。
   late final Set<String> _initialSelection;
 
-  /// 勾選或順序跟進場時不一樣了嗎。
+  /// 勾选或顺序跟进场时不一样了吗。
   bool get _hasUnsavedChanges {
-    // 名單還沒載進來時 _options 只有一個「待定」，這時候算出來的勾選一定跟
-    // 進場時不一樣，會誤判成「改過」而多跳一次確認。
+    // 名单还没载进来时 _options 只有一个「待定」，这时候算出来的勾选一定跟
+    // 进场时不一样，会误判成「改过」而多跳一次确认。
     if (!_optionsInitialized) return false;
     final selected = _buildSelectedPeople(_options);
-    // 「沒有人」在 _buildSelectedPeople 會被補成 ['待定']，而 _initialSelection
-    // 是原始勾選（可能是空的），兩邊都先把佔位符拿掉才比得準。
+    // 「没有人」在 _buildSelectedPeople 会被补成 ['待定']，而 _initialSelection
+    // 是原始勾选（可能是空的），两边都先把占位符拿掉才比得准。
     final selectedSet = selected.where((n) => n != placeholderPerson).toSet();
     final initialSet = _initialSelection
         .where((n) => n != placeholderPerson)
@@ -131,21 +131,21 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
     return _orderChanged;
   }
 
-  /// 未存的改動要被丟掉時先問一聲。交換會重寫這一項的人，帶不過去。
+  /// 未存的改动要被丢掉时先问一声。交换会重写这一项的人，带不过去。
   Future<bool> _confirmDiscardChanges() async {
     final discard = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('尚未儲存'),
-        content: const Text('這裡改的人員還沒儲存，去交換會丟掉這些改動。'),
+        title: const Text('尚未储存'),
+        content: const Text('这里改的人员还没储存，去交换会丢掉这些改动。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('留在這裡'),
+            child: const Text('留在这里'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('丟掉並交換'),
+            child: const Text('丢掉并交换'),
           ),
         ],
       ),
@@ -242,12 +242,12 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
       }).toList();
       if (changed) updates.add(roster.copyWith(duties: updatedDuties));
     }
-    // 一次送出而不是逐筆 await：逐筆的話中間一筆失敗，後面幾天就默默沒改。
-    // updateRosters 會把成功的先寫回畫面，再把失敗的報上來。
+    // 一次送出而不是逐笔 await：逐笔的话中间一笔失败，后面几天就默默没改。
+    // updateRosters 会把成功的先写回画面，再把失败的报上来。
     try {
       await provider.updateRosters(updates);
     } catch (e) {
-      showWriteFailure(messenger, '刪除', e);
+      showWriteFailure(messenger, '删除', e);
     }
   }
 
@@ -257,8 +257,8 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('確認刪除'),
-        content: Text('確定要刪除「$trimmed」嗎？'),
+        title: const Text('确认删除'),
+        content: Text('确定要删除「$trimmed」吗？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -266,7 +266,7 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: const Text('删除'),
           ),
         ],
       ),
@@ -291,7 +291,7 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
       ),
       builder: (context) {
         return SettingsBottomSheet(
-          title: '新增名單以外的人員',
+          title: '新增名单以外的人员',
           submitLabel: '加入',
           onSubmit: () {
             _addCustomName();
@@ -300,7 +300,7 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
           child: TextField(
             controller: _customController,
             decoration: InputDecoration(
-              hintText: '例：外請講員',
+              hintText: '例：外请讲员',
               isDense: true,
               filled: true,
               fillColor: Theme.of(
@@ -399,8 +399,8 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
     widget.onSubmit((
       role: role,
       people: selected,
-      // 只收名單上的同工：外請講員這類名字寫進固定排序的話，之後新加入的
-      // 同工都會排在他們後面。他們本來就拖不動（見 onReorder）。
+      // 只收名单上的同工：外请讲员这类名字写进固定排序的话，之后新加入的
+      // 同工都会排在他们后面。他们本来就拖不动（见 onReorder）。
       ranking: _orderChanged
           ? StaffRanking(role, _options.where(_allUserNames.contains).toList())
           : null,
@@ -419,13 +419,13 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
         if (!widget.roleEditable)
           TextField(
             controller: _roleController,
-            decoration: const InputDecoration(labelText: '職位名稱'),
+            decoration: const InputDecoration(labelText: '职位名称'),
             enabled: false,
           ),
         if (canSelectRole)
           DropdownButtonFormField<String>(
             initialValue: _selectedRole,
-            decoration: const InputDecoration(labelText: '服事項目'),
+            decoration: const InputDecoration(labelText: '服事项目'),
             items: widget.roleOptions.map((role) {
               return DropdownMenuItem(value: role, child: Text(role));
             }).toList(),
@@ -434,7 +434,7 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
                 setState(() {
                   _selectedRole = value;
                   _peopleFuture = widget.peopleLoader(_selectedRole);
-                  // 換了服事項目就換了一份排序，前一項拖過的順序不能帶過來。
+                  // 换了服事项目就换了一份排序，前一项拖过的顺序不能带过来。
                   _optionsInitialized = false;
                   _orderChanged = false;
                 });
@@ -444,12 +444,12 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
         if (roleMissing)
           Builder(
             builder: (context) => Text(
-              '請先按右上角中間的清單圖示「服事項目設定」新增項目',
+              '请先按右上角中间的清单图示「服事项目设定」新增项目',
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
-        // 換班的入口。原本是服事列上的一顆 ⇄，但那顆佔掉的 44px 讓名字欄只
-        // 剩 142px，三個名字就被擠成兩行 —— 名字才是這個畫面天天在看的東西。
+        // 换班的入口。原本是服事列上的一颗 ⇄，但那颗占掉的 44px 让名字栏只
+        // 剩 142px，三个名字就被挤成两行 —— 名字才是这个画面天天在看的东西。
         if (widget.onSwap != null)
           Align(
             alignment: Alignment.centerLeft,
@@ -459,19 +459,19 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
                   return;
                 }
                 if (!mounted) return;
-                // 先關掉這張 sheet：兩張疊著的話，換完回來的還是舊資料。
+                // 先关掉这张 sheet：两张叠著的话，换完回来的还是旧资料。
                 Navigator.of(this.context).pop();
                 widget.onSwap!();
               },
               icon: const Icon(Icons.swap_horiz, size: 18),
-              label: const Text('與其他日期交換'),
+              label: const Text('与其他日期交换'),
             ),
           ),
         const SizedBox(height: 12),
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            '選擇同工（拖曳排序會套用到每一週）',
+            '选择同工（拖曳排序会套用到每一周）',
             style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
           ),
         ),
@@ -485,7 +485,7 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return Center(child: Text('載入同工名單失敗: ${snapshot.error}'));
+                return Center(child: Text('载入同工名单失败: ${snapshot.error}'));
               }
 
               final data = snapshot.data;
@@ -510,8 +510,8 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
                   buildDefaultDragHandles: true,
                   onReorder: (oldIndex, newIndex) {
                     final name = _options[oldIndex];
-                    // 待定與名單外的人不進固定排序，拖了也存不起來，乾脆
-                    // 不給拖 —— 否則畫面上排好的位置存完就跳回去。
+                    // 待定与名单外的人不进固定排序，拖了也存不起来，干脆
+                    // 不给拖 —— 否则画面上排好的位置存完就跳回去。
                     if (!_isRankable(name)) return;
                     setState(() {
                       if (newIndex > oldIndex) {
@@ -539,7 +539,7 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
                         children: [
                           if (isCustom)
                             IconButton(
-                              tooltip: '刪除自訂項目',
+                              tooltip: '删除自订项目',
                               constraints: const BoxConstraints(
                                 minWidth: 48,
                                 minHeight: 48,
@@ -562,7 +562,7 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
                   },
                 ),
               );
-              // 只剩「待定」時，新手看不出是哪個設定沒做，直接說要去哪裡勾。
+              // 只剩「待定」时，新手看不出是哪个设定没做，直接说要去哪里勾。
               final hasCandidates = (data?.options ?? const <String>[]).any(
                 (name) => name != placeholderPerson,
               );
@@ -574,10 +574,10 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
                       role.isEmpty
-                          ? '先選擇服事項目，才會列出可以排的同工。'
-                          : '還沒有同工可排「$role」。請到「我的」→「帳號管理」編輯同工，'
-                                '在「${widget.rosterType.label}」牧區的「參與服事」'
-                                '勾選「$role」，他就會出現在這裡。',
+                          ? '先选择服事项目，才会列出可以排的同工。'
+                          : '还没有同工可排「$role」。请到「我的」→「帐号管理」编辑同工，'
+                                '在「${widget.rosterType.label}」牧区的「参与服事」'
+                                '勾选「$role」，他就会出现在这里。',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,
@@ -596,7 +596,7 @@ class _RosterPeopleDialogState extends State<_RosterPeopleDialog> {
           child: TextButton.icon(
             onPressed: _showCustomInputSheet,
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('新增名單以外的人員'),
+            label: const Text('新增名单以外的人员'),
           ),
         ),
       ],

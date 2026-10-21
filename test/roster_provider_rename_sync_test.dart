@@ -21,10 +21,10 @@ void main() {
             type: ServiceType.sundayService,
             serviceName: '主日崇拜',
             duties: [
-              RosterEntry(role: '領會', people: const ['A']),
-              RosterEntry(role: '講員', people: const ['B']),
+              RosterEntry(role: '领会', people: const ['A']),
+              RosterEntry(role: '讲员', people: const ['B']),
             ],
-            specialEvents: const ['聖餐主日'],
+            specialEvents: const ['圣餐主日'],
           ),
           ServiceRoster(
             id: 'youth-1',
@@ -32,22 +32,22 @@ void main() {
             type: ServiceType.youth,
             serviceName: '青年崇拜',
             duties: [
-              RosterEntry(role: '領會', people: const ['Y']),
+              RosterEntry(role: '领会', people: const ['Y']),
             ],
-            specialEvents: const ['聖餐主日'],
+            specialEvents: const ['圣餐主日'],
           ),
         ],
         templates: {
-          ServiceType.sundayService: ['領會', '講員'],
-          ServiceType.youth: ['領會'],
+          ServiceType.sundayService: ['领会', '讲员'],
+          ServiceType.youth: ['领会'],
           ServiceType.children: const [],
         },
         eventOptions: {
           ServiceType.sundayService: const [
-            EventOption(name: '聖餐主日', color: 0xFFF39C12),
+            EventOption(name: '圣餐主日', color: 0xFFF39C12),
           ],
           ServiceType.youth: const [
-            EventOption(name: '聖餐主日', color: 0xFFF39C12),
+            EventOption(name: '圣餐主日', color: 0xFFF39C12),
           ],
           ServiceType.children: const [],
         },
@@ -61,12 +61,12 @@ void main() {
       () async {
         await provider.updateTemplates(
           {
-            ServiceType.sundayService: ['敬拜主領', '講員'],
-            ServiceType.youth: ['領會'],
+            ServiceType.sundayService: ['敬拜主领', '讲员'],
+            ServiceType.youth: ['领会'],
             ServiceType.children: const [],
           },
           renamedRolesByType: {
-            ServiceType.sundayService: {'領會': '敬拜主領'},
+            ServiceType.sundayService: {'领会': '敬拜主领'},
           },
         );
 
@@ -75,8 +75,8 @@ void main() {
             .first;
         final youth = provider.getRostersByType(ServiceType.youth).first;
 
-        expect(sunday.duties.map((d) => d.role), ['敬拜主領', '講員']);
-        expect(youth.duties.map((d) => d.role), ['領會']);
+        expect(sunday.duties.map((d) => d.role), ['敬拜主领', '讲员']);
+        expect(youth.duties.map((d) => d.role), ['领会']);
       },
     );
 
@@ -84,35 +84,35 @@ void main() {
       await provider.updateEventOptions(
         {
           ServiceType.sundayService: const [
-            EventOption(name: '聖餐', color: 0xFFF39C12),
+            EventOption(name: '圣餐', color: 0xFFF39C12),
           ],
           ServiceType.youth: const [
-            EventOption(name: '聖餐主日', color: 0xFFF39C12),
+            EventOption(name: '圣餐主日', color: 0xFFF39C12),
           ],
           ServiceType.children: const [],
         },
         renamedEventsByType: {
-          ServiceType.sundayService: {'聖餐主日': '聖餐'},
+          ServiceType.sundayService: {'圣餐主日': '圣餐'},
         },
       );
 
       final sunday = provider.getRostersByType(ServiceType.sundayService).first;
       final youth = provider.getRostersByType(ServiceType.youth).first;
 
-      expect(sunday.specialEvents, ['聖餐']);
-      expect(youth.specialEvents, ['聖餐主日']);
+      expect(sunday.specialEvents, ['圣餐']);
+      expect(youth.specialEvents, ['圣餐主日']);
     });
   });
 
-  group('RosterProvider 刪除服事項目', () {
+  group('RosterProvider 删除服事项目', () {
     ServiceRoster youth(String id, DateTime date) => ServiceRoster(
       id: id,
       date: date,
       type: ServiceType.youth,
       serviceName: '青年崇拜',
       duties: [
-        RosterEntry(role: '領會', people: const ['Y']),
-        RosterEntry(role: '報告', people: const ['R']),
+        RosterEntry(role: '领会', people: const ['Y']),
+        RosterEntry(role: '报告', people: const ['R']),
       ],
     );
 
@@ -131,19 +131,19 @@ void main() {
             type: ServiceType.sundayService,
             serviceName: '主日崇拜',
             duties: [
-              RosterEntry(role: '報告', people: const ['S']),
+              RosterEntry(role: '报告', people: const ['S']),
             ],
           ),
         ],
         templates: {
-          ServiceType.sundayService: ['報告'],
-          ServiceType.youth: ['領會', '報告'],
+          ServiceType.sundayService: ['报告'],
+          ServiceType.youth: ['领会', '报告'],
           ServiceType.children: const [],
         },
         staffOrders: {
           ServiceType.youth: StaffOrder({
-            '領會': ['Y', 'Z'],
-            '報告': ['R', 'Q'],
+            '领会': ['Y', 'Z'],
+            '报告': ['R', 'Q'],
           }),
         },
       );
@@ -160,52 +160,52 @@ void main() {
     ];
 
     Future<void> dropYouthReport() => provider.updateTemplates({
-      ServiceType.sundayService: ['報告'],
-      ServiceType.youth: ['領會'],
+      ServiceType.sundayService: ['报告'],
+      ServiceType.youth: ['领会'],
       ServiceType.children: const [],
     });
 
-    test('今天以後的服事表拿掉那一項，過去的不動', () async {
+    test('今天以后的服事表拿掉那一项，过去的不动', () async {
       await dropYouthReport();
 
-      expect(rolesOf('last-week'), ['領會', '報告']);
-      expect(rolesOf('today'), ['領會']);
-      expect(rolesOf('next-week'), ['領會']);
+      expect(rolesOf('last-week'), ['领会', '报告']);
+      expect(rolesOf('today'), ['领会']);
+      expect(rolesOf('next-week'), ['领会']);
     });
 
-    test('只刪那個崇拜的：別的崇拜同名的項目還在', () async {
+    test('只删那个崇拜的：别的崇拜同名的项目还在', () async {
       await dropYouthReport();
 
-      expect(rolesOf('sunday'), ['報告']);
+      expect(rolesOf('sunday'), ['报告']);
     });
 
-    test('存著的排序也刪掉那一項', () async {
+    test('存著的排序也删掉那一项', () async {
       await dropYouthReport();
 
       final order = repository.staffOrders[ServiceType.youth]!;
-      expect(order.rankingOf('報告'), isEmpty);
-      expect(order.rankingOf('領會'), ['Y', 'Z']);
+      expect(order.rankingOf('报告'), isEmpty);
+      expect(order.rankingOf('领会'), ['Y', 'Z']);
     });
 
-    test('改名不算刪除：服事表上的人跟著新名字走', () async {
+    test('改名不算删除：服事表上的人跟著新名字走', () async {
       await provider.updateTemplates(
         {
-          ServiceType.sundayService: ['報告'],
-          ServiceType.youth: ['領會', '宣布'],
+          ServiceType.sundayService: ['报告'],
+          ServiceType.youth: ['领会', '宣布'],
           ServiceType.children: const [],
         },
         renamedRolesByType: {
-          ServiceType.youth: {'報告': '宣布'},
+          ServiceType.youth: {'报告': '宣布'},
         },
       );
 
-      expect(rolesOf('next-week'), ['領會', '宣布']);
-      expect(rolesOf('last-week'), ['領會', '宣布']);
+      expect(rolesOf('next-week'), ['领会', '宣布']);
+      expect(rolesOf('last-week'), ['领会', '宣布']);
     });
   });
 
-  // 寫入失敗一律往上丟，不進 error：編輯頁一看到 error 就把整頁換成錯誤畫面。
-  group('RosterProvider 寫入失敗', () {
+  // 写入失败一律往上丢，不进 error：编辑页一看到 error 就把整页换成错误画面。
+  group('RosterProvider 写入失败', () {
     late InMemoryRosterRepository repository;
     late RosterProvider provider;
 
@@ -215,9 +215,9 @@ void main() {
       type: type,
       serviceName: '崇拜',
       duties: [
-        RosterEntry(role: '領會', people: const ['A']),
+        RosterEntry(role: '领会', people: const ['A']),
       ],
-      specialEvents: const ['聖餐主日'],
+      specialEvents: const ['圣餐主日'],
     );
 
     setUp(() async {
@@ -227,15 +227,15 @@ void main() {
           roster('youth-1', ServiceType.youth),
         ],
         templates: {
-          ServiceType.sundayService: ['領會'],
-          ServiceType.youth: ['領會'],
+          ServiceType.sundayService: ['领会'],
+          ServiceType.youth: ['领会'],
         },
       );
       provider = RosterProvider(repository);
       await provider.fetchInitialData();
     });
 
-    test('updateRoster 失敗時丟出來，本地不動，error 仍是 null', () async {
+    test('updateRoster 失败时丢出来，本地不动，error 仍是 null', () async {
       repository.failRosterIds = {'sun-1'};
       final before = provider.getRostersByType(ServiceType.sundayService).first;
 
@@ -250,40 +250,40 @@ void main() {
             .getRostersByType(ServiceType.sundayService)
             .first
             .specialEvents,
-        ['聖餐主日'],
+        ['圣餐主日'],
       );
     });
 
-    test('樣板寫入失敗時丟出來，樣板不變', () async {
+    test('样板写入失败时丢出来，样板不变', () async {
       repository.failTemplateWrite = StateError('permission-denied');
 
       await expectLater(
         provider.updateTemplates({
-          ServiceType.sundayService: ['敬拜主領'],
+          ServiceType.sundayService: ['敬拜主领'],
         }),
         throwsStateError,
       );
 
       expect(provider.error, isNull);
-      expect(provider.templates[ServiceType.sundayService], ['領會']);
+      expect(provider.templates[ServiceType.sundayService], ['领会']);
     });
 
-    test('改名同步部分失敗：成功的那幾天照改，丟 PartialUpdateException', () async {
+    test('改名同步部分失败：成功的那几天照改，丢 PartialUpdateException', () async {
       repository.failRosterIds = {'youth-1'};
 
       await expectLater(
         provider.updateEventOptions(
           {
             ServiceType.sundayService: const [
-              EventOption(name: '聖餐', color: 0xFFF39C12),
+              EventOption(name: '圣餐', color: 0xFFF39C12),
             ],
             ServiceType.youth: const [
-              EventOption(name: '聖餐', color: 0xFFF39C12),
+              EventOption(name: '圣餐', color: 0xFFF39C12),
             ],
           },
           renamedEventsByType: {
-            ServiceType.sundayService: {'聖餐主日': '聖餐'},
-            ServiceType.youth: {'聖餐主日': '聖餐'},
+            ServiceType.sundayService: {'圣餐主日': '圣餐'},
+            ServiceType.youth: {'圣餐主日': '圣餐'},
           },
         ),
         throwsA(
@@ -294,21 +294,21 @@ void main() {
       );
 
       expect(provider.error, isNull);
-      expect(repository.eventOptionWrites, 1, reason: '活動清單本身已寫入');
+      expect(repository.eventOptionWrites, 1, reason: '活动清单本身已写入');
       expect(
         provider
             .getRostersByType(ServiceType.sundayService)
             .first
             .specialEvents,
-        ['聖餐'],
+        ['圣餐'],
       );
       expect(provider.getRostersByType(ServiceType.youth).first.specialEvents, [
-        '聖餐主日',
+        '圣餐主日',
       ]);
     });
   });
 
-  group('RosterProvider.addEventOption（匯入結果的「加入活動清單」）', () {
+  group('RosterProvider.addEventOption（汇入结果的「加入活动清单」）', () {
     late InMemoryRosterRepository repository;
     late RosterProvider provider;
 
@@ -318,10 +318,10 @@ void main() {
         templates: const {},
         eventOptions: {
           ServiceType.sundayService: [
-            EventOption(name: '聖餐', color: eventColorPalette[0]),
+            EventOption(name: '圣餐', color: eventColorPalette[0]),
           ],
           ServiceType.youth: [
-            EventOption(name: '聖餐', color: eventColorPalette[0]),
+            EventOption(name: '圣餐', color: eventColorPalette[0]),
           ],
         },
       );
@@ -329,86 +329,86 @@ void main() {
       await provider.fetchInitialData();
     });
 
-    test('加在那個崇拜的清單最後，顏色挑還沒用過的', () async {
+    test('加在那个崇拜的清单最后，颜色挑还没用过的', () async {
       final added = await provider.addEventOption(
         ServiceType.sundayService,
-        '孩童奉獻禮',
+        '孩童奉献礼',
       );
 
       expect(added.color, eventColorPalette[1]);
       final saved = (await repository
           .getEventOptions())[ServiceType.sundayService]!;
-      expect(saved.map((o) => o.name), ['聖餐', '孩童奉獻禮']);
+      expect(saved.map((o) => o.name), ['圣餐', '孩童奉献礼']);
     });
 
-    test('加完馬上查得到顏色，已經匯入的那幾天不必重匯', () async {
-      await provider.addEventOption(ServiceType.sundayService, '孩童奉獻禮');
+    test('加完马上查得到颜色，已经汇入的那几天不必重汇', () async {
+      await provider.addEventOption(ServiceType.sundayService, '孩童奉献礼');
       expect(
-        provider.eventColorFor(ServiceType.sundayService, '孩童奉獻禮'),
+        provider.eventColorFor(ServiceType.sundayService, '孩童奉献礼'),
         eventColorPalette[1],
       );
     });
 
-    test('別的崇拜的清單不受影響', () async {
-      await provider.addEventOption(ServiceType.sundayService, '孩童奉獻禮');
+    test('别的崇拜的清单不受影响', () async {
+      await provider.addEventOption(ServiceType.sundayService, '孩童奉献礼');
       final youth = (await repository.getEventOptions())[ServiceType.youth]!;
-      expect(youth.map((o) => o.name), ['聖餐']);
+      expect(youth.map((o) => o.name), ['圣餐']);
     });
 
-    test('已經有同名的就不再寫，重按不會多一筆', () async {
-      await provider.addEventOption(ServiceType.sundayService, '孩童奉獻禮');
-      await provider.addEventOption(ServiceType.sundayService, '孩童奉獻禮');
+    test('已经有同名的就不再写，重按不会多一笔', () async {
+      await provider.addEventOption(ServiceType.sundayService, '孩童奉献礼');
+      await provider.addEventOption(ServiceType.sundayService, '孩童奉献礼');
       expect(repository.eventOptionWrites, 1);
     });
 
-    test('別台裝置在這段期間加的活動不會被蓋掉', () async {
-      // 這台的快取還停在載入時；另一台裝置已經在青崇加了一個活動。
+    test('别台装置在这段期间加的活动不会被盖掉', () async {
+      // 这台的快取还停在载入时；另一台装置已经在青崇加了一个活动。
       await repository.updateEventOptions({
         ...await repository.getEventOptions(),
         ServiceType.youth: [
-          EventOption(name: '聖餐', color: eventColorPalette[0]),
+          EventOption(name: '圣餐', color: eventColorPalette[0]),
           EventOption(name: '迎新', color: eventColorPalette[1]),
         ],
       });
 
-      await provider.addEventOption(ServiceType.sundayService, '孩童奉獻禮');
+      await provider.addEventOption(ServiceType.sundayService, '孩童奉献礼');
 
       final youth = (await repository.getEventOptions())[ServiceType.youth]!;
-      expect(youth.map((o) => o.name), ['聖餐', '迎新']);
+      expect(youth.map((o) => o.name), ['圣餐', '迎新']);
     });
 
-    test('別台裝置已經加過同名的，就不再寫，但這台也看得到顏色', () async {
+    test('别台装置已经加过同名的，就不再写，但这台也看得到颜色', () async {
       await repository.updateEventOptions({
         ...await repository.getEventOptions(),
         ServiceType.sundayService: [
-          EventOption(name: '聖餐', color: eventColorPalette[0]),
-          EventOption(name: '孩童奉獻禮', color: eventColorPalette[4]),
+          EventOption(name: '圣餐', color: eventColorPalette[0]),
+          EventOption(name: '孩童奉献礼', color: eventColorPalette[4]),
         ],
       });
       final writes = repository.eventOptionWrites;
 
       final result = await provider.addEventOption(
         ServiceType.sundayService,
-        '孩童奉獻禮',
+        '孩童奉献礼',
       );
 
       expect(result.color, eventColorPalette[4]);
       expect(repository.eventOptionWrites, writes);
       expect(
-        provider.eventColorFor(ServiceType.sundayService, '孩童奉獻禮'),
+        provider.eventColorFor(ServiceType.sundayService, '孩童奉献礼'),
         eventColorPalette[4],
       );
     });
 
-    test('寫入失敗時丟例外，而且清單維持原樣', () async {
+    test('写入失败时丢例外，而且清单维持原样', () async {
       repository.failEventOptionWrite = StateError('permission-denied');
       await expectLater(
-        provider.addEventOption(ServiceType.sundayService, '孩童奉獻禮'),
+        provider.addEventOption(ServiceType.sundayService, '孩童奉献礼'),
         throwsStateError,
       );
       expect(
         provider.eventOptionsFor(ServiceType.sundayService).map((o) => o.name),
-        ['聖餐'],
+        ['圣餐'],
       );
     });
   });

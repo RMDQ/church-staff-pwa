@@ -45,81 +45,81 @@ Future<void> _pump(WidgetTester tester, InstallHintService service) async {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('iPhone 在瀏覽器裡：教他用 Safari 加入主畫面，沒有安裝按鈕', (tester) async {
+  testWidgets('iPhone 在浏览器里：教他用 Safari 加入主画面，没有安装按钮', (tester) async {
     await _pump(
       tester,
       _FakeHints(_hint(InstallPlatform.ios, browser: InstallBrowser.safari)),
     );
-    expect(find.text('把這個網站加到手機桌面'), findsOneWidget);
+    expect(find.text('把这个网站加到手机桌面'), findsOneWidget);
     expect(
-      find.textContaining('下方工具列的分享圖示', findRichText: true),
+      find.textContaining('下方工具列的分享图示', findRichText: true),
       findsOneWidget,
     );
     expect(find.byIcon(Icons.ios_share), findsOneWidget);
-    expect(find.textContaining('加入主畫面', findRichText: true), findsOneWidget);
-    expect(find.textContaining('從桌面的圖示打開', findRichText: true), findsOneWidget);
-    expect(find.text('安裝到手機'), findsNothing);
+    expect(find.textContaining('加入主画面', findRichText: true), findsOneWidget);
+    expect(find.textContaining('从桌面的图示打开', findRichText: true), findsOneWidget);
+    expect(find.text('安装到手机'), findsNothing);
   });
 
-  testWidgets('Android 有 beforeinstallprompt：按安裝，接受後卡片消失', (tester) async {
+  testWidgets('Android 有 beforeinstallprompt：按安装，接受后卡片消失', (tester) async {
     final hints = _FakeHints(_hint(InstallPlatform.android, canPrompt: true));
     await _pump(tester, hints);
-    await tester.tap(find.text('安裝到手機'));
+    await tester.tap(find.text('安装到手机'));
     await tester.pumpAndSettle();
     expect(hints.prompts, 1);
-    expect(find.text('把這個網站加到手機桌面'), findsNothing);
+    expect(find.text('把这个网站加到手机桌面'), findsNothing);
   });
 
-  testWidgets('Android 按了安裝又取消：卡片留著', (tester) async {
+  testWidgets('Android 按了安装又取消：卡片留著', (tester) async {
     final hints = _FakeHints(
       _hint(InstallPlatform.android, canPrompt: true),
       accept: false,
     );
     await _pump(tester, hints);
-    await tester.tap(find.text('安裝到手機'));
+    await tester.tap(find.text('安装到手机'));
     await tester.pumpAndSettle();
-    expect(find.text('把這個網站加到手機桌面'), findsOneWidget);
+    expect(find.text('把这个网站加到手机桌面'), findsOneWidget);
   });
 
-  testWidgets('iPhone 的 Chrome：分享圖示在網址列右邊', (tester) async {
+  testWidgets('iPhone 的 Chrome：分享图示在网址列右边', (tester) async {
     await _pump(
       tester,
       _FakeHints(_hint(InstallPlatform.ios, browser: InstallBrowser.chrome)),
     );
     expect(
-      find.textContaining('網址列右邊的分享圖示', findRichText: true),
+      find.textContaining('网址列右边的分享图示', findRichText: true),
       findsOneWidget,
     );
   });
 
-  testWidgets('Android 沒有安裝事件：改教他用 Chrome 選單', (tester) async {
+  testWidgets('Android 没有安装事件：改教他用 Chrome 选单', (tester) async {
     await _pump(tester, _FakeHints(_hint(InstallPlatform.android)));
-    expect(find.textContaining('右上角的選單', findRichText: true), findsOneWidget);
+    expect(find.textContaining('右上角的选单', findRichText: true), findsOneWidget);
     expect(find.byIcon(Icons.more_vert), findsOneWidget);
-    expect(find.text('安裝到手機'), findsNothing);
+    expect(find.text('安装到手机'), findsNothing);
   });
 
-  testWidgets('已經從主畫面打開、或是桌機：不顯示', (tester) async {
+  testWidgets('已经从主画面打开、或是桌机：不显示', (tester) async {
     await _pump(
       tester,
       _FakeHints(_hint(InstallPlatform.ios, standalone: true)),
     );
-    expect(find.text('把這個網站加到手機桌面'), findsNothing);
+    expect(find.text('把这个网站加到手机桌面'), findsNothing);
     await _pump(tester, _FakeHints(_hint(InstallPlatform.other)));
-    expect(find.text('把這個網站加到手機桌面'), findsNothing);
+    expect(find.text('把这个网站加到手机桌面'), findsNothing);
   });
 
-  testWidgets('按「不用了」之後，這台裝置就不再提醒', (tester) async {
+  testWidgets('按「不用了」之后，这台装置就不再提醒', (tester) async {
     final hints = _FakeHints(_hint(InstallPlatform.ios));
     await _pump(tester, hints);
     await tester.tap(find.text('不用了'));
     await tester.pumpAndSettle();
-    expect(find.text('把這個網站加到手機桌面'), findsNothing);
+    expect(find.text('把这个网站加到手机桌面'), findsNothing);
 
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool(AddToHomeCard.dismissedKey), isTrue);
     await tester.pumpWidget(const SizedBox());
     await _pump(tester, hints);
-    expect(find.text('把這個網站加到手機桌面'), findsNothing);
+    expect(find.text('把这个网站加到手机桌面'), findsNothing);
   });
 }

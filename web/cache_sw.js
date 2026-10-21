@@ -44,21 +44,21 @@ const CACHE_NAME = `church-staff-pwa-${CACHE_VERSION}`;
 const VENDOR_VERSION = '__VENDOR_VERSION__';
 const VENDOR_CACHE_NAME = `church-staff-pwa-vendor-${VENDOR_VERSION}`;
 
-// CanvasKit 內建字型不含中文字。遇到 bundle 裡沒有的字，engine 會在
-// runtime 去 fonts.gstatic.com 抓 Noto Sans TC/SC 的 subset —— 也就是說
-// 捲動到還沒載過的姓名時，會臨時發網路請求、解字型、重排版，直接表現成
-// 一格一格的卡頓。iOS 加到桌面的 PWA 又特別容易把 HTTP cache 清掉，
-// 所以每次冷啟動都可能重來一次。
+// CanvasKit 内建字型不含中文字。遇到 bundle 里没有的字，engine 会在
+// runtime 去 fonts.gstatic.com 抓 Noto Sans TC/SC 的 subset —— 也就是说
+// 卷动到还没载过的姓名时，会临时发网路请求、解字型、重排版，直接表现成
+// 一格一格的卡顿。iOS 加到桌面的 PWA 又特别容易把 HTTP cache 清掉，
+// 所以每次冷启动都可能重来一次。
 //
-// 這個 cache 不綁任何版本：字型 URL 本身就是內容定址（改版會換 URL），
-// 而且跟 App 或 Flutter 版本都無關，沒有理由跟著失效。
+// 这个 cache 不绑任何版本：字型 URL 本身就是内容定址（改版会换 URL），
+// 而且跟 App 或 Flutter 版本都无关，没有理由跟著失效。
 const FONT_CACHE_NAME = 'church-staff-pwa-fonts-v1';
 const FONT_HOSTNAMES = ['fonts.gstatic.com', 'fonts.googleapis.com'];
 
-// 字型 subset 是「每遇到一個新的 Unicode 範圍就多一個 URL」，沒有上限的話
-// 這個 cache 會一直長大。iOS 的每來源儲存配額很小，一旦超過，Safari 會把
-// 整個來源的 Cache Storage 清掉 —— 連 App 本體與引擎的快取一起賠進去。
-// 超過上限就從最舊的開始刪（Cache.keys() 依插入順序回傳）。
+// 字型 subset 是「每遇到一个新的 Unicode 范围就多一个 URL」，没有上限的话
+// 这个 cache 会一直长大。iOS 的每来源储存配额很小，一旦超过，Safari 会把
+// 整个来源的 Cache Storage 清掉 —— 连 App 本体与引擎的快取一起赔进去。
+// 超过上限就从最旧的开始删（Cache.keys() 依插入顺序回传）。
 const FONT_CACHE_MAX_ENTRIES = 64;
 
 // Same-origin path prefixes whose bytes are tied to the Flutter SDK version
@@ -80,21 +80,21 @@ const VENDOR_PATH_PREFIXES = ['/canvaskit/'];
 // users see updates promptly. Cached copy is the offline fallback.
 //
 // `/version.json` deliberately does NOT belong here — it falls through to
-// cacheFirst below. 個人頁的「更新於」讀的就是這份檔案，而那行字要回答的是
-// 「我手上這個 App 是哪一版」，不是「伺服器現在部署到哪一版」。CACHE_NAME 綁
-// build SHA，所以 cache-first 拿到的必定是「正在跑的那一版」隨 bundle 一起進
-// 快取的那份 —— 這正是 477ad89 的意圖（它把 version.json 的產生移到
-// `flutter build` 之前，就是為了讓它進得了這個快取）。
+// cacheFirst below. 个人页的「更新于」读的就是这份档案，而那行字要回答的是
+// 「我手上这个 App 是哪一版」，不是「伺服器现在部署到哪一版」。CACHE_NAME 绑
+// build SHA，所以 cache-first 拿到的必定是「正在跑的那一版」随 bundle 一起进
+// 快取的那份 —— 这正是 477ad89 的意图（它把 version.json 的产生移到
+// `flutter build` 之前，就是为了让它进得了这个快取）。
 //
-// 放進 network-first 會靜默撤銷那個修正：舊的 SW 還在服務舊的 main.dart.js，
-// version.json 卻是網路上最新的，畫面顯示「已更新」但跑的其實是舊 bundle ——
-// 一個裝置到底更新了沒有，就再也看不出來。實際踩過一次：一位使用者截圖顯示
-// 「更新於 10:51」，那正是伺服器部署完成的時間，跟他手機上跑的版本無關。
+// 放进 network-first 会静默撤销那个修正：旧的 SW 还在服务旧的 main.dart.js，
+// version.json 却是网路上最新的，画面显示「已更新」但跑的其实是旧 bundle ——
+// 一个装置到底更新了没有，就再也看不出来。实际踩过一次：一位使用者截图显示
+// 「更新于 10:51」，那正是伺服器部署完成的时间，跟他手机上跑的版本无关。
 //
-// 更新偵測不靠這個檔案，靠的是 SW 自己的 updatefound / SKIP_WAITING
-// （見 web/app_update.js），所以 cache-first 不會讓任何人卡在舊版。
-// `/app_update.js` 同理但反過來：它是「換到新版」那段交接程式碼，被自己的舊
-// 快取服務的話，卡住的裝置就再也救不回來（修好的交接流程永遠載不進去）。
+// 更新侦测不靠这个档案，靠的是 SW 自己的 updatefound / SKIP_WAITING
+// （见 web/app_update.js），所以 cache-first 不会让任何人卡在旧版。
+// `/app_update.js` 同理但反过来：它是「换到新版」那段交接程式码，被自己的旧
+// 快取服务的话，卡住的装置就再也救不回来（修好的交接流程永远载不进去）。
 const NETWORK_FIRST_PATHS = new Set([
   '/',
   '/index.html',
@@ -164,8 +164,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // 字型要擺在 never-cache 檢查之前：fonts.gstatic.com 也是 gstatic.com，
-  // 會被下面那條規則掃到。
+  // 字型要摆在 never-cache 检查之前：fonts.gstatic.com 也是 gstatic.com，
+  // 会被下面那条规则扫到。
   if (FONT_HOSTNAMES.includes(url.hostname)) {
     event.respondWith(cacheFirst(event, FONT_CACHE_NAME, trimFontCache));
     return;
@@ -222,35 +222,35 @@ async function cacheFirst(event, cacheName = CACHE_NAME, afterPut) {
   if (cached) return cached;
   const response = await fetch(request);
   if (response && response.ok) {
-    // 只回應、不 await 寫入，讓使用者不必等 cache.put 才拿到 bytes。
+    // 只回应、不 await 写入，让使用者不必等 cache.put 才拿到 bytes。
     event.waitUntil(persist(cache, request, response.clone(), afterPut));
   }
   return response;
 }
 
-// 寫入一定要包在 event.waitUntil 裡。respondWith 的 promise 一 resolve，
-// 這個 fetch event 就算處理完了，瀏覽器隨時可以把 service worker 收掉 ——
-// 沒被 waitUntil 追蹤的 cache.put 會跟著 SW 一起被砍，表現成「快取時有時無」，
-// 冷啟動一次抓進去好幾十個資產時特別容易中。
+// 写入一定要包在 event.waitUntil 里。respondWith 的 promise 一 resolve，
+// 这个 fetch event 就算处理完了，浏览器随时可以把 service worker 收掉 ——
+// 没被 waitUntil 追踪的 cache.put 会跟著 SW 一起被砍，表现成「快取时有时无」，
+// 冷启动一次抓进去好几十个资产时特别容易中。
 //
-// put 失敗（iOS 上最常見的是配額爆掉）之後仍然要跑 afterPut：字型 cache 正是
-// 靠 trim 縮回上限內的，把 trim 綁在成功路徑上等於「一超過配額就再也修不回來」，
-// 剛好在最需要它的時候失效。
+// put 失败（iOS 上最常见的是配额爆掉）之后仍然要跑 afterPut：字型 cache 正是
+// 靠 trim 缩回上限内的，把 trim 绑在成功路径上等于「一超过配额就再也修不回来」，
+// 刚好在最需要它的时候失效。
 async function persist(cache, request, response, afterPut) {
   try {
     await cache.put(request, response);
   } catch (_) {
-    // 寫不進去就算了，下次請求會重新抓。
+    // 写不进去就算了，下次请求会重新抓。
   }
   if (!afterPut) return;
   try {
     await afterPut(cache);
   } catch (_) {
-    // trim 失敗不影響已經回給頁面的回應。
+    // trim 失败不影响已经回给页面的回应。
   }
 }
 
-// 保留最新的 FONT_CACHE_MAX_ENTRIES 筆，其餘從最舊的開始刪。
+// 保留最新的 FONT_CACHE_MAX_ENTRIES 笔，其余从最旧的开始删。
 async function trimFontCache(cache) {
   const keys = await cache.keys();
   const excess = keys.length - FONT_CACHE_MAX_ENTRIES;

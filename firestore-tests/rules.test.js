@@ -1,9 +1,9 @@
-// firestore.rules 的安全規則測試，跑在 Firestore emulator 上。
+// firestore.rules 的安全规则测试，跑在 Firestore emulator 上。
 //
 //   cd firestore-tests && npm install && npm test
 //
-// 規則是唯一擋得住「繞過 App、直接用公開 web SDK 打 Firestore」的東西，
-// 所以每一條授權判斷都要有對應的測試。
+// 规则是唯一挡得住「绕过 App、直接用公开 web SDK 打 Firestore」的东西，
+// 所以每一条授权判断都要有对应的测试。
 import assert from 'node:assert';
 import defaults from '../worker/generated_config.js';
 import { renderRules } from '../scripts/prepare-deployment.mjs';
@@ -32,9 +32,9 @@ import {
   where,
 } from 'firebase/firestore';
 
-// 預設值要跟 firebase.json 的 emulators.firestore.port 一致。`npm test` 走
-// emulators:exec 會自己設好 FIRESTORE_EMULATOR_HOST，但手動起 emulator 再跑
-// `node --test rules.test.js` 時只剩這個預設值，寫錯 port 會變成連不上的怪錯誤。
+// 预设值要跟 firebase.json 的 emulators.firestore.port 一致。`npm test` 走
+// emulators:exec 会自己设好 FIRESTORE_EMULATOR_HOST，但手动起 emulator 再跑
+// `node --test rules.test.js` 时只剩这个预设值，写错 port 会变成连不上的怪错误。
 const [host, port] = (process.env.FIRESTORE_EMULATOR_HOST ?? '127.0.0.1:8181').split(':');
 
 let testEnv;
@@ -42,22 +42,22 @@ let testEnv;
 const ADMIN = 'admin-1';
 const MEMBER = 'member-1';
 const OTHER = 'member-2';
-// 編輯 group。刻意獨立於 OTHER：OTHER 的 role 會被「管理員可以調整別人的
-// role」那條測試改掉，借用它會讓這裡的斷言隨執行順序漂移。
+// 编辑 group。刻意独立于 OTHER：OTHER 的 role 会被「管理员可以调整别人的
+// role」那条测试改掉，借用它会让这里的断言随执行顺序漂移。
 //
-// 三個人的 role 全都不是 admin，而且 ROSTER_EDITOR 的 role 比 PLAIN_LEADER 還
-// 低 —— 這是刻意的，用來釘住「權限看 group 不看 role」。
-const ROSTER_EDITOR = 'roster-editor-1'; // 三個牧區都有
-// 只屬於青崇與兒主的編輯者。整組「編輯權不等於全部聚會別」的斷言靠他。
+// 三个人的 role 全都不是 admin，而且 ROSTER_EDITOR 的 role 比 PLAIN_LEADER 还
+// 低 —— 这是刻意的，用来钉住「权限看 group 不看 role」。
+const ROSTER_EDITOR = 'roster-editor-1'; // 三个牧区都有
+// 只属于青崇与儿主的编辑者。整组「编辑权不等于全部聚会别」的断言靠他。
 const YOUTH_EDITOR = 'youth-editor-1';
-// 有 roster-editors 但一個牧區都沒有 —— 也是所有既有帳號（沒有 zoneTypes
-// 欄位）的形狀，用來釘住「沒有牧區就什麼都改不動」。
+// 有 roster-editors 但一个牧区都没有 —— 也是所有既有帐号（没有 zoneTypes
+// 栏位）的形状，用来钉住「没有牧区就什么都改不动」。
 const ZONELESS_EDITOR = 'zoneless-editor-1';
 const CALENDAR_EDITOR = 'calendar-editor-1';
-const PLAIN_LEADER = 'plain-leader-1'; // 身分是小組長，但沒有任何 group
-const GRANTED = 'granted-1'; // 已經有 group，用來測收回
-const DELETED = 'deleted-1'; // 有 Auth token，但 users 文件已被管理員刪掉
-const LEGACY = 'legacy-1'; // 舊資料：users 文件存在但沒有 role 欄位
+const PLAIN_LEADER = 'plain-leader-1'; // 身分是小组长，但没有任何 group
+const GRANTED = 'granted-1'; // 已经有 group，用来测收回
+const DELETED = 'deleted-1'; // 有 Auth token，但 users 文件已被管理员删掉
+const LEGACY = 'legacy-1'; // 旧资料：users 文件存在但没有 role 栏位
 
 function userDoc(id, role, groups, zoneTypes) {
   const document = {
@@ -68,10 +68,10 @@ function userDoc(id, role, groups, zoneTypes) {
     role,
     zones: [],
   };
-  // 不傳就完全不寫這個欄位 —— 既有使用者全都是這個形狀，規則必須撐得住。
+  // 不传就完全不写这个栏位 —— 既有使用者全都是这个形状，规则必须撑得住。
   if (groups !== undefined) document.groups = groups;
-  // zones 攤平出來的投影（見 User.zoneTypes）：規則語言沒有迴圈，讀不出 zones
-  // 那個 map list 裡的 serviceType，所以牧區的判斷一律看這個欄位。
+  // zones 摊平出来的投影（见 User.zoneTypes）：规则语言没有回圈，读不出 zones
+  // 那个 map list 里的 serviceType，所以牧区的判断一律看这个栏位。
   if (zoneTypes !== undefined) document.zoneTypes = zoneTypes;
   return document;
 }
@@ -82,8 +82,8 @@ before(async () => {
     firestore: {
       rules: renderRules(readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8'), {
         ...defaults, services: [...defaults.services,
-          { id: 'midweek', label: '週中', name: '週中聚會', weekday: 3, enabled: true },
-          { id: 'retired', label: '舊聚會', name: '舊聚會', weekday: 1, enabled: false },
+          { id: 'midweek', label: '周中', name: '周中聚会', weekday: 3, enabled: true },
+          { id: 'retired', label: '旧聚会', name: '旧聚会', weekday: 1, enabled: false },
         ],
       }),
       host,
@@ -91,9 +91,9 @@ before(async () => {
     },
   });
 
-  // 一定要先清空：`npm test` 每次都是全新 emulator 所以看不出來，但只要對著
-  // 長時間開著的 emulator 重跑，上一輪殘留的 users/new-staff 之類文件就會讓
-  // 「建立帳號」的測試變成在打 update 規則，create 那幾條就悄悄失去偵測力。
+  // 一定要先清空：`npm test` 每次都是全新 emulator 所以看不出来，但只要对著
+  // 长时间开著的 emulator 重跑，上一轮残留的 users/new-staff 之类文件就会让
+  // 「建立帐号」的测试变成在打 update 规则，create 那几条就悄悄失去侦测力。
   await testEnv.clearFirestore();
 
   await testEnv.withSecurityRulesDisabled(async (context) => {
@@ -113,7 +113,7 @@ before(async () => {
       doc(db, 'users', YOUTH_EDITOR),
       userDoc(YOUTH_EDITOR, 'staff', ['roster-editors'], ['youth', 'children']),
     );
-    // zoneTypes 欄位完全不存在：既有帳號的形狀。
+    // zoneTypes 栏位完全不存在：既有帐号的形状。
     await setDoc(
       doc(db, 'users', ZONELESS_EDITOR),
       userDoc(ZONELESS_EDITOR, 'staff', ['roster-editors']),
@@ -126,37 +126,37 @@ before(async () => {
       doc(db, 'users', PLAIN_LEADER),
       userDoc(PLAIN_LEADER, 'leader'),
     );
-    // 「管理員可以把 group 收回成空陣列」要更新的對象。在這裡種下去而不是靠
-    // 前一條測試留下來的 —— clearFirestore() 只在 before() 跑一次，相依前一條
-    // 的話單獨執行那一條會 NOT_FOUND，看起來像 rules 壞了。
+    // 「管理员可以把 group 收回成空阵列」要更新的对象。在这里种下去而不是靠
+    // 前一条测试留下来的 —— clearFirestore() 只在 before() 跑一次，相依前一条
+    // 的话单独执行那一条会 NOT_FOUND，看起来像 rules 坏了。
     await setDoc(
       doc(db, 'users', GRANTED),
       userDoc(GRANTED, 'member', ['calendar-editors']),
     );
-    // 注意：DELETED 刻意沒有 users 文件。
+    // 注意：DELETED 刻意没有 users 文件。
     const legacy = userDoc(LEGACY, 'member');
     delete legacy.role;
     await setDoc(doc(db, 'users', LEGACY), legacy);
-    // users 底下不該有任何子集合可讀寫，靠最後的 default deny 擋。
+    // users 底下不该有任何子集合可读写，靠最后的 default deny 挡。
     await setDoc(doc(db, 'users', MEMBER, 'private', 'secret'), { pin: '1234' });
     await setDoc(doc(db, 'rosters', 'r1'), {
       serviceName: '主日崇拜',
       type: 'sundayService',
     });
-    // r2 專門給 list 查詢用：r1 會被「管理員可以改服事表」覆寫掉 date 欄位。
+    // r2 专门给 list 查询用：r1 会被「管理员可以改服事表」覆写掉 date 栏位。
     await setDoc(doc(db, 'rosters', 'r2'), {
       serviceName: '青年崇拜',
       type: 'youth',
       date: Timestamp.fromDate(new Date('2030-01-05T00:00:00Z')),
     });
-    // 兒主那本，專門留給青崇編輯者寫（不跟 r1/r2 的斷言互相覆寫）。
+    // 儿主那本，专门留给青崇编辑者写（不跟 r1/r2 的断言互相覆写）。
     await setDoc(doc(db, 'rosters', 'r3'), {
-      serviceName: '兒童主日學',
+      serviceName: '儿童主日学',
       type: 'children',
     });
-    // 沒有 type 欄位的舊資料：規則不該爆掉，而是只有 admin 動得了。
-    await setDoc(doc(db, 'rosters', 'legacy'), { serviceName: '沒有 type 的舊資料' });
-    // 刪除測試專用，一本一條，避免互相依賴執行順序。
+    // 没有 type 栏位的旧资料：规则不该爆掉，而是只有 admin 动得了。
+    await setDoc(doc(db, 'rosters', 'legacy'), { serviceName: '没有 type 的旧资料' });
+    // 删除测试专用，一本一条，避免互相依赖执行顺序。
     await setDoc(doc(db, 'rosters', 'doomed-youth'), {
       serviceName: '青年崇拜',
       type: 'youth',
@@ -166,7 +166,7 @@ before(async () => {
       type: 'sundayService',
     });
     await setDoc(doc(db, 'settings', 'roster_templates'), {
-      sundayService: ['領會'],
+      sundayService: ['领会'],
     });
   });
 });
@@ -190,42 +190,42 @@ const asPlainLeader = () =>
 const asDeleted = () => testEnv.authenticatedContext(DELETED).firestore();
 const asAnon = () => testEnv.unauthenticatedContext().firestore();
 
-describe('rosters / settings 讀取', () => {
-  it('一般同工讀得到服事表', async () => {
+describe('rosters / settings 读取', () => {
+  it('一般同工读得到服事表', async () => {
     await assertSucceeds(getDoc(doc(asMember(), 'rosters', 'r1')));
   });
 
-  it('一般同工讀得到 settings', async () => {
+  it('一般同工读得到 settings', async () => {
     await assertSucceeds(
       getDoc(doc(asMember(), 'settings', 'roster_templates')),
     );
   });
 
-  // 這是 isActiveUser() 存在的理由：後台刪帳號只刪 Firestore 文件，
-  // Firebase Auth 帳號還活著，token 仍然有效。
-  it('被刪掉的帳號讀不到服事表', async () => {
+  // 这是 isActiveUser() 存在的理由：后台删帐号只删 Firestore 文件，
+  // Firebase Auth 帐号还活著，token 仍然有效。
+  it('被删掉的帐号读不到服事表', async () => {
     await assertFails(getDoc(doc(asDeleted(), 'rosters', 'r1')));
   });
 
-  it('被刪掉的帳號讀不到 settings', async () => {
+  it('被删掉的帐号读不到 settings', async () => {
     await assertFails(
       getDoc(doc(asDeleted(), 'settings', 'roster_templates')),
     );
   });
 
-  it('未登入讀不到服事表', async () => {
+  it('未登入读不到服事表', async () => {
     await assertFails(getDoc(doc(asAnon(), 'rosters', 'r1')));
   });
 
-  it('未登入讀不到 settings', async () => {
+  it('未登入读不到 settings', async () => {
     await assertFails(getDoc(doc(asAnon(), 'settings', 'roster_templates')));
   });
 
-  // App 真正的讀取路徑是 collection query，不是單筆 getDoc
-  // （FirestoreRosterRepository.getUpcomingRosters）。只測 getDoc 的話，
-  // 把 rules 的 `allow read` 收窄成 `allow get` 也不會被抓到，但整個服事表
-  // 畫面會直接 permission-denied。
-  it('一般同工可以用 App 的查詢條件列出服事表', async () => {
+  // App 真正的读取路径是 collection query，不是单笔 getDoc
+  // （FirestoreRosterRepository.getUpcomingRosters）。只测 getDoc 的话，
+  // 把 rules 的 `allow read` 收窄成 `allow get` 也不会被抓到，但整个服事表
+  // 画面会直接 permission-denied。
+  it('一般同工可以用 App 的查询条件列出服事表', async () => {
     const snapshot = await assertSucceeds(
       getDocs(
         query(
@@ -235,11 +235,11 @@ describe('rosters / settings 讀取', () => {
         ),
       ),
     );
-    // 真的有讀到資料，而不是「查詢通過但結果為空」。
-    assert.ok(snapshot.size >= 1, '應該至少讀到一筆有 date 的 roster');
+    // 真的有读到资料，而不是「查询通过但结果为空」。
+    assert.ok(snapshot.size >= 1, '应该至少读到一笔有 date 的 roster');
   });
 
-  it('被刪掉的帳號不能列出服事表', async () => {
+  it('被删掉的帐号不能列出服事表', async () => {
     await assertFails(getDocs(collection(asDeleted(), 'rosters')));
   });
 
@@ -248,17 +248,17 @@ describe('rosters / settings 讀取', () => {
   });
 });
 
-describe('rosters / settings 寫入', () => {
+describe('rosters / settings 写入', () => {
   it('一般同工不能改服事表', async () => {
     await assertFails(
       setDoc(doc(asMember(), 'rosters', 'r1'), {
-        serviceName: '亂改',
+        serviceName: '乱改',
         type: 'sundayService',
       }),
     );
   });
 
-  it('管理員可以改服事表', async () => {
+  it('管理员可以改服事表', async () => {
     await assertSucceeds(
       setDoc(doc(asAdmin(), 'rosters', 'r1'), {
         serviceName: '主日崇拜',
@@ -267,8 +267,8 @@ describe('rosters / settings 寫入', () => {
     );
   });
 
-  // role 只有 staff，靠 group 放行。牧區涵蓋主日，所以動得了 r1。
-  it('roster-editors 可以改自己牧區的服事表', async () => {
+  // role 只有 staff，靠 group 放行。牧区涵盖主日，所以动得了 r1。
+  it('roster-editors 可以改自己牧区的服事表', async () => {
     await assertSucceeds(
       setDoc(doc(asRosterEditor(), 'rosters', 'r1'), {
         serviceName: '主日崇拜',
@@ -277,22 +277,22 @@ describe('rosters / settings 寫入', () => {
     );
   });
 
-  // 反過來：身分是小組長但沒有 group，一樣不能改。少了這條，把 inGroup() 誤寫
-  // 回看 role 也不會有任何測試變紅。
-  it('沒有 group 的小組長不能改服事表', async () => {
+  // 反过来：身分是小组长但没有 group，一样不能改。少了这条，把 inGroup() 误写
+  // 回看 role 也不会有任何测试变红。
+  it('没有 group 的小组长不能改服事表', async () => {
     await assertFails(
       setDoc(doc(asPlainLeader(), 'rosters', 'r1'), {
-        serviceName: '亂改',
+        serviceName: '乱改',
         type: 'sundayService',
       }),
     );
   });
 
-  // 兩個 group 正交：行事曆編輯者碰不到服事表。
+  // 两个 group 正交：行事历编辑者碰不到服事表。
   it('calendar-editors 不能改服事表', async () => {
     await assertFails(
       setDoc(doc(asCalendarEditor(), 'rosters', 'r1'), {
-        serviceName: '亂改',
+        serviceName: '乱改',
         type: 'sundayService',
       }),
     );
@@ -304,59 +304,59 @@ describe('rosters / settings 寫入', () => {
     );
   });
 
-  // 範本是所有服事表的骨架，改壞會影響到每一個人，所以留在 admin。
+  // 范本是所有服事表的骨架，改坏会影响到每一个人，所以留在 admin。
   it('roster-editors 不能改 settings', async () => {
     await assertFails(
       setDoc(doc(asRosterEditor(), 'settings', 'roster_templates'), { x: 1 }),
     );
   });
 
-  it('被刪掉的帳號不能改服事表', async () => {
+  it('被删掉的帐号不能改服事表', async () => {
     await assertFails(
       setDoc(doc(asDeleted(), 'rosters', 'r1'), {
-        serviceName: '亂改',
+        serviceName: '乱改',
         type: 'sundayService',
       }),
     );
   });
 });
 
-// 編輯權（group）與牧區（zoneTypes）是兩個軸：group 說「可以改服事表」，
-// zoneTypes 說「可以改哪一本」。兩個都要過。
+// 编辑权（group）与牧区（zoneTypes）是两个轴：group 说「可以改服事表」，
+// zoneTypes 说「可以改哪一本」。两个都要过。
 //
-// 這一組釘住的是實際發生過的問題：只屬於青崇與兒主的人被加進 roster-editors
-// 之後，連主日那本都動得了。
-describe('rosters 的牧區範圍', () => {
-  it('青崇編輯者改得動自己牧區的服事表', async () => {
+// 这一组钉住的是实际发生过的问题：只属于青崇与儿主的人被加进 roster-editors
+// 之后，连主日那本都动得了。
+describe('rosters 的牧区范围', () => {
+  it('青崇编辑者改得动自己牧区的服事表', async () => {
     await assertSucceeds(
       setDoc(doc(asYouthEditor(), 'rosters', 'r3'), {
-        serviceName: '兒童主日學',
+        serviceName: '儿童主日学',
         type: 'children',
       }),
     );
   });
 
-  it('青崇編輯者改不動主日的服事表', async () => {
+  it('青崇编辑者改不动主日的服事表', async () => {
     await assertFails(
       setDoc(doc(asYouthEditor(), 'rosters', 'r1'), {
-        serviceName: '亂改',
+        serviceName: '乱改',
         type: 'sundayService',
       }),
     );
   });
 
-  // 只檢查寫進去的 type 是不夠的：那樣可以把主日那本「改標成」青崇，一次寫入
-  // 就把它整本吃下來。舊的 type 也要在自己的牧區內。
-  it('青崇編輯者不能把主日那本改標成青崇', async () => {
+  // 只检查写进去的 type 是不够的：那样可以把主日那本「改标成」青崇，一次写入
+  // 就把它整本吃下来。旧的 type 也要在自己的牧区内。
+  it('青崇编辑者不能把主日那本改标成青崇', async () => {
     await assertFails(
       setDoc(doc(asYouthEditor(), 'rosters', 'r1'), {
-        serviceName: '偷天換日',
+        serviceName: '偷天换日',
         type: 'youth',
       }),
     );
   });
 
-  it('青崇編輯者建得出新的青崇服事表', async () => {
+  it('青崇编辑者建得出新的青崇服事表', async () => {
     await assertSucceeds(
       setDoc(doc(asYouthEditor(), 'rosters', 'new-youth'), {
         serviceName: '青年崇拜',
@@ -365,7 +365,7 @@ describe('rosters 的牧區範圍', () => {
     );
   });
 
-  it('青崇編輯者建不出新的主日服事表', async () => {
+  it('青崇编辑者建不出新的主日服事表', async () => {
     await assertFails(
       setDoc(doc(asYouthEditor(), 'rosters', 'new-sunday'), {
         serviceName: '主日崇拜',
@@ -374,104 +374,104 @@ describe('rosters 的牧區範圍', () => {
     );
   });
 
-  it('青崇編輯者刪得掉自己牧區的服事表', async () => {
+  it('青崇编辑者删得掉自己牧区的服事表', async () => {
     await assertSucceeds(deleteDoc(doc(asYouthEditor(), 'rosters', 'doomed-youth')));
   });
 
-  it('青崇編輯者刪不掉主日的服事表', async () => {
+  it('青崇编辑者删不掉主日的服事表', async () => {
     await assertFails(deleteDoc(doc(asYouthEditor(), 'rosters', 'doomed-sunday')));
   });
 
-  // 既有帳號全都是這個形狀（沒有 zoneTypes 欄位）。`data.get('zoneTypes', [])`
-  // 讓它們讀成「沒有牧區」而不是規則報錯，結果是什麼都改不動 —— 所以上線前要
-  // 先跑 scripts/backfill-user-zone-types.mjs 把欄位補上。
-  it('沒有牧區的編輯者什麼都改不動', async () => {
+  // 既有帐号全都是这个形状（没有 zoneTypes 栏位）。`data.get('zoneTypes', [])`
+  // 让它们读成「没有牧区」而不是规则报错，结果是什么都改不动 —— 所以上线前要
+  // 先跑 scripts/backfill-user-zone-types.mjs 把栏位补上。
+  it('没有牧区的编辑者什么都改不动', async () => {
     await assertFails(
       setDoc(doc(asZonelessEditor(), 'rosters', 'r3'), {
-        serviceName: '亂改',
+        serviceName: '乱改',
         type: 'children',
       }),
     );
   });
 
-  it('編輯者動不了沒有 type 的舊資料', async () => {
+  it('编辑者动不了没有 type 的旧资料', async () => {
     await assertFails(
-      setDoc(doc(asRosterEditor(), 'rosters', 'legacy'), { serviceName: '亂改' }),
+      setDoc(doc(asRosterEditor(), 'rosters', 'legacy'), { serviceName: '乱改' }),
     );
   });
 
-  // admin 是 root：沒有 type 的舊資料要有人修得動，否則就沒人修得動了。
-  it('管理員動得了沒有 type 的舊資料', async () => {
+  // admin 是 root：没有 type 的旧资料要有人修得动，否则就没人修得动了。
+  it('管理员动得了没有 type 的旧资料', async () => {
     await assertSucceeds(
-      setDoc(doc(asAdmin(), 'rosters', 'legacy'), { serviceName: '補上 type', type: 'youth' }),
+      setDoc(doc(asAdmin(), 'rosters', 'legacy'), { serviceName: '补上 type', type: 'youth' }),
     );
   });
 
-  // 一個牧區都沒有的 admin 照樣是 root。
-  it('管理員不必有牧區也改得動全部', async () => {
+  // 一个牧区都没有的 admin 照样是 root。
+  it('管理员不必有牧区也改得动全部', async () => {
     await assertSucceeds(
       setDoc(doc(asAdmin(), 'rosters', 'r3'), {
-        serviceName: '兒童主日學',
+        serviceName: '儿童主日学',
         type: 'children',
       }),
     );
   });
 });
 
-describe('users 讀取', () => {
-  it('讀得到自己的資料', async () => {
+describe('users 读取', () => {
+  it('读得到自己的资料', async () => {
     await assertSucceeds(getDoc(doc(asMember(), 'users', MEMBER)));
   });
 
-  // 收窄前：任何登入者都讀得到全部人的 email 與 fcm token。
-  it('一般同工讀不到別人的資料', async () => {
+  // 收窄前：任何登入者都读得到全部人的 email 与 fcm token。
+  it('一般同工读不到别人的资料', async () => {
     await assertFails(getDoc(doc(asMember(), 'users', OTHER)));
   });
 
-  it('管理員讀得到別人的資料', async () => {
+  it('管理员读得到别人的资料', async () => {
     await assertSucceeds(getDoc(doc(asAdmin(), 'users', OTHER)));
   });
 
-  it('被刪掉的帳號讀不到別人的資料', async () => {
+  it('被删掉的帐号读不到别人的资料', async () => {
     await assertFails(getDoc(doc(asDeleted(), 'users', MEMBER)));
   });
 
-  it('未登入讀不到任何人的資料', async () => {
+  it('未登入读不到任何人的资料', async () => {
     await assertFails(getDoc(doc(asAnon(), 'users', MEMBER)));
   });
 
-  // 以下四條是「users 讀取收窄」真正的重點。收窄前後 getDoc 自己那筆都會成功，
-  // 差別只出現在 list：只測 getDoc 的話，有人加一條 `allow list: if isActiveUser()`
-  // 就等於把全體同工的 email 與 fcm token 重新對所有登入者開放，而測試全綠。
-  it('管理員可以列出整個 users collection（後台人員選擇器走這條）', async () => {
+  // 以下四条是「users 读取收窄」真正的重点。收窄前后 getDoc 自己那笔都会成功，
+  // 差别只出现在 list：只测 getDoc 的话，有人加一条 `allow list: if isActiveUser()`
+  // 就等于把全体同工的 email 与 fcm token 重新对所有登入者开放，而测试全绿。
+  it('管理员可以列出整个 users collection（后台人员选择器走这条）', async () => {
     const snapshot = await assertSucceeds(
       getDocs(collection(asAdmin(), 'users')),
     );
-    assert.ok(snapshot.size >= 3, '管理員應該讀得到所有使用者');
+    assert.ok(snapshot.size >= 3, '管理员应该读得到所有使用者');
   });
 
-  // 服事表的人員選擇器走 getUsers()，所以 roster-editors 必須列得到整個
-  // collection。代價是他也看得到所有人的 email 與 fcm token —— Firestore rules
-  // 沒有欄位級讀取限制，開這個 group 就是連帶開這些。
-  it('roster-editors 可以列出整個 users collection（服事表人員選擇器走這條）', async () => {
+  // 服事表的人员选择器走 getUsers()，所以 roster-editors 必须列得到整个
+  // collection。代价是他也看得到所有人的 email 与 fcm token —— Firestore rules
+  // 没有栏位级读取限制，开这个 group 就是连带开这些。
+  it('roster-editors 可以列出整个 users collection（服事表人员选择器走这条）', async () => {
     const snapshot = await assertSucceeds(
       getDocs(collection(asRosterEditor(), 'users')),
     );
-    assert.ok(snapshot.size >= 3, 'roster-editors 應該讀得到所有使用者');
+    assert.ok(snapshot.size >= 3, 'roster-editors 应该读得到所有使用者');
   });
 
   it('一般同工不能列出 users collection', async () => {
     await assertFails(getDocs(collection(asMember(), 'users')));
   });
 
-  // 只有行事曆權限的人沒有理由讀通訊錄，所以 users 讀取綁的是 roster-editors
+  // 只有行事历权限的人没有理由读通讯录，所以 users 读取绑的是 roster-editors
   // 而不是「任何 group」。
   it('calendar-editors 不能列出 users collection', async () => {
     await assertFails(getDocs(collection(asCalendarEditor(), 'users')));
   });
 
-  // 加上 where 條件也不行：rules 不是過濾器，list 一律整批拒絕。
-  it('一般同工不能用 where 條件迂迴列出 users', async () => {
+  // 加上 where 条件也不行：rules 不是过滤器，list 一律整批拒绝。
+  it('一般同工不能用 where 条件迂回列出 users', async () => {
     await assertFails(
       getDocs(query(collection(asMember(), 'users'), where('id', '==', MEMBER))),
     );
@@ -482,12 +482,12 @@ describe('users 讀取', () => {
     );
   });
 
-  it('被刪掉的帳號不能列出 users collection', async () => {
+  it('被删掉的帐号不能列出 users collection', async () => {
     await assertFails(getDocs(collection(asDeleted(), 'users')));
   });
 
-  // users/{uid} 的 match 不涵蓋子集合，只靠最後的 default deny 擋。
-  it('users 底下的子集合連本人與管理員都讀不到', async () => {
+  // users/{uid} 的 match 不涵盖子集合，只靠最后的 default deny 挡。
+  it('users 底下的子集合连本人与管理员都读不到', async () => {
     await assertFails(
       getDoc(doc(asMember(), 'users', MEMBER, 'private', 'secret')),
     );
@@ -498,8 +498,8 @@ describe('users 讀取', () => {
 });
 
 describe('users 自我更新', () => {
-  // PushNotificationService._saveToken 走的就是這條（set + merge）。
-  it('可以寫自己的 fcm token', async () => {
+  // PushNotificationService._saveToken 走的就是这条（set + merge）。
+  it('可以写自己的 fcm token', async () => {
     await assertSucceeds(
       setDoc(
         doc(asMember(), 'users', MEMBER),
@@ -509,7 +509,7 @@ describe('users 自我更新', () => {
     );
   });
 
-  it('可以寫自己的 notificationPrefs', async () => {
+  it('可以写自己的 notificationPrefs', async () => {
     await assertSucceeds(
       setDoc(
         doc(asMember(), 'users', MEMBER),
@@ -519,14 +519,14 @@ describe('users 自我更新', () => {
     );
   });
 
-  it('不能把自己升成管理員', async () => {
+  it('不能把自己升成管理员', async () => {
     await assertFails(
       updateDoc(doc(asMember(), 'users', MEMBER), { role: 'admin' }),
     );
   });
 
-  // group 模型最關鍵的一條：能自己加 group 的話，整個授權模型就等於不存在。
-  it('不能把自己加進任何 group', async () => {
+  // group 模型最关键的一条：能自己加 group 的话，整个授权模型就等于不存在。
+  it('不能把自己加进任何 group', async () => {
     await assertFails(
       updateDoc(doc(asMember(), 'users', MEMBER), {
         groups: ['roster-editors'],
@@ -534,8 +534,8 @@ describe('users 自我更新', () => {
     );
   });
 
-  // 已經在某個 group 裡的人也不能自己再多拿一個。
-  it('group 成員不能自己再加別的 group', async () => {
+  // 已经在某个 group 里的人也不能自己再多拿一个。
+  it('group 成员不能自己再加别的 group', async () => {
     await assertFails(
       updateDoc(doc(asCalendarEditor(), 'users', CALENDAR_EDITOR), {
         groups: ['calendar-editors', 'roster-editors'],
@@ -543,7 +543,7 @@ describe('users 自我更新', () => {
     );
   });
 
-  it('不能改自己的姓名或 zones（要透過管理員）', async () => {
+  it('不能改自己的姓名或 zones（要透过管理员）', async () => {
     await assertFails(
       updateDoc(doc(asMember(), 'users', MEMBER), { name: '自己改的' }),
     );
@@ -554,7 +554,7 @@ describe('users 自我更新', () => {
     );
   });
 
-  it('不能改別人的 fcm', async () => {
+  it('不能改别人的 fcm', async () => {
     await assertFails(
       setDoc(
         doc(asMember(), 'users', OTHER),
@@ -564,11 +564,11 @@ describe('users 自我更新', () => {
     );
   });
 
-  // selfUpdateOnlyTouches 的重點在 hasOnly，不在「有沒有碰到 role」。
-  // 只寫 role 的攻擊上面已經測了，但那條測試擋不住 hasOnly 被寫成 hasAny：
-  // hasAny 之下「只寫 role」仍然會被拒絕（測試照樣綠），而「fcm + role 一起寫」
-  // 就會過關，一次請求把自己升成 admin。這幾條就是補那個洞。
-  it('不能把 role 夾帶在合法欄位裡一起寫入', async () => {
+  // selfUpdateOnlyTouches 的重点在 hasOnly，不在「有没有碰到 role」。
+  // 只写 role 的攻击上面已经测了，但那条测试挡不住 hasOnly 被写成 hasAny：
+  // hasAny 之下「只写 role」仍然会被拒绝（测试照样绿），而「fcm + role 一起写」
+  // 就会过关，一次请求把自己升成 admin。这几条就是补那个洞。
+  it('不能把 role 夹带在合法栏位里一起写入', async () => {
     await assertFails(
       setDoc(
         doc(asMember(), 'users', MEMBER),
@@ -585,7 +585,7 @@ describe('users 自我更新', () => {
     );
   });
 
-  it('不能把姓名夾帶在合法欄位裡一起寫入', async () => {
+  it('不能把姓名夹带在合法栏位里一起写入', async () => {
     await assertFails(
       updateDoc(doc(asMember(), 'users', MEMBER), {
         fcm: { webTokens: ['token-evil'] },
@@ -594,9 +594,9 @@ describe('users 自我更新', () => {
     );
   });
 
-  // 同時寫兩個合法欄位要放行：App 的通知開關流程就是先寫 fcm 再寫
-  // notificationPrefs，若哪天合併成一次寫入也不該被擋。
-  it('可以一次寫入 fcm 與 notificationPrefs', async () => {
+  // 同时写两个合法栏位要放行：App 的通知开关流程就是先写 fcm 再写
+  // notificationPrefs，若哪天合并成一次写入也不该被挡。
+  it('可以一次写入 fcm 与 notificationPrefs', async () => {
     await assertSucceeds(
       setDoc(
         doc(asMember(), 'users', MEMBER),
@@ -609,10 +609,10 @@ describe('users 自我更新', () => {
     );
   });
 
-  // PushNotificationService._saveToken 的實際寫法：arrayUnion + serverTimestamp。
-  // 上面那條用的是普通陣列，擋不住「未來加了 fcm 欄位型別驗證卻沒考慮
-  // sentinel 值」而讓真正的 App 寫入失敗。
-  it('可以用 App 實際的 arrayUnion + serverTimestamp 寫法存 fcm token', async () => {
+  // PushNotificationService._saveToken 的实际写法：arrayUnion + serverTimestamp。
+  // 上面那条用的是普通阵列，挡不住「未来加了 fcm 栏位型别验证却没考虑
+  // sentinel 值」而让真正的 App 写入失败。
+  it('可以用 App 实际的 arrayUnion + serverTimestamp 写法存 fcm token', async () => {
     await assertSucceeds(
       setDoc(
         doc(asMember(), 'users', MEMBER),
@@ -627,9 +627,9 @@ describe('users 自我更新', () => {
     );
   });
 
-  // 管理員自己也會跑 _saveToken。這條走的是 update 規則的 isAdmin 分支，
-  // 而該分支帶著 hasValidRole()，所以要確認 merge 寫入不會被自己的驗證擋掉。
-  it('管理員也可以寫自己的 fcm token', async () => {
+  // 管理员自己也会跑 _saveToken。这条走的是 update 规则的 isAdmin 分支，
+  // 而该分支带著 hasValidRole()，所以要确认 merge 写入不会被自己的验证挡掉。
+  it('管理员也可以写自己的 fcm token', async () => {
     await assertSucceeds(
       setDoc(
         doc(asAdmin(), 'users', ADMIN),
@@ -644,15 +644,15 @@ describe('users 自我更新', () => {
     );
   });
 
-  it('不能整份覆寫自己的文件（set 不帶 merge）', async () => {
+  it('不能整份覆写自己的文件（set 不带 merge）', async () => {
     await assertFails(
       setDoc(doc(asMember(), 'users', MEMBER), userDoc(MEMBER, 'admin')),
     );
   });
 
-  // 被刪掉的帳號對自己的文件做 set(merge) 會落在 create 規則（文件不存在），
-  // 而 create 只開給管理員 —— 所以無法自己把自己救回來重新取得讀取權。
-  it('被刪掉的帳號不能用 set(merge) 把自己的文件寫回來', async () => {
+  // 被删掉的帐号对自己的文件做 set(merge) 会落在 create 规则（文件不存在），
+  // 而 create 只开给管理员 —— 所以无法自己把自己救回来重新取得读取权。
+  it('被删掉的帐号不能用 set(merge) 把自己的文件写回来', async () => {
     await assertFails(
       setDoc(
         doc(asDeleted(), 'users', DELETED),
@@ -666,14 +666,14 @@ describe('users 自我更新', () => {
   });
 });
 
-describe('users 管理員操作與 role 驗證', () => {
-  it('管理員可以用合法 role 建立帳號', async () => {
+describe('users 管理员操作与 role 验证', () => {
+  it('管理员可以用合法 role 建立帐号', async () => {
     await assertSucceeds(
       setDoc(doc(asAdmin(), 'users', 'new-staff'), userDoc('new-staff', 'staff')),
     );
   });
 
-  it('管理員不能寫入不合法的 role', async () => {
+  it('管理员不能写入不合法的 role', async () => {
     await assertFails(
       setDoc(
         doc(asAdmin(), 'users', 'new-bogus'),
@@ -682,48 +682,48 @@ describe('users 管理員操作與 role 驗證', () => {
     );
   });
 
-  it('管理員不能把既有帳號改成不合法的 role', async () => {
+  it('管理员不能把既有帐号改成不合法的 role', async () => {
     await assertFails(
       updateDoc(doc(asAdmin(), 'users', OTHER), { role: 'root' }),
     );
   });
 
-  // 唯一的管理員刪掉或降級自己，就沒有人能再管這個網站。
-  it('管理員不能刪除自己', async () => {
+  // 唯一的管理员删掉或降级自己，就没有人能再管这个网站。
+  it('管理员不能删除自己', async () => {
     await assertFails(deleteDoc(doc(asAdmin(), 'users', ADMIN)));
   });
 
-  it('管理員不能把自己降成非管理員', async () => {
+  it('管理员不能把自己降成非管理员', async () => {
     await assertFails(updateDoc(doc(asAdmin(), 'users', ADMIN), { role: 'staff' }));
   });
 
-  it('管理員可以改自己的其他資料', async () => {
-    await assertSucceeds(updateDoc(doc(asAdmin(), 'users', ADMIN), { name: '管理員改名' }));
+  it('管理员可以改自己的其他资料', async () => {
+    await assertSucceeds(updateDoc(doc(asAdmin(), 'users', ADMIN), { name: '管理员改名' }));
   });
 
-  // 只擋自己：有兩位以上管理員時，可以互相降級或刪除（例如交接給別人）。
-  it('管理員可以把另一位管理員降成組員', async () => {
+  // 只挡自己：有两位以上管理员时，可以互相降级或删除（例如交接给别人）。
+  it('管理员可以把另一位管理员降成组员', async () => {
     await assertSucceeds(setDoc(doc(asAdmin(), 'users', 'second-admin'), userDoc('second-admin', 'admin')));
     await assertSucceeds(updateDoc(doc(asAdmin(), 'users', 'second-admin'), { role: 'member' }));
   });
 
-  it('管理員可以刪除另一位管理員', async () => {
+  it('管理员可以删除另一位管理员', async () => {
     await assertSucceeds(setDoc(doc(asAdmin(), 'users', 'third-admin'), userDoc('third-admin', 'admin')));
     await assertSucceeds(deleteDoc(doc(asAdmin(), 'users', 'third-admin')));
   });
 
-  it('管理員可以刪除別人', async () => {
+  it('管理员可以删除别人', async () => {
     await assertSucceeds(setDoc(doc(asAdmin(), 'users', 'to-remove'), userDoc('to-remove', 'staff')));
     await assertSucceeds(deleteDoc(doc(asAdmin(), 'users', 'to-remove')));
   });
 
-  it('管理員可以調整別人的 role', async () => {
+  it('管理员可以调整别人的 role', async () => {
     await assertSucceeds(
       updateDoc(doc(asAdmin(), 'users', OTHER), { role: 'staff' }),
     );
   });
 
-  it('管理員可以授予 group', async () => {
+  it('管理员可以授予 group', async () => {
     await assertSucceeds(
       setDoc(
         doc(asAdmin(), 'users', 'granted-new'),
@@ -732,8 +732,8 @@ describe('users 管理員操作與 role 驗證', () => {
     );
   });
 
-  // 名字打錯會變成一個看起來像授權、實際上什麼都不對應的欄位。
-  it('管理員不能寫入不存在的 group 名稱', async () => {
+  // 名字打错会变成一个看起来像授权、实际上什么都不对应的栏位。
+  it('管理员不能写入不存在的 group 名称', async () => {
     await assertFails(
       setDoc(
         doc(asAdmin(), 'users', 'granted-bogus'),
@@ -742,7 +742,7 @@ describe('users 管理員操作與 role 驗證', () => {
     );
   });
 
-  it('管理員可以授予牧區', async () => {
+  it('管理员可以授予牧区', async () => {
     await assertSucceeds(
       setDoc(
         doc(asAdmin(), 'users', 'zoned-new'),
@@ -751,8 +751,8 @@ describe('users 管理員操作與 role 驗證', () => {
     );
   });
 
-  // 同 group：打錯的聚會別會變成一個看起來像授權、實際上對不到任何服事表的欄位。
-  it('管理員不能寫入不存在的聚會別', async () => {
+  // 同 group：打错的聚会别会变成一个看起来像授权、实际上对不到任何服事表的栏位。
+  it('管理员不能写入不存在的聚会别', async () => {
     await assertFails(
       setDoc(
         doc(asAdmin(), 'users', 'zoned-bogus'),
@@ -761,25 +761,25 @@ describe('users 管理員操作與 role 驗證', () => {
     );
   });
 
-  it('管理員可以把 group 收回成空陣列', async () => {
+  it('管理员可以把 group 收回成空阵列', async () => {
     await assertSucceeds(
       updateDoc(doc(asAdmin(), 'users', GRANTED), { groups: [] }),
     );
   });
 
-  it('一般同工不能建立帳號', async () => {
+  it('一般同工不能建立帐号', async () => {
     await assertFails(
       setDoc(doc(asMember(), 'users', 'sneaky'), userDoc('sneaky', 'admin')),
     );
   });
 
-  it('一般同工不能刪帳號', async () => {
+  it('一般同工不能删帐号', async () => {
     await assertFails(deleteDoc(doc(asMember(), 'users', OTHER)));
   });
 
-  // 自己準備要被刪的文件，不要依賴上面「管理員可以用合法 role 建立帳號」
-  // 留下來的 new-staff：那種隱性順序相依會讓單獨跑一條測試時整個爆掉。
-  it('管理員可以刪帳號', async () => {
+  // 自己准备要被删的文件，不要依赖上面「管理员可以用合法 role 建立帐号」
+  // 留下来的 new-staff：那种隐性顺序相依会让单独跑一条测试时整个爆掉。
+  it('管理员可以删帐号', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(
         doc(context.firestore(), 'users', 'doomed-1'),
@@ -789,25 +789,25 @@ describe('users 管理員操作與 role 驗證', () => {
     await assertSucceeds(deleteDoc(doc(asAdmin(), 'users', 'doomed-1')));
   });
 
-  // 舊資料可能沒有 role 欄位。hasValidRole() 讀的是「寫入後的完整文件」，
-  // 所以只改 name 會因為 role 不存在而被擋；管理員必須順手補上 role。
-  // 後台的 updateUser 走的是 user.toJson() 全欄位覆寫，一定帶 role，所以
-  // 正常操作不受影響 —— 這條是把這個邊界行為釘住，避免有人誤判成 rules 壞了。
-  it('沒有 role 欄位的舊資料：只改其他欄位會被擋，補上 role 才能改', async () => {
+  // 旧资料可能没有 role 栏位。hasValidRole() 读的是「写入后的完整文件」，
+  // 所以只改 name 会因为 role 不存在而被挡；管理员必须顺手补上 role。
+  // 后台的 updateUser 走的是 user.toJson() 全栏位覆写，一定带 role，所以
+  // 正常操作不受影响 —— 这条是把这个边界行为钉住，避免有人误判成 rules 坏了。
+  it('没有 role 栏位的旧资料：只改其他栏位会被挡，补上 role 才能改', async () => {
     await assertFails(
       updateDoc(doc(asAdmin(), 'users', LEGACY), { name: '只改名字' }),
     );
     await assertSucceeds(
       updateDoc(doc(asAdmin(), 'users', LEGACY), {
-        name: '補上 role',
+        name: '补上 role',
         role: 'member',
       }),
     );
   });
 
-  // role 欄位不能被刪掉：刪掉之後 hasValidRole() 會直接評估失敗，
-  // 該使用者的文件就再也不能用「只改一半欄位」的方式維護了。
-  it('管理員不能刪掉 role 欄位', async () => {
+  // role 栏位不能被删掉：删掉之后 hasValidRole() 会直接评估失败，
+  // 该使用者的文件就再也不能用「只改一半栏位」的方式维护了。
+  it('管理员不能删掉 role 栏位', async () => {
     await assertFails(
       updateDoc(doc(asAdmin(), 'users', OTHER), { role: deleteField() }),
     );
@@ -817,43 +817,43 @@ describe('users 管理員操作與 role 驗證', () => {
 describe('staff_orders 同工排序', () => {
   const ranking = { roles: { 招待: ['甲', '乙'] } };
 
-  it('一般同工讀得到', async () => {
+  it('一般同工读得到', async () => {
     await assertSucceeds(getDoc(doc(asMember(), 'staff_orders', 'youth')));
   });
 
-  it('被刪掉的帳號讀不到', async () => {
+  it('被删掉的帐号读不到', async () => {
     await assertFails(getDoc(doc(asDeleted(), 'staff_orders', 'youth')));
   });
 
-  it('一般同工改不動', async () => {
+  it('一般同工改不动', async () => {
     await assertFails(setDoc(doc(asMember(), 'staff_orders', 'youth'), ranking));
   });
 
-  // 排序是在選人視窗裡拖的，編輯者一定要寫得動自己牧區那份 —— 放在
-  // settings/ 底下就會卡在這裡。
-  it('青崇編輯者改得動青崇的排序', async () => {
+  // 排序是在选人视窗里拖的，编辑者一定要写得动自己牧区那份 —— 放在
+  // settings/ 底下就会卡在这里。
+  it('青崇编辑者改得动青崇的排序', async () => {
     await assertSucceeds(setDoc(doc(asYouthEditor(), 'staff_orders', 'youth'), ranking));
   });
 
-  it('青崇編輯者改不動主日的排序', async () => {
+  it('青崇编辑者改不动主日的排序', async () => {
     await assertFails(
       setDoc(doc(asYouthEditor(), 'staff_orders', 'sundayService'), ranking),
     );
   });
 
-  it('沒有牧區的編輯者什麼都改不動', async () => {
+  it('没有牧区的编辑者什么都改不动', async () => {
     await assertFails(
       setDoc(doc(asZonelessEditor(), 'staff_orders', 'children'), ranking),
     );
   });
 
-  it('管理員改得動任何崇拜的排序', async () => {
+  it('管理员改得动任何崇拜的排序', async () => {
     await assertSucceeds(setDoc(doc(asAdmin(), 'staff_orders', 'sundayService'), ranking));
   });
 
-  // App 只寫有變的服事項目（merge），不整份覆寫：別人剛改過的其他項目不能
-  // 被蓋掉，拿掉的項目用 deleteField()。
-  it('merge 寫入只動提到的服事項目', async () => {
+  // App 只写有变的服事项目（merge），不整份覆写：别人刚改过的其他项目不能
+  // 被盖掉，拿掉的项目用 deleteField()。
+  it('merge 写入只动提到的服事项目', async () => {
     const ref = doc(asYouthEditor(), 'staff_orders', 'children');
     await assertSucceeds(
       setDoc(ref, { roles: { 招待: ['甲', '乙'], 司琴: ['丙'] } }),
@@ -868,13 +868,13 @@ describe('staff_orders 同工排序', () => {
     assert.deepEqual(snapshot.data(), { roles: { 招待: ['乙', '甲'], 敬拜: ['丁'] } });
   });
 
-  it('不是崇拜的文件 id 連管理員都寫不進去', async () => {
+  it('不是崇拜的文件 id 连管理员都写不进去', async () => {
     await assertFails(setDoc(doc(asAdmin(), 'staff_orders', 'sundaySevice'), ranking));
   });
 });
 
-describe('生成設定：自訂第四聚會、停用聚會與日期格式', () => {
-  it('第四聚會保持 admin / roster-editors + zone 的授權邊界', async () => {
+describe('生成设定：自订第四聚会、停用聚会与日期格式', () => {
+  it('第四聚会保持 admin / roster-editors + zone 的授权边界', async () => {
     const uid = 'midweek-editor';
     await assertSucceeds(setDoc(doc(asAdmin(), 'users', uid),
       userDoc(uid, 'staff', ['roster-editors'], ['midweek', 'retired'])));
@@ -890,16 +890,16 @@ describe('生成設定：自訂第四聚會、停用聚會與日期格式', () =
     // Hiding an ID is not deleting its historical records or permission grants.
     await assertSucceeds(setDoc(doc(db, 'rosters', 'old-retired'), { type: 'retired', dateKey: '2030-01-07' }));
     await assertSucceeds(getDoc(doc(asMember(), 'rosters', 'old-retired')));
-    await assertSucceeds(updateDoc(doc(db, 'rosters', 'old-retired'), { serviceName: '舊聚會' }));
+    await assertSucceeds(updateDoc(doc(db, 'rosters', 'old-retired'), { serviceName: '旧聚会' }));
   });
 
-  it('未知 incoming type 連 admin 也不能建立或改寫', async () => {
+  it('未知 incoming type 连 admin 也不能建立或改写', async () => {
     await assertFails(setDoc(doc(asAdmin(), 'rosters', 'unknown-type'), { type: 'not-configured' }));
     await assertFails(updateDoc(doc(asAdmin(), 'rosters', 'r2'), { type: 'not-configured' }));
     await assertFails(setDoc(doc(asAdmin(), 'users', 'unknown-zone'), userDoc('unknown-zone', 'staff', [], ['not-configured'])));
   });
 
-  it('dateKey 有正確格式，舊 Timestamp-only 仍可讀寫', async () => {
+  it('dateKey 有正确格式，旧 Timestamp-only 仍可读写', async () => {
     const ref = doc(asAdmin(), 'rosters', 'date-key-test');
     await assertSucceeds(setDoc(ref, { type: 'midweek', dateKey: '2030-01-02' }));
     for (const dateKey of ['2030-13-02', '2030-01-00', '2030/01/02', '2030-1-2', 20300102, null]) {
@@ -912,18 +912,18 @@ describe('生成設定：自訂第四聚會、停用聚會與日期格式', () =
   });
 });
 
-describe('預設拒絕', () => {
-  it('未定義的 collection 一律拒絕，連管理員也是', async () => {
+describe('预设拒绝', () => {
+  it('未定义的 collection 一律拒绝，连管理员也是', async () => {
     await assertFails(getDoc(doc(asAdmin(), 'anything', 'x')));
     await assertFails(setDoc(doc(asAdmin(), 'anything', 'x'), { a: 1 }));
   });
 });
 
 
-// Dart 的 rosterWeekDocumentIds 測試釘住相同的七個 ID；這裡驗證實際
-// Firestore optimistic transaction 在兩個不同目標日期之間仍會衝突並重試。
-describe('排表並行建立', () => {
-  it('不同星期設定同時看到空週，也只會建立一場', { timeout: 20_000 }, async () => {
+// Dart 的 rosterWeekDocumentIds 测试钉住相同的七个 ID；这里验证实际
+// Firestore optimistic transaction 在两个不同目标日期之间仍会冲突并重试。
+describe('排表并行建立', () => {
+  it('不同星期设定同时看到空周，也只会建立一场', { timeout: 20_000 }, async () => {
     const ids = [
       '20260928_midweek', '20260929_midweek', '20260930_midweek',
       '20261001_midweek', '20261002_midweek', '20261003_midweek', '20261004_midweek',
@@ -948,7 +948,7 @@ describe('排表並行建立', () => {
         const dateKey = key.slice(0, 4) + '-' + key.slice(4, 6) + '-' + key.slice(6, 8);
         transaction.set(doc(db, 'rosters', ids[targetIndex]), {
           type: 'midweek', dateKey, date: Timestamp.fromDate(new Date(dateKey + 'T00:00:00Z')),
-          serviceName: '週間聚會', duties: [],
+          serviceName: '周间聚会', duties: [],
         });
         return true;
       });
@@ -956,7 +956,7 @@ describe('排表並行建立', () => {
     try {
       const results = await Promise.all([create(4), create(6)]);
       assert.equal(results.filter(Boolean).length, 1);
-      assert.ok(attempts >= 3, '第二個 transaction 必須因相同週的讀取衝突而重試');
+      assert.ok(attempts >= 3, '第二个 transaction 必须因相同周的读取冲突而重试');
       const snapshots = await Promise.all(ids.map((id) => getDoc(doc(asAdmin(), 'rosters', id))));
       assert.equal(snapshots.filter((snapshot) => snapshot.exists()).length, 1);
     } finally {
@@ -966,27 +966,27 @@ describe('排表並行建立', () => {
   });
 });
 
-// 管理員在 App 裡新增的聚會（settings/services）。ids 只能增加：刪掉一個 ID，
-// 用過它的服事表和牧區權限就對不回去了。
-describe('App 裡設定的聚會', () => {
+// 管理员在 App 里新增的聚会（settings/services）。ids 只能增加：删掉一个 ID，
+// 用过它的服事表和牧区权限就对不回去了。
+describe('App 里设定的聚会', () => {
   const services = (...ids) => ids.map((id) => ({ id, label: id, name: id, weekday: 3, enabled: true }));
 
-  it('一般同工不能改聚會設定', async () => {
+  it('一般同工不能改聚会设定', async () => {
     await assertFails(setDoc(doc(asRosterEditor(), 'settings', 'services'), { services: services('prayer'), ids: ['prayer'] }));
   });
 
-  it('管理員新增聚會後，那個聚會的服事表才寫得進去', async () => {
-    const roster = { type: 'prayer', dateKey: '2030-01-02', serviceName: '禱告會' };
+  it('管理员新增聚会后，那个聚会的服事表才写得进去', async () => {
+    const roster = { type: 'prayer', dateKey: '2030-01-02', serviceName: '祷告会' };
     await assertFails(setDoc(doc(asAdmin(), 'rosters', '20300102_prayer'), roster));
     await assertSucceeds(setDoc(doc(asAdmin(), 'settings', 'services'), {
       services: services('sundayService', 'prayer'), ids: ['sundayService', 'youth', 'children', 'prayer'],
     }));
     await assertSucceeds(setDoc(doc(asAdmin(), 'rosters', '20300102_prayer'), roster));
-    // 同工的牧區也可以設到新的聚會。
+    // 同工的牧区也可以设到新的聚会。
     await assertSucceeds(updateDoc(doc(asAdmin(), 'users', OTHER), { zoneTypes: ['prayer'] }));
   });
 
-  it('ids 只能增加，不能拿掉用過的聚會', async () => {
+  it('ids 只能增加，不能拿掉用过的聚会', async () => {
     await assertFails(setDoc(doc(asAdmin(), 'settings', 'services'), {
       services: services('sundayService'), ids: ['sundayService'],
     }));
@@ -995,7 +995,7 @@ describe('App 裡設定的聚會', () => {
     }));
   });
 
-  it('聚會設定不能刪除，也不能塞別的欄位或空清單', async () => {
+  it('聚会设定不能删除，也不能塞别的栏位或空清单', async () => {
     await assertFails(deleteDoc(doc(asAdmin(), 'settings', 'services')));
     await assertFails(setDoc(doc(asAdmin(), 'settings', 'services'), {
       services: services('sundayService'), ids: ['sundayService', 'youth', 'children', 'prayer', 'choir'], extra: true,
@@ -1005,11 +1005,11 @@ describe('App 裡設定的聚會', () => {
     }));
   });
 
-  it('沒在 ids 裡的聚會還是寫不進去', async () => {
+  it('没在 ids 里的聚会还是写不进去', async () => {
     await assertFails(setDoc(doc(asAdmin(), 'rosters', '20300102_wedding'), { type: 'wedding', dateKey: '2030-01-02' }));
   });
 
-  it('其他設定照舊只有管理員能寫、也能刪', async () => {
+  it('其他设定照旧只有管理员能写、也能删', async () => {
     await assertSucceeds(setDoc(doc(asAdmin(), 'settings', 'scratch'), { x: 1 }));
     await assertSucceeds(deleteDoc(doc(asAdmin(), 'settings', 'scratch')));
     await assertFails(setDoc(doc(asMember(), 'settings', 'scratch'), { x: 1 }));

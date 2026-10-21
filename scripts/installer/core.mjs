@@ -8,10 +8,10 @@ import { checkPng, CORE_ICONS, fingerprint, ICON_SIZES, installationError, isPri
 export { installationError, STEPS, UPDATE_STEPS };
 
 export const REGIONS = [
-  ['asia-east1', '台灣'], ['asia-east2', '香港'],
-  ['asia-northeast1', '東京'], ['asia-southeast1', '新加坡'],
-  ['australia-southeast1', '雪梨'], ['europe-west1', '比利時'],
-  ['us-central1', '美國中部'], ['us-east1', '美國東部'],
+  ['asia-east1', '台湾'], ['asia-east2', '香港'],
+  ['asia-northeast1', '东京'], ['asia-southeast1', '新加坡'],
+  ['australia-southeast1', '雪梨'], ['europe-west1', '比利时'],
+  ['us-central1', '美国中部'], ['us-east1', '美国东部'],
 ];
 
 // Churches rarely know which data center suits them, and the choice is
@@ -79,14 +79,14 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 // Validate a required single-line field and return it trimmed.
 function requireText(value, label, max = 100) {
   if (typeof value !== 'string' || !value.trim() || value.length > max || /[\x00-\x1f]/.test(value)) {
-    throw installationError(`${label}未填寫或格式不正確`, 'INVALID_INPUT');
+    throw installationError(`${label}未填写或格式不正确`, 'INVALID_INPUT');
   }
   return value.trim();
 }
 
 function requireEmail(value, label) {
   const result = requireText(value, label, 254);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) throw installationError(`${label}格式不正確`, 'INVALID_INPUT');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) throw installationError(`${label}格式不正确`, 'INVALID_INPUT');
   return result;
 }
 
@@ -97,7 +97,7 @@ export function coreChurchConfig({ appName, shortName, timeZone, services }) {
   return validateChurchConfig({
     schemaVersion: 1, appName, shortName, timeZone: canonicalTimeZone(timeZone), services,
     features: { calendar: false, photoImport: false, pushNotifications: false, lineNotifications: false },
-    devotional: { enabled: false, dataUrl: '', linkUrl: '', sourceName: '每日靈糧', fetchUrl: '', fetchFormat: 'json' },
+    devotional: { enabled: false, dataUrl: '', linkUrl: '', sourceName: '每日灵粮', fetchUrl: '', fetchFormat: 'json' },
     icons: { ...CORE_ICONS },
   });
 }
@@ -158,7 +158,7 @@ function decodeIcons(icons) {
     decoded[name] = typeof icons?.[name] === 'string' && /^[A-Za-z0-9+/]+={0,2}$/.test(icons[name]) ? Buffer.from(icons[name], 'base64') : undefined;
   }
   const set = iconSet(decoded);
-  if (!set) throw installationError('Logo 圖片轉換失敗，請換一張 PNG 或 JPG 再試', 'INVALID_INPUT');
+  if (!set) throw installationError('Logo 图片转换失败，请换一张 PNG 或 JPG 再试', 'INVALID_INPUT');
   return set;
 }
 
@@ -182,56 +182,55 @@ async function readPlanIcons(runDir, hashes) {
     let bytes;
     try { bytes = await readPrivateFile(logoFile(runDir, name)); } catch { /* Reported below like a changed file. */ }
     if (!bytes || sha256(bytes) !== hashes[name]) {
-      throw installationError('這次安裝的教會 Logo 檔案遺失或被更改，已停止；不會自動改用預設圖示。');
+      throw installationError('这次安装的教会 Logo 档案遗失或被更改，已停止；不会自动改用预设图示。');
     }
     files[name] = bytes;
   }
   const icons = iconSet(files);
-  if (!icons) throw installationError('這次安裝的教會 Logo 檔案遺失或被更改，已停止；不會自動改用預設圖示。');
+  if (!icons) throw installationError('这次安装的教会 Logo 档案遗失或被更改，已停止；不会自动改用预设图示。');
   return icons;
 }
 
 export function createInstallationPlan(input, identity, {
   runId = randomUUID(), sourceRevision = 'development', mode = 'cloud', iconHashes,
 } = {}) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) throw installationError('請填寫教會設定', 'INVALID_INPUT');
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw installationError('请填写教会设定', 'INVALID_INPUT');
   const allowed = new Set(['appName', 'shortName', 'siteName', 'timeZone', 'region', 'services', 'adminName', 'adminEmail', 'cloudflareAccountId']);
-  if (Object.keys(input).some((key) => !allowed.has(key))) throw installationError('設定包含不支援的欄位', 'INVALID_INPUT');
-  if (!RUN_ID.test(runId)) throw installationError('安裝識別碼不正確', 'INVALID_INPUT');
-  const googleEmail = requireEmail(identity?.googleEmail, 'Google 帳號');
+  if (Object.keys(input).some((key) => !allowed.has(key))) throw installationError('设定包含不支援的栏位', 'INVALID_INPUT');
+  if (!RUN_ID.test(runId)) throw installationError('安装识别码不正确', 'INVALID_INPUT');
+  const googleEmail = requireEmail(identity?.googleEmail, 'Google 帐号');
   if (!/^[0-9a-f]{32}$/i.test(input.cloudflareAccountId ?? '') ||
       !identity?.accounts?.some((account) => account.id === input.cloudflareAccountId)) {
-    throw installationError('請選擇已授權的 Cloudflare 帳號', 'INVALID_INPUT');
+    throw installationError('请选择已授权的 Cloudflare 帐号', 'INVALID_INPUT');
   }
-  // Empty means automatic; a region is only sent when the church chose one.
-  if (input.region && !REGIONS.some(([id]) => id === input.region)) throw installationError('資料庫地區不正確，請重新選擇', 'INVALID_INPUT');
+  if (!REGIONS.some(([id]) => id === input.region)) throw installationError('请选择资料库地区', 'INVALID_INPUT');
   const siteName = typeof input.siteName === 'string' ? input.siteName.trim().toLowerCase() : '';
   if (!SITE_NAME.test(siteName) || siteName.includes('--')) {
-    throw installationError('網站名稱只能用 3–40 個英文小寫字母、數字和連字號（-），並以字母開頭', 'INVALID_INPUT');
+    throw installationError('网站名称只能用 3–40 个英文小写字母、数字和连字号（-），并以字母开头', 'INVALID_INPUT');
   }
   if (!Array.isArray(input.services) || input.services.length < 1 || input.services.length > 20) {
-    throw installationError('請設定 1 至 20 種聚會', 'INVALID_INPUT');
+    throw installationError('请设定 1 至 20 种聚会', 'INVALID_INPUT');
   }
   let churchConfig;
   try {
     churchConfig = coreChurchConfig({
-      appName: requireText(input.appName, '教會名稱'),
-      shortName: requireText(input.shortName, '顯示簡稱', 20),
-      timeZone: requireText(input.timeZone, '時區'),
+      appName: requireText(input.appName, '教会名称'),
+      shortName: requireText(input.shortName, '显示简称', 20),
+      timeZone: requireText(input.timeZone, '时区'),
       services: input.services.map((service, index) => ({
         id: `service${index + 1}`,
-        label: requireText(service?.label, '聚會簡稱', 20),
-        name: requireText(service?.name, '聚會名稱'),
+        label: requireText(service?.label, '聚会简称', 20),
+        name: requireText(service?.name, '聚会名称'),
         weekday: service?.weekday,
         enabled: true,
       })),
     });
   } catch (error) {
     if (error.safeToDisplay) throw error;
-    throw installationError(`教會設定不正確：${error.message}`, 'INVALID_INPUT');
+    throw installationError(`教会设定不正确：${error.message}`, 'INVALID_INPUT');
   }
   const projectId = projectIdFor(runId);
-  const adminName = requireText(input.adminName, '管理員姓名');
+  const adminName = requireText(input.adminName, '管理员姓名');
   const plan = {
     schemaVersion: 1, runId, sourceRevision, mode,
     projectId, pagesProject: siteName,
@@ -239,7 +238,7 @@ export function createInstallationPlan(input, identity, {
     googleEmail, region: input.region || regionForTimeZone(churchConfig.timeZone), churchConfig,
     ...(iconHashes ? { icons: { ...iconHashes } } : {}),
     // Sign-in uses the email; like bootstrap-admin, the username defaults to the name.
-    admin: { name: adminName, email: requireEmail(input.adminEmail, '管理員 email'), username: adminName },
+    admin: { name: adminName, email: requireEmail(input.adminEmail, '管理员 email'), username: adminName },
   };
   return { ...plan, digest: fingerprint(plan) };
 }
@@ -247,18 +246,18 @@ export function createInstallationPlan(input, identity, {
 // resumable: the program versions whose records this one can safely continue
 // (see scripts/installer/RESUMES_FROM), always including its own.
 function validateStoredPlan(plan, resumable, mode) {
-  if (!plan || plan.schemaVersion !== 1 || !RUN_ID.test(plan.runId ?? '')) throw installationError('安裝紀錄格式不正確');
+  if (!plan || plan.schemaVersion !== 1 || !RUN_ID.test(plan.runId ?? '')) throw installationError('安装纪录格式不正确');
   const { digest, ...fields } = plan;
-  if (fingerprint(fields) !== digest) throw installationError('安裝設定已被更改，拒絕接續');
+  if (fingerprint(fields) !== digest) throw installationError('安装设定已被更改，拒绝接续');
   const config = validateChurchConfig(plan.churchConfig);
   if (Object.values(config.features).some(Boolean) || config.devotional.enabled ||
       plan.projectId !== projectIdFor(plan.runId) || !SITE_NAME.test(plan.pagesProject ?? '') ||
-      !REGIONS.some(([id]) => id === plan.region)) throw installationError('紀錄不是核心首次安裝設定');
-  if (!resumable.has(plan.sourceRevision)) throw installationError('程式版本與這次安裝不相容；請使用原版本接續，不要重新建立專案');
-  if (plan.mode !== mode) throw installationError('示範安裝與真實安裝不可互相接續');
-  if (plan.icons !== undefined && !isIconHashes(plan.icons)) throw installationError('安裝紀錄格式不正確');
-  requireEmail(plan.googleEmail, 'Google 帳號');
-  requireEmail(plan.admin?.email, '管理員 email');
+      !REGIONS.some(([id]) => id === plan.region)) throw installationError('纪录不是核心首次安装设定');
+  if (!resumable.has(plan.sourceRevision)) throw installationError('程式版本与这次安装不相容；请使用原版本接续，不要重新建立专案');
+  if (plan.mode !== mode) throw installationError('示范安装与真实安装不可互相接续');
+  if (plan.icons !== undefined && !isIconHashes(plan.icons)) throw installationError('安装纪录格式不正确');
+  requireEmail(plan.googleEmail, 'Google 帐号');
+  requireEmail(plan.admin?.email, '管理员 email');
 }
 
 function assertCheckpointSafe(value, depth = 0) {
@@ -276,7 +275,7 @@ async function privateDirectory(directory) {
   await mkdir(directory, { mode: 0o700 }).catch((error) => { if (error.code !== 'EEXIST') throw error; });
   const stat = await lstat(directory);
   if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('Installer directory must not be a link');
-  if ((stat.mode & 0o077) !== 0) throw installationError('安裝紀錄目錄權限過寬，請先限制為只有本人可存取');
+  if ((stat.mode & 0o077) !== 0) throw installationError('安装纪录目录权限过宽，请先限制为只有本人可存取');
 }
 
 async function assertRegular(file) {
@@ -295,7 +294,7 @@ async function readPrivateFile(file) {
 }
 
 async function openStore(rootDir, runId) {
-  if (!RUN_ID.test(runId)) throw installationError('安裝識別碼不正確', 'INVALID_INPUT');
+  if (!RUN_ID.test(runId)) throw installationError('安装识别码不正确', 'INVALID_INPUT');
   const root = await realpath(rootDir);
   const local = path.join(root, '.local');
   // Existing .local may contain unrelated operator files. Never change its permissions.
@@ -311,7 +310,7 @@ async function openStore(rootDir, runId) {
     runDir,
     async read() {
       const stat = await assertRegular(file);
-      if (!stat || stat.size > 2 * 1024 * 1024) throw installationError('找不到有效的安裝紀錄');
+      if (!stat || stat.size > 2 * 1024 * 1024) throw installationError('找不到有效的安装纪录');
       return JSON.parse((await readPrivateFile(file)).toString('utf8'));
     },
     async write(value, initial = false) {
@@ -350,15 +349,15 @@ function verifiedWebsite(value) {
 export function publicError(error) {
   const result = {
     code: typeof error?.code === 'string' && /^[A-Z_]{2,80}$/.test(error.code) ? error.code : 'INSTALLATION_ERROR',
-    message: error?.safeToDisplay === true ? String(error.message).slice(0, 1_000) : '操作未完成。請確認授權與工具狀態後重試；原始輸出不會公開，以免洩漏憑證。',
+    message: error?.safeToDisplay === true ? String(error.message).slice(0, 1_000) : '操作未完成。请确认授权与工具状态后重试；原始输出不会公开，以免泄漏凭证。',
   };
-  const action = error?.action ?? (error?.helpUrl ? { title: '開啟官方設定頁', url: error.helpUrl } : undefined);
+  const action = error?.action ?? (error?.helpUrl ? { title: '开启官方设定页', url: error.helpUrl } : undefined);
   if (action?.url) {
     try {
       const url = new URL(action.url);
       if (url.protocol === 'https:' && !url.username && !url.password &&
           ['console.firebase.google.com', 'console.cloud.google.com', 'dash.cloudflare.com'].includes(url.hostname)) {
-        result.action = { title: String(action.title ?? '開啟官方設定頁').slice(0, 100), url: url.href };
+        result.action = { title: String(action.title ?? '开启官方设定页').slice(0, 100), url: url.href };
       }
     } catch { /* Never echo an untrusted diagnostic URL. */ }
   }
@@ -367,7 +366,7 @@ export function publicError(error) {
 
 // Update builds get their own private directory; they never touch install records.
 async function updateDirectory(rootDir, runId) {
-  if (!RUN_ID.test(runId)) throw installationError('安裝識別碼不正確', 'INVALID_INPUT');
+  if (!RUN_ID.test(runId)) throw installationError('安装识别码不正确', 'INVALID_INPUT');
   const root = await realpath(rootDir);
   const local = path.join(root, '.local');
   const localStat = await lstat(local).catch((error) => { if (error.code !== 'ENOENT') throw error; });
@@ -450,7 +449,7 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
     return writeQueue;
   };
   const exclusive = async (operation) => {
-    if (busy) throw installationError('另一個步驟仍在執行，請等待或停止', 'BUSY');
+    if (busy) throw installationError('另一个步骤仍在执行，请等待或停止', 'BUSY');
     busy = true;
     lastError = undefined;
     controller = new AbortController();
@@ -463,7 +462,7 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
     cloudflareIdentity = await cloudflare.inspectIdentity({ signal });
     if (googleIdentity.email !== plan.googleEmail ||
         !cloudflareIdentity.accounts?.some((account) => account.id === plan.cloudflareAccountId)) {
-      throw installationError('目前授權帳號與安裝紀錄不符，已停止，沒有切換到其他專案', 'IDENTITY_MISMATCH');
+      throw installationError('目前授权帐号与安装纪录不符，已停止，没有切换到其他专案', 'IDENTITY_MISMATCH');
     }
   };
 
@@ -475,7 +474,7 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
       for (const directory of [local, base]) {
         const stat = await lstat(directory).catch((error) => { if (error.code !== 'ENOENT') throw error; });
         if (!stat) return [];
-        if (!stat.isDirectory() || stat.isSymbolicLink()) throw installationError('安裝紀錄目錄不正確');
+        if (!stat.isDirectory() || stat.isSymbolicLink()) throw installationError('安装纪录目录不正确');
       }
       const candidates = (await readdir(base)).filter((name) => RUN_ID.test(name)).slice(0, 100);
       const results = [];
@@ -524,9 +523,9 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
     },
     findInstalls() {
       return exclusive(async (signal) => {
-        if (state?.approved && state.status !== 'complete') throw installationError('目前有一個安裝還沒完成；請先完成或停止它，再更新網站');
-        if (!googleIdentity?.email || !cloudflareIdentity?.accounts?.length) throw installationError('請先連接 Google 與 Cloudflare', 'CONFIRMATION_REQUIRED');
-        message = '正在尋找這組帳號裝過的網站…';
+        if (state?.approved && state.status !== 'complete') throw installationError('目前有一个安装还没完成；请先完成或停止它，再更新网站');
+        if (!googleIdentity?.email || !cloudflareIdentity?.accounts?.length) throw installationError('请先连接 Google 与 Cloudflare', 'CONFIRMATION_REQUIRED');
+        message = '正在寻找这组帐号装过的网站…';
         update = undefined;
         const found = await cloudflare.listInstalls({ signal });
         const next = [];
@@ -544,14 +543,14 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
           });
         }
         installs = next;
-        message = installs.length ? '請選擇要更新的網站' : '這組 Google／Cloudflare 帳號底下，找不到安裝精靈裝過的網站';
+        message = installs.length ? '请选择要更新的网站' : '这组 Google／Cloudflare 帐号底下，找不到安装精灵装过的网站';
       });
     },
     planUpdate({ pagesProject, accountId } = {}) {
       return exclusive(async (signal) => {
         const target = installs?.find((item) => item.pagesProject === pagesProject && item.accountId === accountId);
-        if (!target) throw installationError('請先按「尋找已安裝的網站」，再選擇一個', 'INVALID_INPUT');
-        if (!target.readable) throw installationError('這個網站是舊版精靈裝的，讀不到教會設定，沒辦法自動更新。', 'UPDATE_UNSUPPORTED');
+        if (!target) throw installationError('请先按「寻找已安装的网站」，再选择一个', 'INVALID_INPUT');
+        if (!target.readable) throw installationError('这个网站是旧版精灵装的，读不到教会设定，没办法自动更新。', 'UPDATE_UNSUPPORTED');
         update = {
           plan: {
             schemaVersion: 1, kind: 'update', mode, runId: target.runId, projectId: target.projectId,
@@ -563,28 +562,28 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
         const live = {};
         await Promise.all(Object.keys(ICON_SIZES).map(async (name) => { live[name] = await fetchAsset(`${target.website}${name}`, { signal }); }));
         update.liveIcons = iconSet(live) ?? undefined;
-        message = '請核對要更新的網站，再按「開始更新」';
+        message = '请核对要更新的网站，再按「开始更新」';
       });
     },
     // A new logo (five PNGs the page drew from the church's image), or back to neutral.
     setUpdateIcons({ icons, reset } = {}) {
       return exclusive(async () => {
-        if (!update || update.status === 'running') throw installationError('請先選擇要更新的網站', 'INVALID_INPUT');
+        if (!update || update.status === 'running') throw installationError('请先选择要更新的网站', 'INVALID_INPUT');
         if (reset) {
           update.icons = undefined;
           update.liveIcons = undefined;
-          message = '這次更新會改回預設圖示';
+          message = '这次更新会改回预设图示';
           return;
         }
         update.icons = decodeIcons(icons);
-        message = '已套用新的 Logo，會在這次更新一起發布';
+        message = '已套用新的 Logo，会在这次更新一起发布';
       });
     },
     applyUpdate({ confirm, customDomain } = {}) {
       return exclusive(async (signal) => {
-        if (!update || confirm !== update.plan.pagesProject) throw installationError('請勾選確認要更新的網站', 'CONFIRMATION_REQUIRED');
+        if (!update || confirm !== update.plan.pagesProject) throw installationError('请勾选确认要更新的网站', 'CONFIRMATION_REQUIRED');
         const domain = customDomain ? normalizeCustomDomain(customDomain) : undefined;
-        if (customDomain && !domain) throw installationError('自訂網址要是你們擁有的子網域，例如 staff.hope-church.org（不能只填 hope-church.org）', 'INVALID_INPUT');
+        if (customDomain && !domain) throw installationError('自订网址要是你们拥有的子网域，例如 staff.hope-church.org（不能只填 hope-church.org）', 'INVALID_INPUT');
         update.plan.customDomain = domain;
         update.domain = undefined;
         await verifyIdentity(update.plan, signal);
@@ -619,7 +618,7 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
             update.steps[step.id] = context.transient.unchanged && ['build', 'publish'].includes(step.id) ? 'skipped' : 'complete';
           }
           update.status = 'complete';
-          message = update.result?.unchanged ? '網站程式已經是最新版本，不需要重新發布。' : '更新完成。同工下次打開 App 就會換到新版。';
+          message = update.result?.unchanged ? '网站程式已经是最新版本，不需要重新发布。' : '更新完成。同工下次打开 App 就会换到新版。';
         } catch (error) {
           const current = UPDATE_STEPS.find((step) => update.steps[step.id] === 'running');
           if (current) update.steps[current.id] = signal.aborted ? 'paused' : 'failed';
@@ -630,24 +629,24 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
     },
     connectGoogle() {
       return exclusive(async (signal) => {
-        message = '請切到 Cloud Shell 分頁：若出現「Authorize Cloud Shell」，按 Authorize 並選擇這次要用的 Google 帳號';
+        message = '请切到 Cloud Shell 分页：若出现「Authorize Cloud Shell」，按 Authorize 并选择这次要用的 Google 帐号';
         googleIdentity = await (google.authorize ?? google.inspectIdentity)({ signal });
-        message = 'Google 帳號已連接';
+        message = 'Google 帐号已连接';
       });
     },
     connectCloudflare() {
       return exclusive(async (signal) => {
         device = undefined;
-        message = '正在開啟 Cloudflare 官方授權';
+        message = '正在开启 Cloudflare 官方授权';
         await cloudflare.startLogin({ emit, signal });
         cloudflareIdentity = await cloudflare.inspectIdentity({ signal });
         device = undefined;
-        message = 'Cloudflare 帳號已連接';
+        message = 'Cloudflare 帐号已连接';
       });
     },
     plan(input) {
       return exclusive(async (signal) => {
-        if (state?.approved) throw installationError('這次安裝已開始，不能更改設定或另建專案；請接續原安裝');
+        if (state?.approved) throw installationError('这次安装已开始，不能更改设定或另建专案；请接续原安装');
         // The optional logo travels with the form but is stored beside the record.
         const form = input && typeof input === 'object' && !Array.isArray(input);
         const { icons: iconInput, ...fields } = form ? input : {};
@@ -658,7 +657,7 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
         // Read-only checks before anything is recorded or confirmed. Google
         // offers no read-only quota/terms check; those surface at the first
         // step, before any other resource exists.
-        message = '正在檢查帳號與網站名稱…';
+        message = '正在检查帐号与网站名称…';
         await verifyIdentity(plan, signal);
         await cloudflare.preflight?.(plan, { signal });
         const nextStore = await openStore(rootDir, plan.runId);
@@ -674,31 +673,31 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
         state = next;
         store = nextStore;
         transient = {};
-        message = '請核對新專案、資料地區與管理員，再確認安裝';
+        message = '请核对新专案、资料地区与管理员，再确认安装';
         return plan;
       });
     },
     load(runId) {
       return exclusive(async () => {
-        if (state?.approved && state.plan.runId !== runId) throw installationError('請先完成或停止目前的安裝，不可在執行期間切換目標');
+        if (state?.approved && state.plan.runId !== runId) throw installationError('请先完成或停止目前的安装，不可在执行期间切换目标');
         const nextStore = await openStore(rootDir, runId);
         const next = await nextStore.read();
         validateStoredPlan(next.plan, resumable, mode);
-        if (next.schemaVersion !== 1 || typeof next.approved !== 'boolean') throw installationError('安裝紀錄格式不正確');
+        if (next.schemaVersion !== 1 || typeof next.approved !== 'boolean') throw installationError('安装纪录格式不正确');
         assertCheckpointSafe(next);
         state = next;
         state.status = state.status === 'complete' ? 'complete' : 'paused';
         store = nextStore;
         transient = {};
         writeQueue = Promise.resolve();
-        message = '已載入紀錄；請重新連接相同帳號，再確認接續';
+        message = '已载入纪录；请重新连接相同帐号，再确认接续';
       });
     },
     apply({ digest, confirmProject, confirmAdmin, acknowledgeRegion, acknowledgeEmail } = {}) {
       return exclusive(async (signal) => {
         if (!state || digest !== state.plan.digest || confirmProject !== state.plan.projectId ||
             confirmAdmin !== state.plan.admin.email || acknowledgeRegion !== true || acknowledgeEmail !== true) {
-          throw installationError('請明確核對新專案、管理員、資料地區與寄信，再確認安裝', 'CONFIRMATION_REQUIRED');
+          throw installationError('请明确核对新专案、管理员、资料地区与寄信，再确认安装', 'CONFIRMATION_REQUIRED');
         }
         validateStoredPlan(state.plan, resumable, mode);
         await verifyIdentity(state.plan, signal);
@@ -730,7 +729,7 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
           }
           state.status = 'complete';
           count('completed', { runId });
-          message = '部署步驟已完成。請查看管理員信箱並實際登入驗收；規則可能需要幾分鐘生效。';
+          message = '部署步骤已完成。请查看管理员信箱并实际登入验收；规则可能需要几分钟生效。';
         } catch (error) {
           const current = STEPS.find((step) => state.steps[step.id] === 'running');
           if (current) state.steps[current.id] = signal.aborted ? 'paused' : error.actionRequired ? 'waiting' : 'failed';
@@ -745,7 +744,7 @@ export function createInstallationManager({ rootDir, google, cloudflare, build, 
     },
     cancel() {
       controller?.abort();
-      message = '正在停止；已建立的雲端資源不會刪除，之後可核對狀態再接續';
+      message = '正在停止；已建立的云端资源不会删除，之后可核对状态再接续';
     },
     async dispose() {
       controller?.abort();

@@ -48,7 +48,7 @@ CalendarEvent? calendarEventFromGoogleItem(
     startTime: startTime,
     endTime: endTime,
     isAllDay: isAllDay,
-    title: title == null || title.isEmpty ? '未命名活動' : title,
+    title: title == null || title.isEmpty ? '未命名活动' : title,
     location: location == null || location.isEmpty ? null : location,
     description: description == null || description.isEmpty
         ? null

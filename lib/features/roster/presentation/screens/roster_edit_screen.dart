@@ -63,14 +63,14 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
       }
       Navigator.push(context, MaterialPageRoute(builder: (_) => builder()));
     } catch (error, st) {
-      log('載入設定畫面失敗', error: error, stackTrace: st);
+      log('载入设定画面失败', error: error, stackTrace: st);
       if (context.mounted) {
         if (dialogShown) {
           Navigator.of(context, rootNavigator: true).pop();
           dialogShown = false;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入失敗：${mapErrorToUserMessage(error)}')),
+          SnackBar(content: Text('载入失败：${mapErrorToUserMessage(error)}')),
         );
       }
     } finally {
@@ -90,15 +90,15 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
       if (!session.canEditRoster) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('沒有權限進入編輯模式')));
+        ).showSnackBar(const SnackBar(content: Text('没有权限进入编辑模式')));
         widget.onExit();
         return;
       }
 
-      // 進入編輯模式時，背景補齊本季 + 下季的 roster（backfill）。
-      // 在無編輯權的路徑下已 return，此處一定有寫入權 —— 但只在自己的牧區內，
-      // 所以補的範圍限制在 allowedTypes（同一個 batch 混進別的聚會別會整批被
-      // rules 拒絕）。失敗靜默處理（ensureQuarterRosters 內部 catch），不影響 UI。
+      // 进入编辑模式时，背景补齐本季 + 下季的 roster（backfill）。
+      // 在无编辑权的路径下已 return，此处一定有写入权 —— 但只在自己的牧区内，
+      // 所以补的范围限制在 allowedTypes（同一个 batch 混进别的聚会别会整批被
+      // rules 拒绝）。失败静默处理（ensureQuarterRosters 内部 catch），不影响 UI。
       context.read<RosterProvider>().ensureQuarterRostersForEditor(
         widget.allowedTypes,
       );
@@ -108,10 +108,10 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
   @override
   Widget build(BuildContext context) {
     final allowedTypes = widget.allowedTypes;
-    // settings 的寫入權在 firestore.rules 裡是 admin only，所以非 admin 看到
-    // 這兩顆按鈕只會按下去然後失敗 —— 不如不要顯示。
+    // settings 的写入权在 firestore.rules 里是 admin only，所以非 admin 看到
+    // 这两颗按钮只会按下去然后失败 —— 不如不要显示。
     final isAdmin = context.select<SessionProvider, bool>((s) => s.isAdmin);
-    const titleText = '編輯服事表';
+    const titleText = '编辑服事表';
 
     final appBar = AppBar(
       title: Text(titleText),
@@ -120,7 +120,7 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
         if (isAdmin) ...[
           IconButton(
             icon: const Icon(Icons.palette_outlined),
-            tooltip: '事件選項設定',
+            tooltip: '事件选项设定',
             onPressed: () => _loadAndPush(
               context,
               event_settings_screen.loadLibrary,
@@ -129,7 +129,7 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.list_alt_outlined),
-            tooltip: '服事項目設定',
+            tooltip: '服事项目设定',
             onPressed: () => _loadAndPush(
               context,
               role_settings_screen.loadLibrary,
@@ -137,10 +137,10 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
             ),
           ),
         ],
-        // 以前是 view_list 圖示，跟旁邊「服事項目設定」的清單圖示幾乎一樣，
-        // 照著「按清單圖示」的說明就會按到這顆、直接離開編輯模式。
+        // 以前是 view_list 图示，跟旁边「服事项目设定」的清单图示几乎一样，
+        // 照著「按清单图示」的说明就会按到这颗、直接离开编辑模式。
         Tooltip(
-          message: '切換至檢視模式',
+          message: '切换至检视模式',
           child: TextButton(onPressed: widget.onExit, child: const Text('完成')),
         ),
       ],
@@ -151,7 +151,7 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
               isScrollable: allowedTypes.length > 3,
               tabs: allowedTypes.map((type) => Tab(text: type.label)).toList(),
               indicatorSize: TabBarIndicatorSize.label,
-              // 讓切換時的動畫更平滑
+              // 让切换时的动画更平滑
               splashFactory: NoSplash.splashFactory,
               overlayColor: const WidgetStatePropertyAll(Colors.transparent),
             ),
@@ -162,16 +162,16 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
         appBar: appBar,
         body: const EmptyState(
           icon: Icons.folder_off_outlined,
-          message: '尚未設定可檢視的牧區',
-          hint: '請先到使用者管理為您指派服事牧區',
+          message: '尚未设定可检视的牧区',
+          hint: '请先到使用者管理为您指派服事牧区',
         ),
       );
     }
 
     return Scaffold(
       appBar: appBar,
-      // 同 roster_screen：不要用 Consumer 包住整個 body，否則每次
-      // notifyListeners 都會重建整棵 TabBarView 與所有卡片。
+      // 同 roster_screen：不要用 Consumer 包住整个 body，否则每次
+      // notifyListeners 都会重建整棵 TabBarView 与所有卡片。
       body: Builder(
         builder: (context) {
           // stale-while-revalidate: only block the UI with a spinner when
@@ -189,7 +189,7 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
                   const CircularProgressIndicator(),
                   const SizedBox(height: 12),
                   Text(
-                    '載入服事資訊中…',
+                    '载入服事资讯中…',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -208,14 +208,14 @@ class _RosterEditScreenState extends State<RosterEditScreen> {
                 onPressed: () =>
                     context.read<RosterProvider>().fetchInitialData(),
                 icon: const Icon(Icons.refresh),
-                label: const Text('重試'),
+                label: const Text('重试'),
               ),
             );
           }
 
-          // TabBarView 預設支援左右滑動
+          // TabBarView 预设支援左右滑动
           return TabBarView(
-            // 收尾動畫越久，「換完分頁馬上想往下滑卻沒反應」的窗口就越長。
+            // 收尾动画越久，「换完分页马上想往下滑却没反应」的窗口就越长。
             physics: const SnappyPageScrollPhysics(),
             controller: widget.tabController,
             children: allowedTypes.map((type) {
@@ -240,14 +240,14 @@ class _RosterList extends StatefulWidget {
   State<_RosterList> createState() => _RosterListState();
 }
 
-// 使用 AutomaticKeepAliveClientMixin 來保持滑動位置
+// 使用 AutomaticKeepAliveClientMixin 来保持滑动位置
 class _RosterListState extends State<_RosterList>
     with AutomaticKeepAliveClientMixin, ScrollAnchorSupport {
   @override
-  bool get wantKeepAlive => true; // 告訴 Flutter 保持這個頁面的狀態
+  bool get wantKeepAlive => true; // 告诉 Flutter 保持这个页面的状态
 
-  // dispose 期間 context 已經查不到 InheritedWidget，所以進場時就把 provider
-  // 抓在手上，撤銷登記時才有東西可用。
+  // dispose 期间 context 已经查不到 InheritedWidget，所以进场时就把 provider
+  // 抓在手上，撤销登记时才有东西可用。
   late final RosterProvider _provider;
 
   @override
@@ -255,8 +255,8 @@ class _RosterListState extends State<_RosterList>
     super.initState();
     _provider = context.read<RosterProvider>();
     _provider.registerScrollAnchorCapture(widget.type, captureScrollAnchor);
-    // 檢視模式切進來時，把當初頂端那一天挪回原本的位置：編輯清單多了一張匯入
-    // 卡、每列多了兩顆按鈕，同一個 pixel offset 在這裡指到的是別天。
+    // 检视模式切进来时，把当初顶端那一天挪回原本的位置：编辑清单多了一张汇入
+    // 卡、每列多了两颗按钮，同一个 pixel offset 在这里指到的是别天。
     final anchor = _provider.scrollAnchorFor(widget.type);
     if (anchor != null) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -273,11 +273,11 @@ class _RosterListState extends State<_RosterList>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // 必須呼叫 super.build
+    super.build(context); // 必须呼叫 super.build
     final isEditMode = context.select<RosterProvider, bool>(
       (provider) => provider.isEditMode,
     );
-    // 只訂閱這個牧區的清單（getRostersByType 有快取，資料沒變時 identity 不變）。
+    // 只订阅这个牧区的清单（getRostersByType 有快取，资料没变时 identity 不变）。
     final rosters = context.select<RosterProvider, List<ServiceRoster>>(
       (provider) => provider.getRostersByType(widget.type),
     );
@@ -285,15 +285,15 @@ class _RosterListState extends State<_RosterList>
     if (rosters.isEmpty) {
       return EmptyState(
         icon: Icons.event_busy_outlined,
-        message: '此類別目前沒有服事資訊',
+        message: '此类别目前没有服事资讯',
         hint: isEditMode
-            ? (_photoImportAvailable ? '可以用服事表照片快速建立' : '懂技術的同工可以貼上 JSON 快速建立')
-            : '管理員建立後會在這裡顯示',
+            ? (_photoImportAvailable ? '可以用服事表照片快速建立' : '懂技术的同工可以贴上 JSON 快速建立')
+            : '管理员建立后会在这里显示',
         action: isEditMode
             ? OutlinedButton.icon(
                 onPressed: () => _showImportJsonDialog(context),
                 icon: const Icon(Icons.upload_file),
-                label: const Text('匯入服事表'),
+                label: const Text('汇入服事表'),
               )
             : null,
       );
@@ -336,16 +336,16 @@ class _RosterListState extends State<_RosterList>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _photoImportAvailable ? '匯入服事表' : '進階：匯入整季服事表',
+                    _photoImportAvailable ? '汇入服事表' : '进阶：汇入整季服事表',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 4),
-                  // 沒有照片辨識時只剩貼 JSON，那是給技術同工的。新教會第一次
-                  // 進編輯模式最先看到這張卡，要讓他知道可以跳過。
+                  // 没有照片辨识时只剩贴 JSON，那是给技术同工的。新教会第一次
+                  // 进编辑模式最先看到这张卡，要让他知道可以跳过。
                   Text(
                     _photoImportAvailable
-                        ? '用服事表照片辨識，依日期批次填入'
-                        : '給懂技術的同工用（貼上 JSON 資料）。一般直接在下面各日期按「新增服事項目」排班即可。',
+                        ? '用服事表照片辨识，依日期批次填入'
+                        : '给懂技术的同工用（贴上 JSON 资料）。一般直接在下面各日期按「新增服事项目」排班即可。',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -356,13 +356,13 @@ class _RosterListState extends State<_RosterList>
               FilledButton.icon(
                 onPressed: () => _showImportJsonDialog(context),
                 icon: const Icon(Icons.upload_file),
-                label: const Text('匯入'),
+                label: const Text('汇入'),
               )
             else
               OutlinedButton.icon(
                 onPressed: () => _showImportJsonDialog(context),
                 icon: const Icon(Icons.upload_file),
-                label: const Text('匯入'),
+                label: const Text('汇入'),
               ),
           ],
         ),
@@ -370,8 +370,8 @@ class _RosterListState extends State<_RosterList>
     );
   }
 
-  /// 照片轉 JSON。建一次就好 —— 它沒有狀態，每次開 sheet 都新建一個
-  /// http.Client 只是多開連線池。
+  /// 照片转 JSON。建一次就好 —— 它没有状态，每次开 sheet 都新建一个
+  /// http.Client 只是多开连线池。
   late final RosterImportService _importService = RosterImportService();
 
   Future<void> _showImportJsonDialog(BuildContext context) async {
@@ -386,8 +386,8 @@ class _RosterListState extends State<_RosterList>
         onSubmit: (raw) => _applyJsonImport(sheetContext, raw),
       ),
     );
-    // sheet 自己關掉時才有結果。成功之後的報告留在這裡而不是 sheet 裡：
-    // 匯入結果視窗要活得比 sheet 久，掛在正在退場的那棵子樹上會被一起帶走。
+    // sheet 自己关掉时才有结果。成功之后的报告留在这里而不是 sheet 里：
+    // 汇入结果视窗要活得比 sheet 久，挂在正在退场的那棵子树上会被一起带走。
     if (result == null || !context.mounted) return;
 
     final summary = result.summary;
@@ -401,36 +401,36 @@ class _RosterListState extends State<_RosterList>
     ).showSnackBar(SnackBar(content: Text(importResultMessage(summary))));
   }
 
-  /// 依姓名把服事補進該同工的設定。
+  /// 依姓名把服事补进该同工的设定。
   ///
-  /// 失敗一律丟 [ImportFixException]：這幾種原因使用者看得懂也處理得了，被
-  /// mapErrorToUserMessage 壓成「操作失敗，請稍後再試」的話就只剩重試可按。
+  /// 失败一律丢 [ImportFixException]：这几种原因使用者看得懂也处理得了，被
+  /// mapErrorToUserMessage 压成「操作失败，请稍后再试」的话就只剩重试可按。
   Future<void> _addMinistryToUser(
     UserAdminProvider userAdminProvider,
     List<String> templateRoles,
     String name,
     List<String> roles,
   ) async {
-    // 樣板裡沒有的服事寫進去也留不住：帳號管理的選單只渲染樣板內的項目，
-    // 看不到也刪不掉，而下次有人存檔服事項目設定時 cleanupUserMinistries 會
-    // 把它清掉 —— 使用者只會看到自己按過「已新增」的東西過陣子又被報一次。
-    // 與其讓它悄悄消失，不如當場說清楚。
+    // 样板里没有的服事写进去也留不住：帐号管理的选单只渲染样板内的项目，
+    // 看不到也删不掉，而下次有人存档服事项目设定时 cleanupUserMinistries 会
+    // 把它清掉 —— 使用者只会看到自己按过「已新增」的东西过阵子又被报一次。
+    // 与其让它悄悄消失，不如当场说清楚。
     final outside = roles.where((r) => !templateRoles.contains(r)).toList();
     if (outside.isNotEmpty) {
       throw ImportFixException(
-        '「${outside.join('、')}」不在服事項目樣板裡，加了也會被清掉。'
-        '請先到服事項目設定新增這個項目',
+        '「${outside.join('、')}」不在服事项目样板里，加了也会被清掉。'
+        '请先到服事项目设定新增这个项目',
       );
     }
 
     final users = await userAdminProvider.getUsers();
     final matches = users.where((u) => u.name.trim() == name.trim()).toList();
     if (matches.isEmpty) {
-      throw ImportFixException('找不到同工「$name」，可能已被刪除');
+      throw ImportFixException('找不到同工「$name」，可能已被删除');
     }
-    // 同名同姓時刻意不猜：補錯人的設定沒有任何跡象，會一路錯到下次排班。
+    // 同名同姓时刻意不猜：补错人的设定没有任何迹象，会一路错到下次排班。
     if (matches.length > 1) {
-      throw ImportFixException('有 ${matches.length} 位同工都叫「$name」，請到帳號管理手動設定');
+      throw ImportFixException('有 ${matches.length} 位同工都叫「$name」，请到帐号管理手动设定');
     }
     await userAdminProvider.updateUser(
       addMinistriesToUser(matches.single, widget.type, roles),
@@ -442,8 +442,8 @@ class _RosterListState extends State<_RosterList>
     RosterImportSummary summary,
   ) async {
     final userAdminProvider = context.read<UserAdminProvider>();
-    // 補設定寫的是 users/{uid}、加活動寫的是 settings/，firestore.rules 裡
-    // 兩個都是 admin only。服事表編輯者進得來匯入流程，但這兩項都補不了。
+    // 补设定写的是 users/{uid}、加活动写的是 settings/，firestore.rules 里
+    // 两个都是 admin only。服事表编辑者进得来汇入流程，但这两项都补不了。
     final isAdmin = context.read<SessionProvider>().isAdmin;
     final rosterProvider = context.read<RosterProvider>();
     final templateRoles = rosterProvider.templates[widget.type] ?? const [];
@@ -469,10 +469,10 @@ class _RosterListState extends State<_RosterList>
     );
   }
 
-  /// 讀現況、交給 [planRosterImport]、把它要寫的寫進去。
+  /// 读现况、交给 [planRosterImport]、把它要写的写进去。
   ///
-  /// 怎麼對名字、怎麼排順序、哪天要改什麼都在 planRosterImport 裡，這裡只剩
-  /// 它碰不到的兩件事：讀同工名單、寫 Firestore。
+  /// 怎么对名字、怎么排顺序、哪天要改什么都在 planRosterImport 里，这里只剩
+  /// 它碰不到的两件事：读同工名单、写 Firestore。
   Future<_JsonImportResult> _applyJsonImport(
     BuildContext context,
     String raw,
@@ -484,7 +484,7 @@ class _RosterListState extends State<_RosterList>
     try {
       users = await userAdminProvider.getUsers();
     } catch (_) {
-      return const _JsonImportResult.failed('無法載入同工名單');
+      return const _JsonImportResult.failed('无法载入同工名单');
     }
 
     final plan = planRosterImport(
@@ -508,31 +508,31 @@ class _RosterListState extends State<_RosterList>
     try {
       await rosterProvider.applyRosterImport(widget.type, ready);
     } catch (e, st) {
-      log('匯入過程寫入 Firestore 失敗', error: e, stackTrace: st);
+      log('汇入过程写入 Firestore 失败', error: e, stackTrace: st);
       String msg;
       if (e is PartialUpdateException) {
         // Log the underlying cause's stack too so future Sentry has the
         // real Firestore error, not just the wrapping exception's stack.
-        log('匯入部分失敗的代表性 cause', error: e.cause, stackTrace: e.causeStackTrace);
+        log('汇入部分失败的代表性 cause', error: e.cause, stackTrace: e.causeStackTrace);
         final failedDates = e.failedRosters
             .map((r) => rosterDateKey(r.date))
             .join('、');
         msg =
-            '${e.successCount} 筆已寫入、${e.failureCount} 筆失敗。'
-            '失敗日期：$failedDates。請重新整理確認狀態後重試';
+            '${e.successCount} 笔已写入、${e.failureCount} 笔失败。'
+            '失败日期：$failedDates。请重新整理确认状态后重试';
       } else {
-        // 服事表那一步失敗一律是 PartialUpdateException，走到這裡的是更早
-        // 的同工排序那一步 —— 服事表一張都還沒寫。
-        msg = '${mapErrorToUserMessage(e)}。服事表沒有動，可以直接重試';
+        // 服事表那一步失败一律是 PartialUpdateException，走到这里的是更早
+        // 的同工排序那一步 —— 服事表一张都还没写。
+        msg = '${mapErrorToUserMessage(e)}。服事表没有动，可以直接重试';
       }
-      return _JsonImportResult.failed('匯入過程寫入失敗：$msg');
+      return _JsonImportResult.failed('汇入过程写入失败：$msg');
     }
 
     return _JsonImportResult.done(ready.summary);
   }
 }
 
-/// sheet 交回來的東西：寫完的報告，或是要留在 sheet 上的錯誤。
+/// sheet 交回来的东西：写完的报告，或是要留在 sheet 上的错误。
 class _JsonImportResult {
   const _JsonImportResult.done(RosterImportSummary this.summary) : error = null;
   const _JsonImportResult.failed(String this.error) : summary = null;
@@ -541,13 +541,13 @@ class _JsonImportResult {
   final String? error;
 }
 
-/// 匯入用的 bottom sheet。
+/// 汇入用的 bottom sheet。
 ///
-/// 抽成獨立的 widget 而不是留在 `_showImportJsonDialog` 裡的 StatefulBuilder：
-/// 那個函式長到兩百行，而其中真正屬於畫面的狀態有四個（錯誤、送出中、辨識中、
-/// JSON 欄位開合），全靠閉包變數撐著。有了 State 之後 controller 也能自己
-/// dispose —— dispose 是在退場動畫結束後才跑的，不會像 sheet 的 future 那樣
-/// 在 pop 當下就把 TextField 底下的東西抽掉。
+/// 抽成独立的 widget 而不是留在 `_showImportJsonDialog` 里的 StatefulBuilder：
+/// 那个函式长到两百行，而其中真正属于画面的状态有四个（错误、送出中、辨识中、
+/// JSON 栏位开合），全靠闭包变数撑著。有了 State 之后 controller 也能自己
+/// dispose —— dispose 是在退场动画结束后才跑的，不会像 sheet 的 future 那样
+/// 在 pop 当下就把 TextField 底下的东西抽掉。
 class _ImportJsonSheet extends StatefulWidget {
   const _ImportJsonSheet({
     required this.type,
@@ -558,8 +558,8 @@ class _ImportJsonSheet extends StatefulWidget {
   final ServiceType type;
   final RosterImportService importService;
 
-  /// 真正寫進 Firestore 的那一步。留在畫面外面是因為它要用到 provider 與
-  /// 服事表樣板，那些是 screen 的事，不是這張 sheet 的。
+  /// 真正写进 Firestore 的那一步。留在画面外面是因为它要用到 provider 与
+  /// 服事表样板，那些是 screen 的事，不是这张 sheet 的。
   final Future<_JsonImportResult> Function(String raw) onSubmit;
 
   @override
@@ -572,14 +572,14 @@ class _ImportJsonSheetState extends State<_ImportJsonSheet> {
   bool _isSubmitting = false;
   bool _isConverting = false;
 
-  /// 選照片的那段時間也要算「忙碌」。只在辨識開始後才鎖按鈕的話，iPhone 上
-  /// 一次點擊偶爾會觸發兩次，第二個選擇器排在第一個後面，選完一張又跳出一個。
-  /// 用欄位而不是 setState 判斷：第二次觸發跟第一次在同一個 frame 內，等不到
-  /// 重建按鈕就已經進來了。
+  /// 选照片的那段时间也要算「忙碌」。只在辨识开始后才锁按钮的话，iPhone 上
+  /// 一次点击偶尔会触发两次，第二个选择器排在第一个后面，选完一张又跳出一个。
+  /// 用栏位而不是 setState 判断：第二次触发跟第一次在同一个 frame 内，等不到
+  /// 重建按钮就已经进来了。
   bool _isPicking = false;
 
-  /// 有照片辨識可用時，貼 JSON 是備援而不是主要動作 —— 預設收起來。
-  /// 辨識完會自動展開，因為那時它變成「看一眼再匯入」的地方。
+  /// 有照片辨识可用时，贴 JSON 是备援而不是主要动作 —— 预设收起来。
+  /// 辨识完会自动展开，因为那时它变成「看一眼再汇入」的地方。
   bool _showJsonField = !_photoImportAvailable;
 
   @override
@@ -604,7 +604,7 @@ class _ImportJsonSheetState extends State<_ImportJsonSheet> {
     } finally {
       _isPicking = false;
     }
-    // 使用者按了取消。那不是錯誤，什麼都不做。
+    // 使用者按了取消。那不是错误，什么都不做。
     if (photo == null || !mounted) return;
 
     setState(() => _isConverting = true);
@@ -630,24 +630,24 @@ class _ImportJsonSheetState extends State<_ImportJsonSheet> {
     }
   }
 
-  /// 預期外的失敗（讀檔、拿登入 token 之類）也要讓畫面有反應。只接自己
-  /// 定義的例外的話，其他錯誤會被 async 吞掉 —— 使用者看到的就是「選完照片
-  /// 什麼都沒有」，連轉圈都沒有。
+  /// 预期外的失败（读档、拿登入 token 之类）也要让画面有反应。只接自己
+  /// 定义的例外的话，其他错误会被 async 吞掉 —— 使用者看到的就是「选完照片
+  /// 什么都没有」，连转圈都没有。
   void _reportUnexpected(Object error, StackTrace stackTrace) {
     debugPrint('roster photo import failed: $error\n$stackTrace');
     if (!mounted) return;
     setState(() {
       _isConverting = false;
-      _errorText = '辨識失敗：$error';
+      _errorText = '辨识失败：$error';
     });
   }
 
   Future<void> _submit() async {
-    // 空白時 parser 只會說「請貼上 JSON 內容」，但這個畫面上根本沒有可以貼的
-    // 地方（文字框收著）—— 要講得出下一步在哪。
+    // 空白时 parser 只会说「请贴上 JSON 内容」，但这个画面上根本没有可以贴的
+    // 地方（文字框收著）—— 要讲得出下一步在哪。
     if (_controller.text.trim().isEmpty && _photoImportAvailable) {
       setState(() {
-        _errorText = '請先從照片辨識，或展開下面自己貼 JSON';
+        _errorText = '请先从照片辨识，或展开下面自己贴 JSON';
         _showJsonField = true;
       });
       return;
@@ -673,15 +673,15 @@ class _ImportJsonSheetState extends State<_ImportJsonSheet> {
   Widget build(BuildContext context) {
     final busy = _isSubmitting || _isConverting;
     return SettingsBottomSheet(
-      title: '匯入服事表（${widget.type.label}）',
-      submitLabel: '匯入',
+      title: '汇入服事表（${widget.type.label}）',
+      submitLabel: '汇入',
       isSubmitting: _isSubmitting,
       onSubmit: busy ? null : _submit,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 辨識結果填回下面那個文字框，不直接匯入：看一眼再按匯入是這個流程
-          // 唯一的把關，而按下匯入走的還是跟手動貼上完全一樣的那條路。
+          // 辨识结果填回下面那个文字框，不直接汇入：看一眼再按汇入是这个流程
+          // 唯一的把关，而按下汇入走的还是跟手动贴上完全一样的那条路。
           if (_photoImportAvailable) ...[
             SizedBox(
               width: double.infinity,
@@ -694,7 +694,7 @@ class _ImportJsonSheetState extends State<_ImportJsonSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.photo_camera_outlined, size: 18),
-                label: Text(_isConverting ? '辨識中…' : '從照片辨識'),
+                label: Text(_isConverting ? '辨识中…' : '从照片辨识'),
               ),
             ),
             if (_isConverting) ...[
@@ -702,9 +702,9 @@ class _ImportJsonSheetState extends State<_ImportJsonSheet> {
               const PhotoImportProgress(),
             ],
             const SizedBox(height: 4),
-            // 收合的理由不是版面好看，是這條路平常用不到：Gemini 掛掉、額度
-            // 用完、模型下架時，從別處轉好再貼進來是唯一還走得通的路，所以它
-            // 要在，但不該擋在前面。
+            // 收合的理由不是版面好看，是这条路平常用不到：Gemini 挂掉、额度
+            // 用完、模型下架时，从别处转好再贴进来是唯一还走得通的路，所以它
+            // 要在，但不该挡在前面。
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
@@ -717,7 +717,7 @@ class _ImportJsonSheetState extends State<_ImportJsonSheet> {
                       : Icons.keyboard_arrow_right,
                   size: 18,
                 ),
-                label: const Text('自己貼 JSON'),
+                label: const Text('自己贴 JSON'),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                 ),
@@ -730,7 +730,7 @@ class _ImportJsonSheetState extends State<_ImportJsonSheet> {
               maxLines: 12,
               decoration: InputDecoration(
                 hintText:
-                    '[\n  {\n    "date": "2026-01-04",\n    "duties": [\n      {"people": ["待定"], "role": "敬拜主領"}\n    ],\n    "events": ["聖餐", {"name": "受洗禮", "color": "#F39C12"}]\n  }\n]',
+                    '[\n  {\n    "date": "2026-01-04",\n    "duties": [\n      {"people": ["待定"], "role": "敬拜主领"}\n    ],\n    "events": ["圣餐", {"name": "受洗礼", "color": "#F39C12"}]\n  }\n]',
                 hintStyle: TextStyle(
                   color: Theme.of(
                     context,
@@ -760,9 +760,9 @@ class _ImportJsonSheetState extends State<_ImportJsonSheet> {
           const SizedBox(height: 8),
           Text(
             _photoImportAvailable
-                ? '可以直接選服事表照片辨識，或自己貼上 JSON。'
-                      '格式需為陣列，每筆含 date，並至少含 duties 或 events'
-                : '格式需為 JSON 陣列，每筆含 date，並至少含 duties 或 events',
+                ? '可以直接选服事表照片辨识，或自己贴上 JSON。'
+                      '格式需为阵列，每笔含 date，并至少含 duties 或 events'
+                : '格式需为 JSON 阵列，每笔含 date，并至少含 duties 或 events',
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ],

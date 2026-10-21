@@ -88,8 +88,8 @@ class GoogleCalendarMonthReader {
       } catch (_) {}
       throw CalendarReadException(
         message == null || message.isEmpty
-            ? '載入失敗（${response.statusCode}）'
-            : '載入失敗（${response.statusCode}）：$message',
+            ? '载入失败（${response.statusCode}）'
+            : '载入失败（${response.statusCode}）：$message',
       );
     }
 

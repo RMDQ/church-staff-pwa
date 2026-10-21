@@ -52,19 +52,19 @@ class _RosterScreenState extends State<RosterScreen>
       });
       final rosterProvider = context.read<RosterProvider>();
       if (!rosterProvider.isEditMode) {
-        // 先記下現在看到哪一天，編輯清單掛好後才換得回來。
+        // 先记下现在看到哪一天，编辑清单挂好后才换得回来。
         rosterProvider.captureScrollAnchors();
         rosterProvider.toggleEditMode();
       }
     } catch (error, st) {
-      log('載入編輯模式失敗', error: error, stackTrace: st);
+      log('载入编辑模式失败', error: error, stackTrace: st);
       if (context.mounted) {
         if (dialogShown) {
           Navigator.of(context, rootNavigator: true).pop();
           dialogShown = false;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入失敗：${mapErrorToUserMessage(error)}')),
+          SnackBar(content: Text('载入失败：${mapErrorToUserMessage(error)}')),
         );
       }
     } finally {
@@ -126,16 +126,16 @@ class _RosterScreenState extends State<RosterScreen>
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionProvider>();
-    // 聚會別只看牧區，不看編輯權：給了 roster-editors 不等於多看得到別的牧區。
-    // 只有 admin 拿得到全部（見 [User.allowedRosterTypes]）。編輯權決定
-    // 「能不能改」，牧區決定「能改哪一本」。
+    // 聚会别只看牧区，不看编辑权：给了 roster-editors 不等于多看得到别的牧区。
+    // 只有 admin 拿得到全部（见 [User.allowedRosterTypes]）。编辑权决定
+    // 「能不能改」，牧区决定「能改哪一本」。
     final canEditRoster = session.canEditRoster;
     final canEdit = canEditRoster && widget.allowEdit;
     final allowedTypes =
         session.currentUser?.allowedRosterTypes ?? const <ServiceType>[];
-    // 標題不分本季／下季：對同工來說那只是「服事表」，範圍怎麼算他不用管。
+    // 标题不分本季／下季：对同工来说那只是「服事表」，范围怎么算他不用管。
     const titleText = '服事表';
-    // select 而非 watch：否則每次 fetch 的 loading 開關都會重建整個 Scaffold
+    // select 而非 watch：否则每次 fetch 的 loading 开关都会重建整个 Scaffold
     // （含 AppBar / TabBar / TabController）。
     final isEditMode = context.select<RosterProvider, bool>(
       (provider) => provider.isEditMode,
@@ -158,7 +158,7 @@ class _RosterScreenState extends State<RosterScreen>
         if (canEdit)
           IconButton(
             icon: const Icon(Icons.edit),
-            tooltip: '切換至編輯模式',
+            tooltip: '切换至编辑模式',
             onPressed: () =>
                 _loadEditLibrary(context, roster_edit_screen.loadLibrary),
           ),
@@ -180,8 +180,8 @@ class _RosterScreenState extends State<RosterScreen>
         appBar: appBar,
         body: const EmptyState(
           icon: Icons.folder_off_outlined,
-          message: '尚未設定可檢視的牧區',
-          hint: '請聯絡管理員為您加入服事牧區',
+          message: '尚未设置可查看的牧区',
+          hint: '请联系管理员为您添加服事牧区',
         ),
       );
     }
@@ -190,10 +190,10 @@ class _RosterScreenState extends State<RosterScreen>
       length: allowedTypes.length,
       child: Scaffold(
         appBar: appBar,
-        // 刻意不用 Consumer 包住整個 body：Consumer 會在每一次
-        // notifyListeners 重建整棵 TabBarView，連帶產生全新的 ListView 與
-        // 全新的卡片 widget，底下卡片再怎麼 select 也擋不住。改成只訂閱
-        // 「要不要顯示 spinner／錯誤」這兩個 bool，清單自己去訂閱自己那份資料。
+        // 刻意不用 Consumer 包住整个 body：Consumer 会在每一次
+        // notifyListeners 重建整棵 TabBarView，连带产生全新的 ListView 与
+        // 全新的卡片 widget，底下卡片再怎么 select 也挡不住。改成只订阅
+        // 「要不要显示 spinner／错误」这两个 bool，清单自己去订阅自己那份资料。
         body: Builder(
           builder: (context) {
             // stale-while-revalidate: only block the UI with a spinner when
@@ -211,7 +211,7 @@ class _RosterScreenState extends State<RosterScreen>
                     const CircularProgressIndicator(),
                     const SizedBox(height: 12),
                     Text(
-                      '載入服事資訊中…',
+                      '加载服事信息中…',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
@@ -230,13 +230,13 @@ class _RosterScreenState extends State<RosterScreen>
                   onPressed: () =>
                       context.read<RosterProvider>().fetchInitialData(),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('重試'),
+                  label: const Text('重试'),
                 ),
               );
             }
 
             return TabBarView(
-              // 收尾動畫越久，「換完分頁馬上想往下滑卻沒反應」的窗口就越長。
+              // 收尾动画越久，「换完分页马上想往下滑却没反应」的窗口就越长。
               physics: const SnappyPageScrollPhysics(),
               controller: _tabController,
               children: allowedTypes.map((type) {
@@ -267,8 +267,8 @@ class _RosterViewListState extends State<_RosterViewList>
   @override
   bool get wantKeepAlive => true;
 
-  // dispose 期間 context 已經查不到 InheritedWidget，所以進場時就把 provider
-  // 抓在手上，撤銷登記時才有東西可用。
+  // dispose 期间 context 已经查不到 InheritedWidget，所以进场时就把 provider
+  // 抓在手上，撤销登记时才有东西可用。
   late final RosterProvider _provider;
 
   @override
@@ -276,7 +276,7 @@ class _RosterViewListState extends State<_RosterViewList>
     super.initState();
     _provider = context.read<RosterProvider>();
     _provider.registerScrollAnchorCapture(widget.type, captureScrollAnchor);
-    // 從編輯模式切回來時，把當初頂端那一天挪回原本的位置。
+    // 从编辑模式切回来时，把当初顶端那一天挪回原本的位置。
     final anchor = _provider.scrollAnchorFor(widget.type);
     if (anchor != null) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -295,31 +295,31 @@ class _RosterViewListState extends State<_RosterViewList>
   Widget build(BuildContext context) {
     super.build(context);
 
-    // 只訂閱這個牧區的清單。getRostersByType 有快取，資料沒變時回傳同一個
-    // List instance，所以其他牧區被編輯、或單純的 loading 開關都不會重建這頁。
+    // 只订阅这个牧区的清单。getRostersByType 有快取，资料没变时回传同一个
+    // List instance，所以其他牧区被编辑、或单纯的 loading 开关都不会重建这页。
     final rosters = context.select<RosterProvider, List<ServiceRoster>>(
       (provider) => provider.getRostersByType(widget.type),
     );
 
     if (rosters.isEmpty) {
-      // 能編輯的人第一次進來看到空表，要知道從哪裡開始，而不是「等管理員」。
+      // 能编辑的人第一次进来看到空表，要知道从哪里开始，而不是「等管理员」。
       final canEdit = context.select<SessionProvider, bool>(
         (session) => session.canEditRoster,
       );
       return EmptyState(
         icon: Icons.event_busy_outlined,
-        message: '此類別目前沒有服事資訊',
+        message: '此类别目前没有服事信息',
         hint: canEdit
-            ? '按右上角的鉛筆開始編輯：先按右上角中間的清單圖示「服事項目設定」新增服事項目，再到各日期按「新增服事項目」排班。'
-            : '管理員建立後會在這裡顯示',
+            ? '点击右上角的铅笔开始编辑：先点击右上角列表图标「服事项目设置」添加服事项目，再到各日期点击「新增服事项目」排班。'
+            : '管理员创建后会在此显示',
       );
     }
 
-    // 事件選項換過就要重建（標籤顏色是從 provider 查的，不在 roster 裡）。
+    // 事件选项换过就要重建（标签颜色是从 provider 查的，不在 roster 里）。
     context.select<RosterProvider, int>(
       (provider) => provider.eventOptionsRevision,
     );
-    // 一個 tear-off 重複用，不要在 itemBuilder 裡每張卡各配一個 closure。
+    // 一个 tear-off 重复用，不要在 itemBuilder 里每张卡各配一个 closure。
     final resolveEventColor = context.read<RosterProvider>().eventColorOf;
 
     return ListView.builder(

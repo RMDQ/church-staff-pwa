@@ -19,11 +19,11 @@ export const NOTIFY_SECRET = 'test-notify-secret';
 export const PROJECT_ID = 'demo-church-staff';
 export const ADMIN_UID = 'admin-uid';
 export const MEMBER_UID = 'member-uid';
-/// role 是 staff，但被授予 calendar-editors —— 權限跟 role 無關。
+/// role 是 staff，但被授予 calendar-editors —— 权限跟 role 无关。
 export const CALENDAR_EDITOR_UID = 'calendar-editor-uid';
-/// 只有 roster-editors：用來證明兩個 group 是正交的。
+/// 只有 roster-editors：用来证明两个 group 是正交的。
 export const ROSTER_EDITOR_UID = 'roster-editor-uid';
-/// users/{uid} 的 name 欄位，也就是 LINE 通知裡出現的名字。
+/// users/{uid} 的 name 栏位，也就是 LINE 通知里出现的名字。
 export const ADMIN_NAME = '王管理';
 export const CALENDAR_EDITOR_NAME = '李同工';
 
@@ -89,10 +89,10 @@ export async function notifyingEnv(overrides = {}) {
   });
 }
 
-/// 換掉全域 fetch 跑一段，跑完一定換回來。
+/// 换掉全域 fetch 跑一段，跑完一定换回来。
 ///
-/// **一定要先 await 再還原**：從 try 裡把還沒完成的 promise 直接回傳出去，會
-/// 在 handler 還在飛的時候就把真的 fetch 裝回去，測試就默默地連上 Google 了。
+/// **一定要先 await 再还原**：从 try 里把还没完成的 promise 直接回传出去，会
+/// 在 handler 还在飞的时候就把真的 fetch 装回去，测试就默默地连上 Google 了。
 export async function withFetch(impl, fn) {
   const original = globalThis.fetch;
   globalThis.fetch = impl;
@@ -119,8 +119,8 @@ export function request(
   });
 }
 
-/// Firestore 對空陣列回的是 { arrayValue: {} }，沒有 values —— 照抄真實形狀，
-/// 否則讀陣列欄位時對空陣列的處理就沒有被測到。
+/// Firestore 对空阵列回的是 { arrayValue: {} }，没有 values —— 照抄真实形状，
+/// 否则读阵列栏位时对空阵列的处理就没有被测到。
 function stringArray(list) {
   return list.length === 0
     ? { arrayValue: {} }
@@ -142,7 +142,7 @@ export function fakeFetch({
   },
   calendar,
   notify,
-  // settings/services 的 ids（管理員在 App 裡新增的聚會）；不給就是沒有這份文件。
+  // settings/services 的 ids（管理员在 App 里新增的聚会）；不给就是没有这份文件。
   services,
 } = {}) {
   const calls = [];
@@ -164,12 +164,12 @@ export function fakeFetch({
       const uid = decodeURIComponent(target.split('/documents/users/')[1].split('?')[0]);
       if (!(uid in users)) return new Response('{}', { status: 404 });
       const profile = users[uid];
-      // null = 文件存在但一個欄位都沒有（舊資料）。
+      // null = 文件存在但一个栏位都没有（旧资料）。
       if (profile === null) return Response.json({ name: `users/${uid}`, fields: {} });
       const fields = {};
       if (profile.role != null) fields.role = { stringValue: profile.role };
-      // 使用者自己的 name 欄位。文件外層那個 name 是 Firestore 的資源路徑，
-      // 兩者同名但不同層 —— displayName() 讀的是這一個。
+      // 使用者自己的 name 栏位。文件外层那个 name 是 Firestore 的资源路径，
+      // 两者同名但不同层 —— displayName() 读的是这一个。
       if (profile.name != null) fields.name = { stringValue: profile.name };
       if (profile.groups != null) fields.groups = stringArray(profile.groups);
       if (profile.zoneTypes != null) fields.zoneTypes = stringArray(profile.zoneTypes);

@@ -3,8 +3,8 @@ import 'package:timezone/timezone.dart' as tz;
 import '../config/church_config.dart';
 import 'time_zone_database.dart';
 
-/// 時間點使用教會時區；只有日期的值使用 UTC 年月日，避免裝置時區及 DST
-/// 讓加七天變成不同的日子。日期值不是活動開始的 UTC 時間點。
+/// 时间点使用教会时区；只有日期的值使用 UTC 年月日，避免装置时区及 DST
+/// 让加七天变成不同的日子。日期值不是活动开始的 UTC 时间点。
 abstract final class ChurchTime {
   static String get timeZone => ChurchConfig.current.timeZone;
 
@@ -18,7 +18,7 @@ abstract final class ChurchTime {
   static DateTime dateOnly(DateTime value) =>
       DateTime.utc(value.year, value.month, value.day);
 
-  /// 行事曆與首頁共用快取語意：全天存日期，有時間的活動存時間點。
+  /// 行事历与首页共用快取语意：全天存日期，有时间的活动存时间点。
   static DateTime parseEventTime(String value, {required bool isAllDay}) {
     final parsed = DateTime.parse(value);
     return isAllDay ? dateOnly(parsed) : inZone(parsed);
@@ -36,7 +36,7 @@ abstract final class ChurchTime {
 
   static tz.TZDateTime atTime(DateTime date, int hour, int minute) {
     if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-      throw const FormatException('無效的時間');
+      throw const FormatException('无效的时间');
     }
     final result = tz.TZDateTime(
       timeZoneLocation(timeZone),
@@ -51,7 +51,7 @@ abstract final class ChurchTime {
         result.day != date.day ||
         result.hour != hour ||
         result.minute != minute) {
-      throw const FormatException('這個時間因夏令時間切換而不存在，請選其他時間');
+      throw const FormatException('这个时间因夏令时间切换而不存在，请选其他时间');
     }
     return result;
   }
@@ -63,11 +63,11 @@ abstract final class ChurchTime {
 
   static DateTime parseDate(String value) {
     if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
-      throw const FormatException('日期必須是 YYYY-MM-DD');
+      throw const FormatException('日期必须是 YYYY-MM-DD');
     }
     final parts = value.split('-').map(int.parse).toList();
     final date = DateTime.utc(parts[0], parts[1], parts[2]);
-    if (dateKey(date) != value) throw const FormatException('無效的日期');
+    if (dateKey(date) != value) throw const FormatException('无效的日期');
     return date;
   }
 }

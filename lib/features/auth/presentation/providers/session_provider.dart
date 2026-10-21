@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import '../../domain/entities/user.dart';
+import '../../domain/signup_request.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/utils/error_messages.dart';
 
@@ -62,8 +63,8 @@ class SessionProvider extends ChangeNotifier {
       // Wait for the full Firestore fetch before dismissing the loading shell.
       _currentUser = await _repository.getCurrentUser();
     } catch (e, st) {
-      log('讀取登入狀態失敗', error: e, stackTrace: st);
-      _error = '讀取登入狀態失敗:${mapErrorToUserMessage(e)}';
+      log('读取登入状态失败', error: e, stackTrace: st);
+      _error = '读取登入状态失败:${mapErrorToUserMessage(e)}';
     } finally {
       _isRestoring = false;
       notifyListeners();
@@ -108,7 +109,7 @@ class SessionProvider extends ChangeNotifier {
       await _repository.writeCachedUser(fresh);
       notifyListeners();
     } catch (e, st) {
-      log('背景更新使用者資料失敗', error: e, stackTrace: st);
+      log('背景更新使用者资料失败', error: e, stackTrace: st);
       // Retain cached user — do not surface an error or sign the user out here,
       // as connectivity blips should not disrupt an active session.
     }
@@ -127,30 +128,40 @@ class SessionProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = '帳號或密碼錯誤';
+        _error = '帐号或密码错误';
         _isLoading = false;
         notifyListeners();
         return false;
       }
+    } on SignupPendingException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } on SignupIncompleteException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e, st) {
-      log('登入失敗', error: e, stackTrace: st);
-      _error = '登入失敗:${mapErrorToUserMessage(e)}';
+      log('登入失败', error: e, stackTrace: st);
+      _error = '登入失败:${mapErrorToUserMessage(e)}';
       _isLoading = false;
       notifyListeners();
       return false;
     }
   }
 
-  /// 寄重設密碼信。成功回傳 null，失敗回傳給使用者看的訊息。
+  /// 寄重设密码信。成功回传 null，失败回传给使用者看的讯息。
   ///
-  /// 不動 [isLoading] 和 [error]：那兩個是登入按鈕和登入錯誤在用的，
-  /// 重設信在自己的對話框裡顯示結果。
+  /// 不动 [isLoading] 和 [error]：那两个是登入按钮和登入错误在用的，
+  /// 重设信在自己的对话框里显示结果。
   Future<String?> sendPasswordReset(String email) async {
     try {
       await _repository.sendPasswordResetEmail(email);
       return null;
     } catch (e, st) {
-      log('寄送重設密碼信失敗', error: e, stackTrace: st);
+      log('寄送重设密码信失败', error: e, stackTrace: st);
       return mapPasswordResetErrorToUserMessage(e);
     }
   }
@@ -165,21 +176,21 @@ class SessionProvider extends ChangeNotifier {
       _currentUser = null;
       _isRestoring = false;
     } catch (e, st) {
-      // 登出失敗時**不能**清掉 _currentUser：那會讓 App 跳回登入畫面、
-      // 使用者以為已經登出，但 Firebase Auth session 其實還活著 ——
-      // 共用裝置上下一個人重開就直接進到前一個人的帳號。
-      // 保留登入狀態並回報錯誤，讓使用者知道要再試一次。
-      log('登出失敗', error: e, stackTrace: st);
-      _error = '登出失敗:${mapErrorToUserMessage(e)}';
+      // 登出失败时**不能**清掉 _currentUser：那会让 App 跳回登入画面、
+      // 使用者以为已经登出，但 Firebase Auth session 其实还活著 ——
+      // 共用装置上下一个人重开就直接进到前一个人的帐号。
+      // 保留登入状态并回报错误，让使用者知道要再试一次。
+      log('登出失败', error: e, stackTrace: st);
+      _error = '登出失败:${mapErrorToUserMessage(e)}';
     } finally {
-      // 不論成敗都要解除 loading，否則畫面卡在「登出中」。
+      // 不论成败都要解除 loading，否则画面卡在「登出中」。
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// 清掉目前的錯誤訊息（例如 UI 已經用 SnackBar 呈現過了）。
-  /// 沒有這個的話，登出失敗留下的 _error 會被登入畫面當成登入錯誤顯示。
+  /// 清掉目前的错误讯息（例如 UI 已经用 SnackBar 呈现过了）。
+  /// 没有这个的话，登出失败留下的 _error 会被登入画面当成登入错误显示。
   void clearError() {
     if (_error == null) return;
     _error = null;

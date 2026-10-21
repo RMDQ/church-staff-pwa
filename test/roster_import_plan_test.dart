@@ -9,7 +9,7 @@ import 'package:church_staff_pwa/features/roster/domain/entities/event_option.da
 import 'package:church_staff_pwa/features/roster/domain/entities/service_roster.dart';
 import 'package:church_staff_pwa/features/roster/domain/roster_import.dart';
 
-// 名字都是虛構的（repo 是公開的）。
+// 名字都是虚构的（repo 是公开的）。
 
 const _type = ServiceType.youth;
 
@@ -38,8 +38,8 @@ ServiceRoster _roster(
 );
 
 final _users = [
-  _user('u1', '林書安', ['敬拜', '司琴']),
-  _user('u2', '郭子謙', ['司琴']),
+  _user('u1', '林书安', ['敬拜', '司琴']),
+  _user('u2', '郭子谦', ['司琴']),
 ];
 
 RosterImportPlan _plan(
@@ -64,17 +64,17 @@ RosterImportPlan _plan(
 
 RosterImportReady _ready(RosterImportPlan plan) {
   if (plan is RosterImportReady) return plan;
-  fail('被擋下了：${(plan as RosterImportRejected).message}');
+  fail('被挡下了：${(plan as RosterImportRejected).message}');
 }
 
 String _rejection(RosterImportPlan plan) {
   if (plan is RosterImportRejected) return plan.message;
-  fail('應該被擋下');
+  fail('应该被挡下');
 }
 
 void main() {
-  group('擋下整份匯入', () {
-    test('JSON 壞掉時直接回解析錯誤，不去對服事表', () {
+  group('挡下整份汇入', () {
+    test('JSON 坏掉时直接回解析错误，不去对服事表', () {
       expect(
         _rejection(
           planRosterImport(
@@ -86,11 +86,11 @@ void main() {
             eventOptions: const [],
           ),
         ),
-        'JSON 格式錯誤',
+        'JSON 格式错误',
       );
     });
 
-    test('樣板還沒載入時，帶 duties 的匯入不能進行', () {
+    test('样板还没载入时，带 duties 的汇入不能进行', () {
       final message = _rejection(
         _plan([
           {
@@ -98,16 +98,16 @@ void main() {
             'duties': [
               {
                 'role': '敬拜',
-                'people': ['林書安'],
+                'people': ['林书安'],
               },
             ],
           },
         ], templatesLoaded: false),
       );
-      expect(message, contains('尚未載入'));
+      expect(message, contains('尚未载入'));
     });
 
-    test('這個崇拜沒有樣板時擋下，並說要找管理員', () {
+    test('这个崇拜没有样板时挡下，并说要找管理员', () {
       final message = _rejection(
         _plan(
           [
@@ -116,7 +116,7 @@ void main() {
               'duties': [
                 {
                   'role': '敬拜',
-                  'people': ['林書安'],
+                  'people': ['林书安'],
                 },
               ],
             },
@@ -127,24 +127,24 @@ void main() {
         ),
       );
       expect(message, contains(_type.label));
-      expect(message, contains('請管理員'));
+      expect(message, contains('请管理员'));
     });
 
-    test('只帶 events 的匯入不需要樣板', () {
+    test('只带 events 的汇入不需要样板', () {
       final plan = _ready(
         _plan([
           {
             'date': '2026-10-03',
-            'events': ['聖餐'],
+            'events': ['圣餐'],
           },
         ], templatesLoaded: false),
       );
-      expect(plan.updates.single.specialEvents, ['聖餐']);
+      expect(plan.updates.single.specialEvents, ['圣餐']);
     });
   });
 
-  group('對到現有服事表', () {
-    test('服事照樣板排序，名字換成全名並帶上 uid', () {
+  group('对到现有服事表', () {
+    test('服事照样板排序，名字换成全名并带上 uid', () {
       final plan = _ready(
         _plan([
           {
@@ -152,11 +152,11 @@ void main() {
             'duties': [
               {
                 'role': '敬拜',
-                'people': ['書安'],
+                'people': ['书安'],
               },
               {
                 'role': '司琴',
-                'people': ['郭子謙'],
+                'people': ['郭子谦'],
               },
             ],
           },
@@ -164,20 +164,20 @@ void main() {
       );
       final duties = plan.updates.single.duties;
       expect(duties.map((d) => d.role), ['司琴', '敬拜']);
-      expect(duties[1].people, ['林書安']);
-      expect(duties[1].personIdsByName, {'林書安': 'u1'});
+      expect(duties[1].people, ['林书安']);
+      expect(duties[1].personIdsByName, {'林书安': 'u1'});
     });
 
-    test('找不到的日期列進 missingDates，不寫', () {
+    test('找不到的日期列进 missingDates，不写', () {
       final plan = _ready(
         _plan([
           {
             'date': '2026-10-03',
-            'events': ['聖餐'],
+            'events': ['圣餐'],
           },
           {
             'date': '2026-10-10',
-            'events': ['聖餐'],
+            'events': ['圣餐'],
           },
         ]),
       );
@@ -186,11 +186,11 @@ void main() {
       expect(plan.summary.updated, 1);
     });
 
-    test('只帶 duties 的那天，活動與顏色原樣保留', () {
+    test('只带 duties 的那天，活动与颜色原样保留', () {
       final existing = _roster(
         '2026-10-03',
-        events: ['洗禮'],
-        colors: {'洗禮': 0xFF123456},
+        events: ['洗礼'],
+        colors: {'洗礼': 0xFF123456},
       );
       final plan = _ready(
         _plan(
@@ -200,7 +200,7 @@ void main() {
               'duties': [
                 {
                   'role': '敬拜',
-                  'people': ['林書安'],
+                  'people': ['林书安'],
                 },
               ],
             },
@@ -209,24 +209,24 @@ void main() {
         ),
       );
       final updated = plan.updates.single;
-      expect(updated.specialEvents, ['洗禮']);
-      expect(updated.customEventColors, {'洗禮': 0xFF123456});
+      expect(updated.specialEvents, ['洗礼']);
+      expect(updated.customEventColors, {'洗礼': 0xFF123456});
     });
 
-    test('只帶 events 的那天，服事原樣保留；活動與顏色整批換掉', () {
-      final duty = RosterEntry(role: '敬拜', people: const ['林書安']);
+    test('只带 events 的那天，服事原样保留；活动与颜色整批换掉', () {
+      final duty = RosterEntry(role: '敬拜', people: const ['林书安']);
       final existing = _roster(
         '2026-10-03',
         duties: [duty],
-        events: ['洗禮'],
-        colors: {'洗禮': 0xFF123456},
+        events: ['洗礼'],
+        colors: {'洗礼': 0xFF123456},
       );
       final plan = _ready(
         _plan(
           [
             {
               'date': '2026-10-03',
-              'events': ['聖餐'],
+              'events': ['圣餐'],
             },
           ],
           rosters: [existing],
@@ -234,13 +234,13 @@ void main() {
       );
       final updated = plan.updates.single;
       expect(updated.duties, [duty]);
-      expect(updated.specialEvents, ['聖餐']);
+      expect(updated.specialEvents, ['圣餐']);
       expect(updated.customEventColors, isEmpty);
     });
   });
 
-  group('報告', () {
-    test('排到沒設定的服事：每個人都在 details 裡，服事排序過', () {
+  group('报告', () {
+    test('排到没设定的服事：每个人都在 details 里，服事排序过', () {
       final plan = _ready(
         _plan([
           {
@@ -248,22 +248,22 @@ void main() {
             'duties': [
               {
                 'role': '敬拜',
-                'people': ['郭子謙'],
+                'people': ['郭子谦'],
               },
               {
                 'role': '音控',
-                'people': ['郭子謙'],
+                'people': ['郭子谦'],
               },
             ],
           },
         ]),
       );
       expect(plan.summary.roleMismatchDetails, {
-        '郭子謙': ['敬拜', '音控'],
+        '郭子谦': ['敬拜', '音控'],
       });
     });
 
-    test('名單上沒有的人照寫進服事表，也列進報告', () {
+    test('名单上没有的人照写进服事表，也列进报告', () {
       final plan = _ready(
         _plan([
           {
@@ -282,23 +282,23 @@ void main() {
       expect(plan.summary.hasIssues, isTrue);
     });
 
-    test('活動清單裡沒有的活動列進 notInEventCatalog', () {
+    test('活动清单里没有的活动列进 notInEventCatalog', () {
       final plan = _ready(
         _plan(
           [
             {
               'date': '2026-10-03',
-              'events': ['聖餐', '感恩聚餐'],
+              'events': ['圣餐', '感恩聚餐'],
             },
           ],
-          eventOptions: const [EventOption(name: '聖餐', color: 0xFFAAAAAA)],
+          eventOptions: const [EventOption(name: '圣餐', color: 0xFFAAAAAA)],
         ),
       );
       expect(plan.summary.notInEventCatalog, ['感恩聚餐']);
     });
   });
 
-  test('外來講員列進報告，但不算問題', () {
+  test('外来讲员列进报告，但不算问题', () {
     final plan = _ready(
       _plan(
         [
@@ -307,7 +307,7 @@ void main() {
             'duties': [
               {
                 'role': '信息',
-                'people': ['溫以諾'],
+                'people': ['温以诺'],
               },
             ],
           },
@@ -317,15 +317,15 @@ void main() {
         },
       ),
     );
-    expect(plan.updates.single.duties.single.people, ['溫以諾']);
-    expect(plan.summary.guestSpeakerNames, ['溫以諾']);
+    expect(plan.updates.single.duties.single.people, ['温以诺']);
+    expect(plan.summary.guestSpeakerNames, ['温以诺']);
     expect(plan.summary.notInRosterNames, isEmpty);
     expect(plan.summary.hasIssues, isFalse);
   });
 
-  test('app 裡只有 roster_import.dart 直接用 parser', () {
-    // 直接呼叫 parseRosterImportJson 會繞過樣板檢查、依日期合併與報告 ——
-    // 以前這段編排寫在畫面裡，bug 都出在那裡。
+  test('app 里只有 roster_import.dart 直接用 parser', () {
+    // 直接呼叫 parseRosterImportJson 会绕过样板检查、依日期合并与报告 ——
+    // 以前这段编排写在画面里，bug 都出在那里。
     final offenders = [
       for (final file in Directory('lib').listSync(recursive: true))
         if (file is File &&
@@ -339,7 +339,7 @@ void main() {
   });
 
   group('同工排序', () {
-    test('照圖片上的先後學，只帶活動的日期不算', () {
+    test('照图片上的先后学，只带活动的日期不算', () {
       final ready = _ready(
         _plan(
           [
@@ -348,14 +348,14 @@ void main() {
               'duties': [
                 {
                   'role': '司琴',
-                  'people': ['郭子謙', '林書安'],
+                  'people': ['郭子谦', '林书安'],
                 },
               ],
             },
-            // 只帶活動：那天的服事還是舊的（林書安在前），不能拿來學。
+            // 只带活动：那天的服事还是旧的（林书安在前），不能拿来学。
             {
               'date': '2026-10-10',
-              'events': ['聖餐'],
+              'events': ['圣餐'],
             },
           ],
           rosters: [
@@ -363,16 +363,16 @@ void main() {
             _roster(
               '2026-10-10',
               duties: [
-                RosterEntry(role: '司琴', people: ['林書安', '郭子謙']),
+                RosterEntry(role: '司琴', people: ['林书安', '郭子谦']),
               ],
             ),
           ],
         ),
       );
-      expect(ready.staffOrder.rankingOf('司琴'), ['郭子謙', '林書安']);
+      expect(ready.staffOrder.rankingOf('司琴'), ['郭子谦', '林书安']);
     });
 
-    test('名單外的人不進排序', () {
+    test('名单外的人不进排序', () {
       final ready = _ready(
         _plan([
           {
@@ -380,21 +380,21 @@ void main() {
             'duties': [
               {
                 'role': '司琴',
-                'people': ['外請甲', '郭子謙', '林書安'],
+                'people': ['外请甲', '郭子谦', '林书安'],
               },
             ],
           },
         ]),
       );
-      expect(ready.staffOrder.rankingOf('司琴'), ['郭子謙', '林書安']);
+      expect(ready.staffOrder.rankingOf('司琴'), ['郭子谦', '林书安']);
     });
 
-    test('只帶活動的匯入沒有東西可學', () {
+    test('只带活动的汇入没有东西可学', () {
       final ready = _ready(
         _plan([
           {
             'date': '2026-10-03',
-            'events': ['聖餐'],
+            'events': ['圣餐'],
           },
         ]),
       );
@@ -402,7 +402,7 @@ void main() {
     });
   });
 
-  test('rosterDateKey 補零', () {
+  test('rosterDateKey 补零', () {
     expect(rosterDateKey(DateTime(2026, 1, 4)), '2026-01-04');
   });
 }

@@ -13,13 +13,13 @@ import 'package:church_staff_pwa/features/roster/presentation/widgets/roster_car
 import 'support/in_memory_roster_repository.dart';
 import 'support/signed_in_auth_repository.dart';
 
-/// 交換服事（「1/1 的破冰跟 1/8 換一下」）。
+/// 交换服事（「1/1 的破冰跟 1/8 换一下」）。
 ///
-/// 這組測試守兩件事：
-///   1. 兩筆一定走同一次 atomic 寫入 —— 分兩次寫的話，中間失敗會留下一個人
-///      被排兩天、另一個人的那天空著。
-///   2. 寫失敗時本地狀態不能先被改掉 —— 否則畫面顯示已交換，Firestore 上卻
-///      沒有，而且沒有任何提示。
+/// 这组测试守两件事：
+///   1. 两笔一定走同一次 atomic 写入 —— 分两次写的话，中间失败会留下一个人
+///      被排两天、另一个人的那天空著。
+///   2. 写失败时本地状态不能先被改掉 —— 否则画面显示已交换，Firestore 上却
+///      没有，而且没有任何提示。
 InMemoryRosterRepository _repo({required List<ServiceRoster> rosters}) =>
     InMemoryRosterRepository(
       rosters: rosters,
@@ -28,11 +28,11 @@ InMemoryRosterRepository _repo({required List<ServiceRoster> rosters}) =>
       },
     );
 
-/// 交換入口現在在「編輯服事項目」的視窗裡，而那個視窗會去 UserAdminProvider
-/// 撈同工名單 —— 所以這組 UI 測試得連 session 一起掛上。
+/// 交换入口现在在「编辑服事项目」的视窗里，而那个视窗会去 UserAdminProvider
+/// 捞同工名单 —— 所以这组 UI 测试得连 session 一起挂上。
 const _kEditor = User(
   id: 'u1',
-  name: '編輯者',
+  name: '编辑者',
   email: 'a@b.c',
   username: 'editor',
   role: UserRole.admin,
@@ -62,7 +62,7 @@ RosterEntry _duty(
   return RosterEntry(role: role, people: people, personIdsByName: ids);
 }
 
-/// 直接把 provider 的內部狀態填好，不必跑完整的 fetch 流程。
+/// 直接把 provider 的内部状态填好，不必跑完整的 fetch 流程。
 Future<RosterProvider> _providerWith(InMemoryRosterRepository repo) async {
   final provider = RosterProvider(repo);
   await provider.fetchRosters();
@@ -74,7 +74,7 @@ RosterEntry _dutyOf(RosterProvider provider, String rosterId) =>
 
 void main() {
   group('replaceDutyPerson', () {
-    test('換掉指定的人，其他人與順序不動', () {
+    test('换掉指定的人，其他人与顺序不动', () {
       final result = RosterProvider.replaceDutyPerson(
         _duty(['美玉', '小明'], ids: {'美玉': 'uid-fang', '小明': 'uid-ming'}),
         '美玉',
@@ -86,7 +86,7 @@ void main() {
       expect(result.personIdsByName, {'志豪': 'uid-hao', '小明': 'uid-ming'});
     });
 
-    test('換成待定：這一天還有別人時不補佔位符', () {
+    test('换成待定：这一天还有别人时不补占位符', () {
       final result = RosterProvider.replaceDutyPerson(
         _duty(['美玉', '小明']),
         '美玉',
@@ -96,7 +96,7 @@ void main() {
       expect(result.people, ['小明']);
     });
 
-    test('換成待定：全空了才補回佔位符', () {
+    test('换成待定：全空了才补回占位符', () {
       final result = RosterProvider.replaceDutyPerson(
         _duty(['美玉'], ids: {'美玉': 'uid-fang'}),
         '美玉',
@@ -104,11 +104,11 @@ void main() {
       );
 
       expect(result.people, ['待定']);
-      // 名字都不在了，uid 不能留著 —— 下次交換會被誤搬。
+      // 名字都不在了，uid 不能留著 —— 下次交换会被误搬。
       expect(result.personIdsByName, isEmpty);
     });
 
-    test('待定被換成真人時，佔位符要消失', () {
+    test('待定被换成真人时，占位符要消失', () {
       final result = RosterProvider.replaceDutyPerson(
         _duty(['待定']),
         '待定',
@@ -120,7 +120,7 @@ void main() {
       expect(result.personIdsByName, {'美玉': 'uid-fang'});
     });
 
-    test('換進來的人本來就在這一天：不留下兩個同名', () {
+    test('换进来的人本来就在这一天：不留下两个同名', () {
       final result = RosterProvider.replaceDutyPerson(
         _duty(['美玉', '小明']),
         '美玉',
@@ -130,10 +130,10 @@ void main() {
       expect(result.people, ['小明']);
     });
 
-    test('people 是空的（UI 顯示成待定）時，換進來的人不能消失', () {
-      // 沒有人的 duty 在交換清單上長得跟「待定」一樣，所以 from 會是「待定」。
-      // 把空清單原樣跑完的話，替換不到東西，補回一個待定 —— 換過來的人就在
-      // 同一個 batch 裡憑空不見，而來源那天已經把他移走了。
+    test('people 是空的（UI 显示成待定）时，换进来的人不能消失', () {
+      // 没有人的 duty 在交换清单上长得跟「待定」一样，所以 from 会是「待定」。
+      // 把空清单原样跑完的话，替换不到东西，补回一个待定 —— 换过来的人就在
+      // 同一个 batch 里凭空不见，而来源那天已经把他移走了。
       final result = RosterProvider.replaceDutyPerson(
         RosterEntry(role: '破冰', people: const []),
         '待定',
@@ -147,7 +147,7 @@ void main() {
   });
 
   group('swapDutyPeople', () {
-    test('兩筆走同一次 atomic 寫入，本地狀態也跟著換', () async {
+    test('两笔走同一次 atomic 写入，本地状态也跟著换', () async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -187,7 +187,7 @@ void main() {
       expect(_dutyOf(provider, 'b').personIdsByName, {'美玉': 'uid-fang'});
     });
 
-    test('rosters 換成新的 instance，衍生快取才會失效', () async {
+    test('rosters 换成新的 instance，衍生快取才会失效', () async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -223,7 +223,7 @@ void main() {
       expect(after.first.duties.first.people, ['小明']);
     });
 
-    test('寫入失敗時往上丟，且本地狀態不動', () async {
+    test('写入失败时往上丢，且本地状态不动', () async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -258,11 +258,11 @@ void main() {
 
       expect(_dutyOf(provider, 'a').people, ['美玉']);
       expect(_dutyOf(provider, 'b').people, ['小明']);
-      // 交換失敗不該把服事表整個標成錯誤 —— 錯誤由 sheet 就地顯示。
+      // 交换失败不该把服事表整个标成错误 —— 错误由 sheet 就地显示。
       expect(provider.error, isNull);
     });
 
-    test('找不到服事表時丟 StateError，不會靜默無事發生', () async {
+    test('找不到服事表时丢 StateError，不会静默无事发生', () async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -290,7 +290,7 @@ void main() {
       expect(repo.atomicBatches, isEmpty);
     });
 
-    test('服事項目索引超出範圍時丟 StateError', () async {
+    test('服事项目索引超出范围时丢 StateError', () async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -326,14 +326,14 @@ void main() {
     });
   });
 
-  group('交換 sheet', () {
+  group('交换 sheet', () {
     setUpAll(() async {
-      // 卡片標題與候選清單都用 zh_TW 的 DateFormat，沒初始化會直接丟
+      // 卡片标题与候选清单都用 zh_TW 的 DateFormat，没初始化会直接丢
       // LocaleDataException。
       await initializeDateFormatting('zh_TW');
     });
 
-    /// 掛一張展開的服事表卡片，並且已經在編輯模式 —— 交換入口只在編輯模式出現。
+    /// 挂一张展开的服事表卡片，并且已经在编辑模式 —— 交换入口只在编辑模式出现。
     Future<RosterProvider> pumpCard(
       WidgetTester tester,
       InMemoryRosterRepository repo,
@@ -341,7 +341,7 @@ void main() {
       final provider = await _providerWith(repo);
       provider.toggleEditMode();
 
-      // session 要先還原完，UserAdminProvider.getUsers() 才過得了 canEditRoster。
+      // session 要先还原完，UserAdminProvider.getUsers() 才过得了 canEditRoster。
       final session = SessionProvider(SignedInAuthRepository(_kEditor));
       await tester.pumpWidget(
         ChangeNotifierProvider<SessionProvider>.value(
@@ -365,8 +365,8 @@ void main() {
           ],
           child: MaterialApp(
             home: Scaffold(
-              // 照 _RosterList 的做法從 provider 讀，卡片才會跟著新資料重建 ——
-              // 直接把 roster 物件塞進去的話，交換完畫面永遠是舊的。
+              // 照 _RosterList 的做法从 provider 读，卡片才会跟著新资料重建 ——
+              // 直接把 roster 物件塞进去的话，交换完画面永远是旧的。
               body: Consumer<RosterProvider>(
                 builder: (context, p, _) => ListView(
                   children: [
@@ -388,17 +388,17 @@ void main() {
       return provider;
     }
 
-    /// 走使用者真的會走的路徑：點服事列開編輯視窗，再按「與其他日期交換」。
-    /// ⇄ 不再直接掛在列上 —— 那顆按鈕佔掉的寬度會把三個名字擠成兩行。
+    /// 走使用者真的会走的路径：点服事列开编辑视窗，再按「与其他日期交换」。
+    /// ⇄ 不再直接挂在列上 —— 那颗按钮占掉的宽度会把三个名字挤成两行。
     Future<void> openSwapSheet(WidgetTester tester) async {
       await tester.tap(find.text('破冰'));
       await tester.pumpAndSettle();
-      expect(find.text('與其他日期交換'), findsOneWidget, reason: '編輯視窗裡要有交換入口');
-      await tester.tap(find.text('與其他日期交換'));
+      expect(find.text('与其他日期交换'), findsOneWidget, reason: '编辑视窗里要有交换入口');
+      await tester.tap(find.text('与其他日期交换'));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('選一天按下交換，兩筆一次寫完並回到卡片上', (tester) async {
+    testWidgets('选一天按下交换，两笔一次写完并回到卡片上', (tester) async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -421,22 +421,22 @@ void main() {
 
       await openSwapSheet(tester);
 
-      expect(find.text('交換服事'), findsOneWidget);
-      // 候選清單是「日期 + 那天的人」，1/11 的小明應該在裡面。
+      expect(find.text('交换服事'), findsOneWidget);
+      // 候选清单是「日期 + 那天的人」，1/11 的小明应该在里面。
       expect(find.text('01/11 (日)'), findsOneWidget);
 
       await tester.tap(find.text('01/11 (日)'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, '交換'));
+      await tester.tap(find.widgetWithText(FilledButton, '交换'));
       await tester.pumpAndSettle();
 
       expect(repo.atomicBatches, hasLength(1));
-      expect(find.text('交換服事'), findsNothing);
-      // 卡片上的名字換過來了。
+      expect(find.text('交换服事'), findsNothing);
+      // 卡片上的名字换过来了。
       expect(find.text('小明'), findsOneWidget);
     });
 
-    testWidgets('自己那天已經有的人不會出現在候選清單裡', (tester) async {
+    testWidgets('自己那天已经有的人不会出现在候选清单里', (tester) async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -459,15 +459,15 @@ void main() {
 
       await openSwapSheet(tester);
 
-      // 1/11 只排了小明，而小明本來就在 1/4，換過來只會變成同一天兩個小明。
+      // 1/11 只排了小明，而小明本来就在 1/4，换过来只会变成同一天两个小明。
       expect(find.text('01/11 (日)'), findsNothing);
-      expect(find.text('其他日期沒有可以交換的「破冰」'), findsOneWidget);
+      expect(find.text('其他日期没有可以交换的「破冰」'), findsOneWidget);
     });
 
-    // 上面那條的反方向。候選清單是按「來源這天已經有誰」濾的，濾不掉「對方那天
-    // 已經有要換過去的人」—— 那種交換會讓對方那天出現兩個同名，去重之後吃掉
-    // 一個，結果是那一天平白少一個人，而且畫面上完全看不出來。
-    testWidgets('對方那天已經有這個人時，那一天不會出現在候選清單裡', (tester) async {
+    // 上面那条的反方向。候选清单是按「来源这天已经有谁」滤的，滤不掉「对方那天
+    // 已经有要换过去的人」—— 那种交换会让对方那天出现两个同名，去重之后吃掉
+    // 一个，结果是那一天平白少一个人，而且画面上完全看不出来。
+    testWidgets('对方那天已经有这个人时，那一天不会出现在候选清单里', (tester) async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -490,13 +490,13 @@ void main() {
 
       await openSwapSheet(tester);
 
-      // 拿 1/4 的美玉去換 1/11 的阿德：美玉已經在 1/11 了，換完那天只剩美玉
-      // 一個人。
+      // 拿 1/4 的美玉去换 1/11 的阿德：美玉已经在 1/11 了，换完那天只剩美玉
+      // 一个人。
       expect(find.text('01/11 (日)'), findsNothing);
-      expect(find.text('其他日期沒有可以交換的「破冰」'), findsOneWidget);
+      expect(find.text('其他日期没有可以交换的「破冰」'), findsOneWidget);
     });
 
-    testWidgets('換掉「要換誰」之後，候選清單跟著重算', (tester) async {
+    testWidgets('换掉「要换谁」之后，候选清单跟著重算', (tester) async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -519,18 +519,18 @@ void main() {
 
       await openSwapSheet(tester);
 
-      // 預設要換的是美玉，她不在 1/11，所以阿德可以選。
+      // 预设要换的是美玉，她不在 1/11，所以阿德可以选。
       expect(find.text('01/11 (日)'), findsOneWidget);
 
-      // 改成換小明 —— 他已經在 1/11 了，同一個選項就不能再出現。
+      // 改成换小明 —— 他已经在 1/11 了，同一个选项就不能再出现。
       await tester.tap(find.widgetWithText(ChoiceChip, '小明'));
       await tester.pumpAndSettle();
 
       expect(find.text('01/11 (日)'), findsNothing);
-      expect(find.text('其他日期沒有可以交換的「破冰」'), findsOneWidget);
+      expect(find.text('其他日期没有可以交换的「破冰」'), findsOneWidget);
     });
 
-    testWidgets('選好之後才換「要換誰」，不會拿舊的索引去換錯人', (tester) async {
+    testWidgets('选好之后才换「要换谁」，不会拿旧的索引去换错人', (tester) async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -565,22 +565,22 @@ void main() {
       expect(
         find.textContaining('01/04 (日) 美玉'),
         findsOneWidget,
-        reason: '選好之後有預覽',
+        reason: '选好之后有预览',
       );
 
-      // 換人之後選取要清掉：清單可能重算，同一個索引指到的已經是別人了。
+      // 换人之后选取要清掉：清单可能重算，同一个索引指到的已经是别人了。
       await tester.tap(find.widgetWithText(ChoiceChip, '小明'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('⇄'), findsNothing, reason: '沒有選取就不該有預覽');
-      await tester.tap(find.text('交換'));
+      expect(find.textContaining('⇄'), findsNothing, reason: '没有选取就不该有预览');
+      await tester.tap(find.text('交换'));
       await tester.pumpAndSettle();
-      expect(repo.atomicBatches, isEmpty, reason: '沒有選取就按不動');
+      expect(repo.atomicBatches, isEmpty, reason: '没有选取就按不动');
     });
 
-    // 交換會重寫這一項的人，帶不過去 —— 但也不能就這樣把使用者剛勾的東西
-    // 靜靜丟掉。
-    testWidgets('編輯視窗有未存的改動時，去交換前先問一聲', (tester) async {
+    // 交换会重写这一项的人，带不过去 —— 但也不能就这样把使用者刚勾的东西
+    // 静静丢掉。
+    testWidgets('编辑视窗有未存的改动时，去交换前先问一声', (tester) async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -603,31 +603,31 @@ void main() {
 
       await tester.tap(find.text('破冰'));
       await tester.pumpAndSettle();
-      // 勾掉原本的人 —— 這就是還沒存的改動。
+      // 勾掉原本的人 —— 这就是还没存的改动。
       await tester.tap(find.widgetWithText(CheckboxListTile, '美玉'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('與其他日期交換'));
+      await tester.tap(find.text('与其他日期交换'));
       await tester.pumpAndSettle();
-      expect(find.text('尚未儲存'), findsOneWidget);
+      expect(find.text('尚未储存'), findsOneWidget);
 
-      // 選擇留下：編輯視窗還在，改動也還在。
-      await tester.tap(find.text('留在這裡'));
+      // 选择留下：编辑视窗还在，改动也还在。
+      await tester.tap(find.text('留在这里'));
       await tester.pumpAndSettle();
-      expect(find.text('交換服事'), findsNothing);
-      expect(find.widgetWithText(FilledButton, '儲存'), findsOneWidget);
+      expect(find.text('交换服事'), findsNothing);
+      expect(find.widgetWithText(FilledButton, '储存'), findsOneWidget);
 
-      // 再按一次並確認丟掉，才進交換。
-      await tester.tap(find.text('與其他日期交換'));
+      // 再按一次并确认丢掉，才进交换。
+      await tester.tap(find.text('与其他日期交换'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('丟掉並交換'));
+      await tester.tap(find.text('丢掉并交换'));
       await tester.pumpAndSettle();
-      expect(find.text('交換服事'), findsOneWidget);
-      // 丟掉的意思是真的沒寫進去。
+      expect(find.text('交换服事'), findsOneWidget);
+      // 丢掉的意思是真的没写进去。
       expect(repo.singleWriteCount, 0);
     });
 
-    testWidgets('沒改過就按交換，不會多跳一個確認', (tester) async {
+    testWidgets('没改过就按交换，不会多跳一个确认', (tester) async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -650,13 +650,13 @@ void main() {
 
       await openSwapSheet(tester);
 
-      expect(find.text('尚未儲存'), findsNothing);
-      expect(find.text('交換服事'), findsOneWidget);
+      expect(find.text('尚未储存'), findsNothing);
+      expect(find.text('交换服事'), findsOneWidget);
     });
 
-    // 待定是「還沒排人」的佔位符，不是使用者剛改的東西 —— 拿它當改動會讓
-    // 每個空的服事項目按交換都先被問一次。
-    testWidgets('還沒排人的項目按交換，不會被問有沒有未存的改動', (tester) async {
+    // 待定是「还没排人」的占位符，不是使用者刚改的东西 —— 拿它当改动会让
+    // 每个空的服事项目按交换都先被问一次。
+    testWidgets('还没排人的项目按交换，不会被问有没有未存的改动', (tester) async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -679,11 +679,11 @@ void main() {
 
       await openSwapSheet(tester);
 
-      expect(find.text('尚未儲存'), findsNothing);
-      expect(find.text('交換服事'), findsOneWidget);
+      expect(find.text('尚未储存'), findsNothing);
+      expect(find.text('交换服事'), findsOneWidget);
     });
 
-    testWidgets('寫入失敗時留在 sheet 上顯示錯誤', (tester) async {
+    testWidgets('写入失败时留在 sheet 上显示错误', (tester) async {
       final repo = _repo(
         rosters: [
           _roster(
@@ -707,11 +707,11 @@ void main() {
       await openSwapSheet(tester);
       await tester.tap(find.text('01/11 (日)'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, '交換'));
+      await tester.tap(find.widgetWithText(FilledButton, '交换'));
       await tester.pumpAndSettle();
 
-      expect(find.text('交換服事'), findsOneWidget);
-      expect(find.textContaining('交換失敗'), findsOneWidget);
+      expect(find.text('交换服事'), findsOneWidget);
+      expect(find.textContaining('交换失败'), findsOneWidget);
     });
   });
 }

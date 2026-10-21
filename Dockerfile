@@ -16,11 +16,11 @@ RUN test -n "$CHURCH_CONFIG_JSON" \
     node scripts/prepare-deployment.mjs --config church.json --out /deployment
 RUN node --input-type=module -e "import fs from 'node:fs'; const c=JSON.parse(fs.readFileSync('/deployment/church.json')); if(c.features.calendar || c.features.photoImport || c.features.lineNotifications) throw Error('Static nginx does not run Pages Functions. Disable calendar/photoImport/lineNotifications or deploy to Cloudflare Pages.');"
 
-# Stage 1: 建置環境 (使用 build host 以確保 Flutter SDK 相容性與編譯速度)
-# 我們產出的是靜態 HTML/JS，所以在哪裡編譯都沒關係
+# Stage 1: 建置环境 (使用 build host 以确保 Flutter SDK 相容性与编译速度)
+# 我们产出的是静态 HTML/JS，所以在哪里编译都没关系
 FROM --platform=$BUILDPLATFORM ubuntu:22.04 AS builder
 
-# 安裝 Flutter 依賴
+# 安装 Flutter 依赖
 RUN apt-get update && apt-get install -y \
     curl \
     git \
@@ -30,41 +30,41 @@ RUN apt-get update && apt-get install -y \
     libglu1-mesa \
     && rm -rf /var/lib/apt/lists/*
 
-# 下載 Flutter SDK。版本固定，與 .github/workflows/deploy-flutter-pwa.yml
-# 的 FLUTTER_VERSION 保持一致；跟著 stable 浮動會讓 image 某天無預警壞掉。
+# 下载 Flutter SDK。版本固定，与 .github/workflows/deploy-flutter-pwa.yml
+# 的 FLUTTER_VERSION 保持一致；跟著 stable 浮动会让 image 某天无预警坏掉。
 ARG FLUTTER_VERSION=3.41.0
 ENV FLUTTER_HOME="/usr/local/flutter"
 RUN git clone --depth 1 https://github.com/flutter/flutter.git \
     -b ${FLUTTER_VERSION} $FLUTTER_HOME
 
-# 設定環境變數
+# 设定环境变数
 ENV PATH="$FLUTTER_HOME/bin:$FLUTTER_HOME/bin/cache/dart-sdk/bin:${PATH}"
 
-# 預先下載 Dart SDK 與依賴，加速後續構建
+# 预先下载 Dart SDK 与依赖，加速后续构建
 RUN flutter config --enable-web
 
-# 設定工作目錄
+# 设定工作目录
 WORKDIR /app
 
-# 複製專案檔案 (分層複製以利用 Docker Cache)
+# 复制专案档案 (分层复制以利用 Docker Cache)
 COPY pubspec.yaml pubspec.lock ./
 RUN flutter pub get
 
-# 複製其餘原始碼
+# 复制其余原始码
 COPY . .
 COPY --from=deployment /deployment /deployment
 
-# CI 那條路徑會在 build 前生出 web/version.json，App 的 AppVersionService
-# 就是讀它來顯示「上次更新」。自架這條原本沒有這一步，/version.json 直接 404，
-# 版本日期永遠是空的。兩條部署路徑的產物要一致。
+# CI 那条路径会在 build 前生出 web/version.json，App 的 AppVersionService
+# 就是读它来显示「上次更新」。自架这条原本没有这一步，/version.json 直接 404，
+# 版本日期永远是空的。两条部署路径的产物要一致。
 RUN set -eu; \
     GENERATED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
     mkdir -p web; \
     printf '{\n  "version": "docker-%s",\n  "build_number": "0",\n  "branch": "docker",\n  "generated_at": "%s"\n}\n' \
       "$(date -u +%Y%m%d%H%M%S)" "$GENERATED_AT" > web/version.json
 
-# 建置時注入的設定。FIREBASE_* 少給的話，編出來的 App 連 Firebase 都
-# 初始化不了（原本這裡只傳了 VAPID key，等於產出不能用的 image）。
+# 建置时注入的设定。FIREBASE_* 少给的话，编出来的 App 连 Firebase 都
+# 初始化不了（原本这里只传了 VAPID key，等于产出不能用的 image）。
 ARG FCM_WEB_VAPID_KEY=""
 ARG FIREBASE_API_KEY=""
 ARG FIREBASE_AUTH_DOMAIN=""
@@ -76,14 +76,14 @@ ARG FIREBASE_MEASUREMENT_ID=""
 ARG GOOGLE_CALENDAR_API_KEY=""
 ARG GOOGLE_CALENDAR_ID=""
 
-# 編譯 Web 版本 (Release Mode)
-# 每個 Firebase.initializeApp 必要的欄位都要檢查 —— 只擋 API key 的話，
-# 少給 projectId 一樣會編出一個在瀏覽器裡開不起來的 image。檢查不通過時
-# `exit 1` 會直接結束這個 RUN 的 shell，後面的 flutter build 不會跑到。
+# 编译 Web 版本 (Release Mode)
+# 每个 Firebase.initializeApp 必要的栏位都要检查 —— 只挡 API key 的话，
+# 少给 projectId 一样会编出一个在浏览器里开不起来的 image。检查不通过时
+# `exit 1` 会直接结束这个 RUN 的 shell，后面的 flutter build 不会跑到。
 #
-# --dart-define 的每個值都要加引號：GOOGLE_CALENDAR_ID 這種可能帶空白的值
-# 沒加引號會被 shell 拆成兩個參數，flutter 收到殘缺的 define 卻照樣編過，
-# 錯誤要到執行期才浮出來。
+# --dart-define 的每个值都要加引号：GOOGLE_CALENDAR_ID 这种可能带空白的值
+# 没加引号会被 shell 拆成两个参数，flutter 收到残缺的 define 却照样编过，
+# 错误要到执行期才浮出来。
 RUN for required in FIREBASE_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_PROJECT_ID \
                     FIREBASE_MESSAGING_SENDER_ID FIREBASE_APP_ID; do \
       eval "value=\${$required}"; \
@@ -107,13 +107,13 @@ RUN for required in FIREBASE_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_PROJECT_ID \
 
 RUN cp -R /deployment/web/. build/web/
 
-# 與 CI 相同：把版本號填進 cache_sw.js，並把 Firebase 設定填進推播 SW。
-# 少了這步，自架版的 SW cache 永遠不會失效，使用者會卡在第一次載入的版本。
+# 与 CI 相同：把版本号填进 cache_sw.js，并把 Firebase 设定填进推播 SW。
+# 少了这步，自架版的 SW cache 永远不会失效，使用者会卡在第一次载入的版本。
 #
-# 跟 CI 一樣要 fail-fast。sed 沒對到 placeholder 時退出碼還是 0，image 會
-# 順利 build 完、nginx 也照常起來，只是 SW 帶著字面上的 __BUILD_VERSION__
-# 與 __FIREBASE_API_KEY__ 上線 —— 快取永不失效、背景推播無聲失效，
-# 兩件事都要等使用者回報才會知道。
+# 跟 CI 一样要 fail-fast。sed 没对到 placeholder 时退出码还是 0，image 会
+# 顺利 build 完、nginx 也照常起来，只是 SW 带著字面上的 __BUILD_VERSION__
+# 与 __FIREBASE_API_KEY__ 上线 —— 快取永不失效、背景推播无声失效，
+# 两件事都要等使用者回报才会知道。
 RUN set -eu; \
     for placeholder in __BUILD_VERSION__ __VENDOR_VERSION__; do \
       grep -q "$placeholder" build/web/cache_sw.js \
@@ -145,21 +145,21 @@ RUN set -eu; \
       echo "ERROR: placeholders remain after substitution" >&2; exit 1; \
     fi
 
-# Stage 2: 執行環境 (目標架構 armv7)
-# Nginx Alpine 版本支援多架構，包括 linux/arm/v7
+# Stage 2: 执行环境 (目标架构 armv7)
+# Nginx Alpine 版本支援多架构，包括 linux/arm/v7
 FROM nginx:alpine
 
-# 移除預設 Nginx 設定
+# 移除预设 Nginx 设定
 RUN rm /etc/nginx/conf.d/default.conf
 
-# 複製我們自定義的 Nginx 設定
+# 复制我们自定义的 Nginx 设定
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# 從 Builder 階段複製編譯好的靜態檔案
+# 从 Builder 阶段复制编译好的静态档案
 COPY --from=builder /app/build/web /usr/share/nginx/html
 
-# 開放 80 port
+# 开放 80 port
 EXPOSE 80
 
-# 啟動 Nginx
+# 启动 Nginx
 CMD ["nginx", "-g", "daemon off;"]

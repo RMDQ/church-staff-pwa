@@ -3,12 +3,12 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/time/church_time.dart';
 
-/// 首頁「近期活動」列出的一筆行事曆活動。
+/// 首页「近期活动」列出的一笔行事历活动。
 ///
-/// 這裡刻意帶著結束時間。先前的版本只存開始時間，於是跨日活動整個壞掉：
-/// 篩選條件是「開始時間還沒過」，所以 8/12–8/14 的特會在 8/13 當天會從首頁
-/// 消失 —— 明明正在進行中。Google Calendar 的 `timeMin` 是用活動的**結束**
-/// 時間過濾的，那筆資料本來就有回傳，是前端自己丟掉的。
+/// 这里刻意带着结束时间。先前的版本只存开始时间，于是跨日活动整个坏掉：
+/// 筛选条件是「开始时间还没过」，所以 8/12–8/14 的特会在 8/13 当天会从首
+/// 页消失 —— 明明正在进行中。Google Calendar 的 `timeMin` 是用活动的**结束**
+/// 时间过滤的，那笔资料本来就有回传，是前端自己丢掉的。
 @immutable
 class RecentActivity {
   const RecentActivity({
@@ -20,8 +20,8 @@ class RecentActivity {
 
   final DateTime startTime;
 
-  /// 活動結束時間，採 Google Calendar 的慣例：**不含**這個瞬間。
-  /// 全日活動的 `end.date` 是隔天，一日活動的 end 是次日零點。
+  /// 活动结束时间，采 Google Calendar 的惯例：**不含**这个瞬间。
+  /// 全日活动的 `end.date` 是隔天，一日活动的 end 是次日零点。
   final DateTime endTime;
 
   final bool isAllDay;
@@ -32,12 +32,12 @@ class RecentActivity {
 
   DateTime get startDay => ChurchTime.dateOnly(startTime);
 
-  /// 活動實際涵蓋的最後一天。
+  /// 活动实际涵盖的最后一天。
   ///
-  /// 因為 [endTime] 是排他的，直接 dateOnly 會多算一天：8/12–8/14 的全日
-  /// 活動，Google 給的 end.date 是 8/15。減一微秒再取日期才會落在 8/14。
-  /// 行事曆畫面的 CalendarEvent.endDay 用的是同一套算法，兩邊要一致，
-  /// 否則同一筆活動在兩個畫面上的天數會對不起來。
+  /// 因为 [endTime] 是排他的，直接 dateOnly 会多算一天：8/12–8/14 的全日
+  /// 活动，Google 给的 end.date 是 8/15。减一微秒再取日期才会落在 8/14。
+  /// 行事历画面的 CalendarEvent.endDay 用的是同一套算法，两边要一致，
+  /// 否则同一笔活动在两个画面上的天数会对应不起来。
   DateTime get endDay {
     final normalizedEnd = endTime.isBefore(startTime) ? startTime : endTime;
     final adjusted = normalizedEnd.subtract(const Duration(microseconds: 1));
@@ -47,10 +47,10 @@ class RecentActivity {
 
   bool get spansMultipleDays => endDay.isAfter(startDay);
 
-  /// [now] 當下這筆活動是否仍未結束（包含正在進行中）。
+  /// [now] 当前这笔活动是否仍未结束（包含正在进行中）。
   ///
-  /// 全日活動以「天」為單位判斷：只要今天還沒超過最後一天就算數，不會因為
-  /// 現在是下午三點就把今天的全日活動視為過去式。
+  /// 全日活动以「天」为单位判断：只要今天还没超过最后一天就算数，不会因为
+  /// 现在是下午三点就把今天的全日活动视为过去式。
   bool isCurrentOrUpcoming(DateTime now) {
     if (isAllDay) {
       return !endDay.isBefore(ChurchTime.dateOnly(ChurchTime.inZone(now)));
@@ -73,9 +73,9 @@ class RecentActivity {
     'title': title,
   };
 
-  /// 舊版快取沒有 endTime。真的讀到舊資料時退化成「當天結束」，寧可少顯示
-  /// 一天也不要憑空生出一個不存在的區間；快取 key 已經升版，正常情況下走
-  /// 不到這條路。
+  /// 旧版快取没有 endTime。真的读到旧资料时退化成「当天结束」，宁可少显示
+  /// 一天也不要凭空生出一个不存在的区间；快取 key 已经升版，正常情况下走
+  /// 不到这条路。
   factory RecentActivity.fromJson(Map<String, dynamic> json) {
     final isAllDay = json['isAllDay'] as bool? ?? false;
     final start = ChurchTime.parseEventTime(
@@ -94,10 +94,10 @@ class RecentActivity {
   }
 }
 
-/// 篩掉已結束的活動、依開始時間排序，取前 [limit] 筆。
+/// 筛掉已结束的活动、依开始时间排序，取前 [limit] 笔。
 ///
-/// 進行中的活動會排在最前面（它的開始時間最早），這是刻意的：正在辦的活動
-/// 比還沒到的更該被看見。
+/// 正在进行的活动会排在最前面（它的开始时间最早），这是刻意的：正在办的活动
+/// 比还没到的更该被看见。
 List<RecentActivity> selectRecentActivities(
   List<RecentActivity> activities, {
   required DateTime now,
@@ -110,16 +110,16 @@ List<RecentActivity> selectRecentActivities(
   return upcoming.take(limit).toList();
 }
 
-final _monthDay = DateFormat('MM/dd', 'zh_TW');
-final _monthDayWeekday = DateFormat('MM/dd (EEEEE)', 'zh_TW');
-final _monthDayWeekdayTime = DateFormat('MM/dd (EEEEE) HH:mm', 'zh_TW');
+final _monthDay = DateFormat('MM/dd', 'zh_CN');
+final _monthDayWeekday = DateFormat('MM/dd (EEEEE)', 'zh_CN');
+final _monthDayWeekdayTime = DateFormat('MM/dd (EEEEE) HH:mm', 'zh_CN');
 
-/// 首頁那一欄要顯示的日期文字。
+/// 首页那一栏要显示的日期文字。
 ///
-/// 版面限制：這串字擠在 `Expanded(flex: 2)` 裡、單行、超出就 ellipsis ——
-/// 也就是說太長不會報錯，只會被默默截掉。所以跨日的格式刻意不帶星期，
-/// 「08/12–08/14」比原本最長的「08/12 (三) 15:30」還短，欄寬不會被撐爆。
-/// recent_activity_test.dart 有一條測試專門盯住這個寬度上限。
+/// 版面限制：这串字挤在 `Expanded(flex: 2)` 里、单行、超出就 ellipsis ——
+/// 也就是说太长不会报错，只会被默默截掉。所以跨日的格式刻意不带星期，
+/// 「08/12–08/14」比原本最长的「08/12 (三) 15:30」还短，栏宽不会被撑爆。
+/// recent_activity_test.dart 有一条测试专门盯住这个宽度上限。
 String formatRecentActivityDate(RecentActivity activity) {
   if (activity.spansMultipleDays) {
     return '${_monthDay.format(activity.startDay)}'

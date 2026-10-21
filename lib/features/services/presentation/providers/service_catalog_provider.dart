@@ -9,7 +9,7 @@ import '../../../../core/config/service_catalog.dart';
 import '../../../../core/services/app_reload_service.dart';
 import '../../data/service_settings_repository.dart';
 
-/// 登入後讀一次 settings/services；跟目前用的清單不同就套用並重新載入。
+/// 登入后读一次 settings/services；跟目前用的清单不同就套用并重新载入。
 class ServiceCatalogProvider extends ChangeNotifier {
   ServiceCatalogProvider(
     this._repository, {
@@ -20,7 +20,7 @@ class ServiceCatalogProvider extends ChangeNotifier {
   final Future<bool> Function(String reason) _reload;
   String? _userId;
 
-  /// 設定頁要知道目前的清單是不是已經存在 Firestore。
+  /// 设定页要知道目前的清单是不是已经存在 Firestore。
   ServiceSettings? settings;
 
   void onSessionChanged(String? userId) {
@@ -39,12 +39,12 @@ class ServiceCatalogProvider extends ChangeNotifier {
         await _reload(_fingerprint(ChurchConfig.current.services));
       }
     } catch (e, st) {
-      // 讀不到就沿用現在的清單（部署設定或本機快取），不影響其他功能。
-      log('讀取聚會設定失敗', error: e, stackTrace: st);
+      // 读不到就沿用现在的清单（部署设定或本机快取），不影响其他功能。
+      log('读取聚会设定失败', error: e, stackTrace: st);
     }
   }
 
-  /// 管理員存好新的清單：套用、記下，再重新載入讓各頁面用新清單。
+  /// 管理员存好新的清单：套用、记下，再重新载入让各页面用新清单。
   Future<void> save(List<ServiceDefinition> services) async {
     await _repository.save(services);
     await ServiceCatalog.remember(services);

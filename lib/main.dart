@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -27,9 +28,10 @@ void main() async {
 
   // Run independent inits in parallel to shave startup latency.
   await Future.wait([
+    initializeDateFormatting('zh_CN', null),
     initializeDateFormatting('zh_TW', null),
     Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-    // 管理員在 App 裡改過的聚會清單（上一次讀到的），不等網路。
+    // 管理员在 App 里改过的聚会清单（上一次读到的），不等网路。
     ServiceCatalog.applyCached(),
   ]);
 
@@ -39,8 +41,8 @@ void main() async {
   // browsers. See commit 7d6b4e2.
   FirebaseFirestore.instance.settings = const Settings(
     webExperimentalForceLongPolling: true,
-    // persistenceEnabled 預設為 true（IndexedDB），明示以確保行為清晰。
-    // cacheSizeBytes 維持預設 40MB，對本應用來說足夠。
+    // persistenceEnabled 预设为 true（IndexedDB），明示以确保行为清晰。
+    // cacheSizeBytes 维持预设 40MB，对本应用来说足够。
     persistenceEnabled: true,
   );
 
@@ -59,7 +61,7 @@ class ChurchApp extends StatelessWidget {
 
   final PushNotificationService pushNotificationService;
 
-  // fromSeed 會跑一整套 Material color 演算法，結果永遠一樣，算一次就好。
+  // fromSeed 会跑一整套 Material color 演算法，结果永远一样，算一次就好。
   static final ColorScheme _colorScheme = ColorScheme.fromSeed(
     seedColor: Colors.blue,
     brightness: Brightness.light,
@@ -72,26 +74,26 @@ class ChurchApp extends StatelessWidget {
       providers: [
         Provider<PushNotificationService>.value(value: pushNotificationService),
 
-        // SessionProvider — 管理登入狀態，最上游。
+        // SessionProvider — 管理登入状态，最上游。
         ChangeNotifierProvider(
           create: (_) => SessionProvider(FirebaseAuthRepository()),
         ),
 
-        // UserAdminProvider — 依賴 SessionProvider。
-        // 使用 ChangeNotifierProxyProvider 注入 session，讓它在登出時自動清 cache。
+        // UserAdminProvider — 依赖 SessionProvider。
+        // 使用 ChangeNotifierProxyProvider 注入 session，让它在登出时自动清 cache。
         ChangeNotifierProxyProvider<SessionProvider, UserAdminProvider>(
           create: (ctx) => UserAdminProvider(
             FirebaseAuthRepository(),
             ctx.read<SessionProvider>(),
           ),
           update: (_, session, prev) {
-            // prev 不會是 null（create 已建立）；update 僅在依賴變動時呼叫。
-            // UserAdminProvider 自己監聽 session，此處不需額外操作。
+            // prev 不会是 null（create 已建立）；update 仅在依赖变动时呼叫。
+            // UserAdminProvider 自己监听 session，此处不需额外操作。
             return prev!;
           },
         ),
 
-        // RosterProvider — session 變動時清 cache 並重抓。
+        // RosterProvider — session 变动时清 cache 并重抓。
         ChangeNotifierProxyProvider<SessionProvider, RosterProvider>(
           create: (_) => RosterProvider(FirestoreRosterRepository()),
           update: (_, session, prev) {
@@ -101,9 +103,9 @@ class ChurchApp extends StatelessWidget {
           },
         ),
 
-        // ServiceCatalogProvider — 登入後讀 settings/services，聚會清單變了就重載。
-        // lazy: false：平常沒有畫面讀它（只有「聚會設定」會），預設的 lazy
-        // 會讓它到打開設定頁才建立，其他裝置就永遠不會去讀新的聚會清單。
+        // ServiceCatalogProvider — 登入后读 settings/services，聚会清单变了就重载。
+        // lazy: false：平常没有画面读它（只有「聚会设定」会），预设的 lazy
+        // 会让它到打开设定页才建立，其他装置就永远不会去读新的聚会清单。
         ChangeNotifierProxyProvider<SessionProvider, ServiceCatalogProvider>(
           lazy: false,
           create: (_) =>
@@ -117,7 +119,7 @@ class ChurchApp extends StatelessWidget {
           },
         ),
 
-        // GroupSettingsProvider — session 變動時清 cache 並重抓。
+        // GroupSettingsProvider — session 变动时清 cache 并重抓。
         ChangeNotifierProxyProvider<SessionProvider, GroupSettingsProvider>(
           create: (_) =>
               GroupSettingsProvider(FirestoreGroupSettingsRepository()),
@@ -140,7 +142,18 @@ class ChurchApp extends StatelessWidget {
           ),
           appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
         ),
-        locale: const Locale('zh', 'TW'),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        locale: const Locale('zh', 'CN'),
+        supportedLocales: const [
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+          Locale('zh'),
+          Locale('en', 'US'),
+        ],
         home: AuthWrapper(pushNotificationService: pushNotificationService),
         debugShowCheckedModeBanner: false,
       ),
@@ -230,7 +243,7 @@ class _AuthRestoringShell extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2.5),
                   ),
                   const SizedBox(width: 12),
-                  Text('載入中…', style: theme.textTheme.titleMedium),
+                  Text('载入中…', style: theme.textTheme.titleMedium),
                 ],
               ),
             ],

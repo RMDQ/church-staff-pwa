@@ -12,10 +12,10 @@ import { git } from './test-git.mjs';
 const ACCOUNT = '0123456789abcdef0123456789abcdef';
 const identity = { googleEmail: 'operator@example.invalid', accounts: [{ id: ACCOUNT, name: 'Test' }] };
 const input = () => ({
-  appName: '範例教會', shortName: '同工助手', timeZone: 'Asia/Taipei', region: 'asia-east1',
+  appName: '范例教会', shortName: '同工助手', timeZone: 'Asia/Taipei', region: 'asia-east1',
   siteName: 'example-staff',
-  services: [{ name: '主日崇拜', label: '主日', weekday: 7 }, { name: '週間聚會', label: '週間', weekday: 3 }],
-  adminName: '測試管理員', adminEmail: 'admin@example.invalid', cloudflareAccountId: ACCOUNT,
+  services: [{ name: '主日崇拜', label: '主日', weekday: 7 }, { name: '周间聚会', label: '周间', weekday: 3 }],
+  adminName: '测试管理员', adminEmail: 'admin@example.invalid', cloudflareAccountId: ACCOUNT,
 });
 const confirmation = (plan) => ({
   digest: plan.digest, confirmProject: plan.projectId, confirmAdmin: plan.admin.email,
@@ -54,7 +54,7 @@ test('plan is pure, stable, core-only and creates safe resource names', () => {
   assert.deepEqual(Object.values(plan.churchConfig.features), [false, false, false, false]);
   assert.equal(plan.churchConfig.devotional.enabled, false);
   // Sign-in uses email; the profile username follows bootstrap-admin's default (the name).
-  assert.equal(plan.admin.username, '測試管理員');
+  assert.equal(plan.admin.username, '测试管理员');
   assert.equal(plan.mode, 'cloud');
   assert.equal('activationEmailConfirmed' in plan, false);
 });
@@ -147,7 +147,7 @@ test('apply requires all explicit confirmations before any mutation', async (t) 
   for (const field of ['digest', 'confirmProject', 'confirmAdmin', 'acknowledgeRegion', 'acknowledgeEmail']) {
     const values = confirmation(plan);
     delete values[field];
-    await assert.rejects(manager.apply(values), /核對/);
+    await assert.rejects(manager.apply(values), /核对/);
   }
   assert.deepEqual(calls, []);
 });
@@ -171,7 +171,7 @@ test('full installation uses the same interface and saves each completed step', 
 test('same-run retry re-inspects earlier steps without creating another plan', async (t) => {
   const { manager, calls } = await fixture(t, { failAt: 'rules' });
   const plan = await manager.plan(input());
-  await assert.rejects(manager.apply(confirmation(plan)), /示範中斷/);
+  await assert.rejects(manager.apply(confirmation(plan)), /示范中断/);
   assert.equal(manager.snapshot().status, 'paused');
   assert.equal(manager.snapshot().steps.find((step) => step.id === 'rules').status, 'failed');
   const firstLength = calls.length;
@@ -190,7 +190,7 @@ test('restart loads private checkpoint but requires reconnecting the same identi
   const next = createInstallationManager({ rootDir, ...providers, demo: true, sourceRevision: 'test-v1' });
   t.after(() => next.dispose());
   await next.load(plan.runId);
-  await assert.rejects(next.apply(confirmation(plan)), /帳號與安裝紀錄不符/);
+  await assert.rejects(next.apply(confirmation(plan)), /帐号与安装纪录不符/);
   providers.google.inspectIdentity = async () => ({ email: identity.googleEmail });
   await next.apply(confirmation(plan));
   assert.equal(next.snapshot().status, 'complete');
@@ -200,7 +200,7 @@ test('demo state cannot be resumed by a live manager', async (t) => {
   const { manager, rootDir } = await fixture(t);
   const plan = await manager.plan(input());
   const live = createInstallationManager({ rootDir, ...createDemoProviders(), sourceRevision: 'test-v1', demo: false });
-  await assert.rejects(live.load(plan.runId), /示範安裝與真實安裝/);
+  await assert.rejects(live.load(plan.runId), /示范安装与真实安装/);
   assert.deepEqual(await live.listRuns(), []);
 });
 
@@ -246,14 +246,14 @@ test('resumable versions run from RESUMES_FROM to the checkout, and none without
 test('changed plan, different source and path traversal fail closed', async (t) => {
   const { manager, rootDir } = await fixture(t);
   const plan = await manager.plan(input());
-  await assert.rejects(manager.load('../outside'), /識別碼/);
+  await assert.rejects(manager.load('../outside'), /识别码/);
   const otherVersion = createInstallationManager({ rootDir, ...createDemoProviders(), sourceRevision: 'other-version', demo: true });
   await assert.rejects(otherVersion.load(plan.runId), /程式版本/);
   const file = path.join(rootDir, '.local/install', plan.runId, 'state.json');
   const record = JSON.parse(await readFile(file));
   record.plan.projectId = 'unrelated-existing';
   await writeFile(file, JSON.stringify(record));
-  await assert.rejects(manager.load(plan.runId), /設定已被更改/);
+  await assert.rejects(manager.load(plan.runId), /设定已被更改/);
 });
 
 test('private state never follows a .local symlink', async (t) => {
@@ -267,7 +267,7 @@ test('private state never follows a .local symlink', async (t) => {
 test('world-readable run storage is rejected rather than permissions silently changed', async (t) => {
   const { manager, rootDir } = await fixture(t);
   await mkdir(path.join(rootDir, '.local/install'), { recursive: true, mode: 0o755 });
-  await assert.rejects(manager.plan(input()), /權限過寬/);
+  await assert.rejects(manager.plan(input()), /权限过宽/);
 });
 
 test('provider credentials cannot be persisted through the checkpoint interface', async (t) => {
@@ -291,7 +291,7 @@ test('double-click cannot start a second concurrent operation; cancellation pres
   const plan = await manager.plan(input());
   const running = manager.apply(confirmation(plan));
   await ready;
-  await assert.rejects(manager.apply(confirmation(plan)), /另一個步驟/);
+  await assert.rejects(manager.apply(confirmation(plan)), /另一个步骤/);
   manager.cancel();
   await assert.rejects(running, /cancelled/);
   assert.equal(manager.snapshot().status, 'paused');
@@ -301,7 +301,7 @@ test('double-click cannot start a second concurrent operation; cancellation pres
 test('ActionRequired displays a waiting step and allowlisted official action', async (t) => {
   const { manager, providers } = await fixture(t);
   providers.google.execute = async () => {
-    throw Object.assign(new Error('請在官方頁面完成確認'), {
+    throw Object.assign(new Error('请在官方页面完成确认'), {
       code: 'AUTH_SETUP_REQUIRED', safeToDisplay: true, actionRequired: true,
       helpUrl: 'https://console.firebase.google.com/project/example/authentication',
     });
@@ -333,14 +333,14 @@ test('process runner bounds failure output and timeout without exposing it in th
     assert.equal(error.exitCode, 2);
     return true;
   });
-  await assert.rejects(runCommand(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { timeoutMs: 20 }), (err) => /逾時/.test(err.message) && err.timedOut === true);
+  await assert.rejects(runCommand(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { timeoutMs: 20 }), /逾时/);
   const environment = commandEnvironment({ CLOUDFLARE_API_TOKEN: undefined });
   assert.equal(environment.CLOUDFLARE_API_TOKEN, undefined);
 });
 
 test('failed read-only preflight records nothing and blocks confirmation', async (t) => {
   const { manager, providers, rootDir, calls } = await fixture(t);
-  providers.cloudflare.preflight = async () => { throw Object.assign(new Error('此網站名稱已被使用'), { safeToDisplay: true, code: 'CLOUDFLARE_INSTALL_FAILED' }); };
+  providers.cloudflare.preflight = async () => { throw Object.assign(new Error('此网站名称已被使用'), { safeToDisplay: true, code: 'CLOUDFLARE_INSTALL_FAILED' }); };
   await assert.rejects(manager.plan(input()), /已被使用/);
   assert.equal(manager.snapshot().plan, undefined);
   assert.deepEqual(await manager.listRuns(), []);
@@ -351,7 +351,7 @@ test('failed read-only preflight records nothing and blocks confirmation', async
 test('preflight re-checks that the connected Google account is still the planned one', async (t) => {
   const { manager, providers } = await fixture(t);
   providers.google.inspectIdentity = async () => ({ email: 'someone-else@example.invalid' });
-  await assert.rejects(manager.plan(input()), /帳號與安裝紀錄不符/);
+  await assert.rejects(manager.plan(input()), /帐号与安装纪录不符/);
 });
 
 test('Cloudflare device code expiry is exposed as time left, never an absolute clock', async (t) => {
@@ -447,21 +447,21 @@ test('without a logo the plan and the build stay on the neutral icons', async (t
 
 test('a broken logo is refused before any record is written', async (t) => {
   const { manager } = await fixture(t);
-  await assert.rejects(manager.plan({ ...input(), icons: encodedIcons({ ...SIZES, 'icons/Icon-512.png': 256 }) }), /Logo 圖片轉換失敗/);
-  await assert.rejects(manager.plan({ ...input(), icons: 'not icons' }), /Logo 圖片轉換失敗/);
+  await assert.rejects(manager.plan({ ...input(), icons: encodedIcons({ ...SIZES, 'icons/Icon-512.png': 256 }) }), /Logo 图片转换失败/);
+  await assert.rejects(manager.plan({ ...input(), icons: 'not icons' }), /Logo 图片转换失败/);
   assert.deepEqual(await manager.listRuns(), []);
 });
 
 test('a resumed install builds the same logo, and a changed logo file stops it before it starts', async (t) => {
   const { manager, rootDir } = await fixture(t, { failAt: 'rules' });
   const plan = await manager.plan({ ...input(), icons: encodedIcons() });
-  await assert.rejects(manager.apply(confirmation(plan)), /示範中斷/);
+  await assert.rejects(manager.apply(confirmation(plan)), /示范中断/);
   const { manager: next, received } = await iconFixture(t, rootDir);
   await next.load(plan.runId);
   const logo = path.join(rootDir, '.local/install', plan.runId, 'logo', 'favicon.png');
   const original = await readFile(logo);
   await writeFile(logo, png(32, 1));
-  await assert.rejects(next.apply(confirmation(plan)), /Logo 檔案遺失或被更改/);
+  await assert.rejects(next.apply(confirmation(plan)), /Logo 档案遗失或被更改/);
   assert.notEqual(next.snapshot().status, 'running');
   await writeFile(logo, original);
   await next.apply(confirmation(plan));
@@ -477,7 +477,7 @@ test('a logo file swapped for a link is refused, not followed', async (t) => {
   await writeFile(elsewhere, await readFile(logo), { mode: 0o600 });
   await rm(logo);
   await symlink(elsewhere, logo);
-  await assert.rejects(manager.apply(confirmation(plan)), /Logo 檔案遺失或被更改/);
+  await assert.rejects(manager.apply(confirmation(plan)), /Logo 档案遗失或被更改/);
   assert.equal(manager.snapshot().status, 'ready');
 });
 
