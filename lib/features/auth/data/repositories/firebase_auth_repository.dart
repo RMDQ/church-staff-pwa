@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/sign_in_account_exception.dart';
 import '../../domain/signup_request.dart';
 import '../cached_user_storage.dart';
 import '../sign_in_admin_service.dart';
@@ -192,57 +193,35 @@ class FirebaseAuthRepository implements AuthRepository {
       final secondaryAuth = firebase_auth.FirebaseAuth.instanceFor(
         app: secondaryApp,
       );
-
-      // 使用 User 物件中携带的完整 Email
       final credential = await secondaryAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      final uid = credential.user!.uid;
-
-      final newUser = user.copyWith(id: uid);
-      await _usersCollection.doc(uid).set(newUser.toJson());
-    } catch (e) {
-      log('Add User Error: $e');
-      throw Exception('无法新增使用者: $e');
+      return credential.user!.uid;
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      log('Create sign-in error: ${e.code}');
+      if (e.code != 'email-already-in-use') rethrow;
+      throw await _emailTakenInBrowser(email);
     } finally {
       await secondaryApp?.delete();
     }
   }
 
-  @override
-  Future<void> updateUser(User user, {String? password}) async {
-    final email = user.email.trim();
-    if (email.isNotEmpty && password != null) {
-      FirebaseApp? secondaryApp;
-      try {
-        secondaryApp = await Firebase.initializeApp(
-          name: 'SecondaryApp',
-          options: Firebase.app().options,
-        );
-
-        final secondaryAuth = firebase_auth.FirebaseAuth.instanceFor(
-          app: secondaryApp,
-        );
-        final credential = await secondaryAuth.createUserWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-
-        final uid = credential.user!.uid;
-        final newUser = user.copyWith(id: uid);
-        await _usersCollection.doc(uid).set(newUser.toJson());
-        if (uid != user.id) {
-          await _usersCollection.doc(user.id).delete();
-        }
-        return;
-      } catch (e) {
-        log('Update User Error: $e');
-        throw Exception('无法建立登入帐号: $e');
-      } finally {
-        await secondaryApp?.delete();
-      }
+  /// Why [email] cannot get a sign-in here: another staff member uses it, or a
+  /// delete left the sign-in behind. Only the second needs the Firebase console,
+  /// since the browser cannot remove someone else's sign-in.
+  Future<SignInAccountException> _emailTakenInBrowser(String email) async {
+    final owners = await _usersCollection
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+    if (owners.docs.isNotEmpty) {
+      final name = (owners.docs.first.data() as Map<String, dynamic>)['name'];
+      return SignInAccountException(
+        name is String && name.trim().isNotEmpty
+            ? '這個 Email 已經是「${name.trim()}」的帳號'
+            : '這個 Email 已經有同工在用了',
+      );
     }
     final projectId = Firebase.app().options.projectId;
     return SignInAccountException(

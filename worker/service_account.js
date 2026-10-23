@@ -1,22 +1,29 @@
-// Access tokens for the church's Google service account, for any Google API
-// scope. Used by routes that must write to Firestore on the server's authority.
+// A Google access token for a service account whose key JSON sits in a
+// Cloudflare secret.
 //
-// google_calendar.js has its own copy of this signing flow for the calendar
-// scope. It is not shared yet so that the calendar path stays untouched; the
-// two should be merged once check-in has shipped.
+// Shared by the calendar writer (GOOGLE_SERVICE_ACCOUNT_JSON) and account
+// management (ACCOUNT_ADMIN_KEY): two separate accounts with separate grants,
+// so a leak of one does not hand over the other. Lives outside functions/ for
+// the same reason every helper here does — nothing under functions/ may be
+// importable as a route.
 
-import { HttpError, requireEnv } from './firebase_user.js';
+import { HttpError, base64UrlToBytes, requireEnv } from './firebase_user.js';
 
 const TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
-const UPSTREAM_TIMEOUT_MS = 10000;
 
-/// Tokens by scope. Cached in the isolate: minting costs an RSA signature and a
-/// round trip, and a token lasts an hour. The 60s margin covers a token that
-/// expires mid-flight.
-const cache = new Map();
+/** Upstream call budget. Without it a hung Google request holds the request open. */
+const TOKEN_TIMEOUT_MS = 10000;
+
+// One entry per secret name: the two accounts never share a token.
+const cachedTokens = new Map();
+
+/** Test seam — the module-level cache would otherwise leak between cases. */
+export function resetServiceAccountTokens() {
+  cachedTokens.clear();
+}
 
 export function resetServiceAccessTokenCache() {
-  cache.clear();
+  cachedTokens.clear();
 }
 
 function bytesToBase64Url(bytes) {
@@ -31,11 +38,12 @@ function textToBase64Url(text) {
 
 async function importPrivateKey(pem) {
   const body = pem
-    .replace(/-----(BEGIN|END) PRIVATE KEY-----/g, '')
+    .replace(/-----BEGIN [A-Z ]+-----/, '')
+    .replace(/-----END [A-Z ]+-----/, '')
     .replace(/\s+/g, '');
   let der;
   try {
-    der = Uint8Array.from(atob(body), (char) => char.charCodeAt(0));
+    der = base64UrlToBytes(body);
   } catch {
     throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
@@ -48,42 +56,51 @@ async function importPrivateKey(pem) {
   );
 }
 
-function serviceAccount(env) {
-  const raw = requireEnv(env, 'GOOGLE_SERVICE_ACCOUNT_JSON');
+/// The parsed key file in [secret]. Only the secret's name is ever logged.
+export function serviceAccount(env, secret) {
+  const raw = requireEnv(env, secret);
   let parsed;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    // Never log the value itself: it contains a private key.
-    console.error('GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON');
+    console.error(`${secret} is not valid JSON`);
     throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
   if (!parsed?.client_email || !parsed?.private_key) {
-    console.error('GOOGLE_SERVICE_ACCOUNT_JSON is missing client_email/private_key');
+    console.error(`${secret} is missing client_email/private_key`);
     throw new HttpError(500, '伺服器设定不完整，请联络管理员');
   }
   return parsed;
 }
 
-async function fetchWithTimeout(fetchImpl, url, init = {}) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+async function safeText(response) {
   try {
-    return await fetchImpl(url, { ...init, signal: controller.signal });
-  } catch (error) {
-    console.error('service account token request failed', error?.name);
-    throw new HttpError(502, '无法连上 Google 服务，请稍后再试');
-  } finally {
-    clearTimeout(timer);
+    return (await response.text()).slice(0, 500);
+  } catch {
+    return '<unreadable>';
   }
 }
 
-/// An access token for [scope], signed as the church's service account.
-export async function getServiceAccessToken(env, scope, fetchImpl = fetch, now = Date.now()) {
-  const cached = cache.get(scope);
-  if (cached && cached.expiresAt > now + 60000) return cached.token;
+/// Mints (and caches) an access token for the account in [secret].
+///
+/// Cached in the isolate rather than per request: minting costs an RSA signature
+/// plus a round trip to Google, and the token is good for an hour. The 60s
+/// safety margin covers a token that expires mid-flight.
+///
+/// [unreachable] is the message a caller's users see when Google cannot be
+/// reached, phrased for what they were trying to do.
+export async function serviceAccountToken(
+  env,
+  { secret, scope, unreachable },
+  fetchImpl = fetch,
+  now = Date.now(),
+) {
+  const cached = cachedTokens.get(secret);
+  if (cached && cached.expiresAt > now + 60000) {
+    return cached.token;
+  }
 
-  const account = serviceAccount(env);
+  const account = serviceAccount(env, secret);
   const issuedAt = Math.floor(now / 1000);
   const header = { alg: 'RS256', typ: 'JWT' };
   const claims = {
@@ -93,30 +110,58 @@ export async function getServiceAccessToken(env, scope, fetchImpl = fetch, now =
     iat: issuedAt,
     exp: issuedAt + 3600,
   };
-  const unsigned = `${textToBase64Url(JSON.stringify(header))}.${textToBase64Url(JSON.stringify(claims))}`;
-  // A literal \n in the key survives JSON.parse as a real newline, but a value
-  // pasted through a dashboard field may keep the two characters: normalise.
+
+  const unsigned = `${textToBase64Url(JSON.stringify(header))}.${textToBase64Url(
+    JSON.stringify(claims),
+  )}`;
+  // The literal \n in the JSON key file survives JSON.parse as a real newline,
+  // but a value pasted through a dashboard field may not — normalise both.
   const key = await importPrivateKey(account.private_key.replace(/\\n/g, '\n'));
-  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    key,
+    new TextEncoder().encode(unsigned),
+  );
   const assertion = `${unsigned}.${bytesToBase64Url(new Uint8Array(signature))}`;
 
-  const response = await fetchWithTimeout(fetchImpl, TOKEN_ENDPOINT, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion,
-    }).toString(),
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TOKEN_TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetchImpl(TOKEN_ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion,
+      }).toString(),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    console.error('token request failed', secret, error);
+    throw new HttpError(502, unreachable);
+  } finally {
+    clearTimeout(timer);
+  }
+
   if (!response.ok) {
-    console.error('service account token exchange failed', response.status);
-    throw new HttpError(502, '无法连上 Google 服务，请稍后再试');
+    console.error('token exchange failed', secret, response.status, await safeText(response));
+    throw new HttpError(502, unreachable);
   }
   const data = await response.json();
   if (typeof data?.access_token !== 'string') {
-    throw new HttpError(502, '无法连上 Google 服务，请稍后再试');
+    throw new HttpError(502, unreachable);
   }
-  const lifetimeMs = typeof data.expires_in === 'number' ? data.expires_in * 1000 : 3600000;
-  cache.set(scope, { token: data.access_token, expiresAt: now + lifetimeMs });
+
+  const lifetimeMs = (Number(data.expires_in) || 3600) * 1000;
+  cachedTokens.set(secret, { token: data.access_token, expiresAt: now + lifetimeMs });
   return data.access_token;
+}
+
+export async function getServiceAccessToken(env, scope, fetchImpl = fetch, now = Date.now()) {
+  return serviceAccountToken(env, {
+    secret: 'GOOGLE_SERVICE_ACCOUNT_JSON',
+    scope,
+    unreachable: '无法连上 Google 服务，请稍后再试',
+  }, fetchImpl, now);
 }

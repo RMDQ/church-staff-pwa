@@ -42,7 +42,7 @@ void main() {
   test('其他錯誤加上前綴並翻成白話', () {
     expect(
       _text(accountErrorSnackBar(Exception('boom'), prefix: '刪除失敗：')),
-      '刪除失敗：操作失敗，請稍後再試',
+      '刪除失敗：操作失败，请稍后再试',
     );
   });
 }

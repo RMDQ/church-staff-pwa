@@ -5,7 +5,18 @@ import defaultConfig from '../worker/generated_config.js';
 import { validateChurchConfig } from '../worker/church_config.js';
 
 const service = (id, enabled = true) => ({ id, label: id, name: id, weekday: 1, enabled });
-const configWithServices = (services) => ({ ...defaultConfig, services });
+const configWithServices = (services) => ({
+  ...defaultConfig,
+  services,
+  checkin: defaultConfig.checkin
+    ? {
+        ...defaultConfig.checkin,
+        serviceId: services.some((s) => s.id === defaultConfig.checkin.serviceId)
+          ? defaultConfig.checkin.serviceId
+          : (services[0]?.id ?? defaultConfig.checkin.serviceId),
+      }
+    : undefined,
+});
 
 const args = ['--project', 'demo-church-staff', '--uid', 'owner-uid', '--name', '测试管理员'];
 const options = () => parseArgs([...args, '--apply', '--confirm-project', 'demo-church-staff', '--confirm-uid', 'owner-uid']);

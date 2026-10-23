@@ -31,6 +31,9 @@ import { churchConfig } from './church_config.js';
 const ACTIONS = {
   calendar: { group: 'calendar-editors', denied: '没有编辑行事历的权限' },
   roster: { group: 'roster-editors', denied: '没有编辑服事表的权限' },
+  // No group grants this: only an admin creates or removes sign-ins, the same
+  // line firestore.rules draws around creating and deleting users/{uid}.
+  accounts: { group: null, denied: '只有管理員可以新增或刪除同工帳號' },
 };
 
 /// Rejects a caller who may not perform [action].

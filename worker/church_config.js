@@ -117,7 +117,9 @@ export function validateChurchConfig(config) {
   if (config.devotional.enabled && (!config.devotional.dataUrl || !config.devotional.linkUrl)) {
     throw new Error('devotional.dataUrl and linkUrl are required when enabled');
   }
-  checkinSettings(config.checkin, config.services);
+  if (config.checkin !== undefined) {
+    checkinSettings(config.checkin, config.services);
+  }
   object(config.icons, ICONS, 'icons');
   for (const key of ICONS) {
     const path = config.icons[key];

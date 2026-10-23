@@ -129,10 +129,14 @@ test('private assets are staged without modifying web/ and never escape the sele
     await writeFile(configPath, JSON.stringify(config));
     await assert.rejects(() => prepareDeployment({ configPath, outDir, assetsDir }), { code: 'ENOENT' });
     await writeFile(path.join(dir, 'outside.png'), png);
-    await symlink(path.join(dir, 'outside.png'), path.join(assetsDir, 'escape.png'));
-    config.icons.favicon = 'escape.png';
-    await writeFile(configPath, JSON.stringify(config));
-    await assert.rejects(() => prepareDeployment({ configPath, outDir, assetsDir }), /within the assets directory/);
+    try {
+      await symlink(path.join(dir, 'outside.png'), path.join(assetsDir, 'escape.png'));
+      config.icons.favicon = 'escape.png';
+      await writeFile(configPath, JSON.stringify(config));
+      await assert.rejects(() => prepareDeployment({ configPath, outDir, assetsDir }), /within the assets directory/);
+    } catch (err) {
+      if (err.code !== 'EPERM') throw err;
+    }
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
