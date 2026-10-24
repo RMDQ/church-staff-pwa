@@ -1,0 +1,26 @@
+# Auto detect text files and perform LF normalization on checkin
+* text=auto eol=lf
+
+# Force specific text files to LF
+*.dart text eol=lf
+*.md text eol=lf
+*.mjs text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.sh text eol=lf
+*.txt text eol=lf
+*.sql text eol=lf
+*.rules text eol=lf
+*.py text eol=lf
+RESUMES_FROM text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.wasm binary
+*.ico binary

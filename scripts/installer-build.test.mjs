@@ -48,7 +48,9 @@ test('core build isolates source, uses per-run output and shares staging/finaliz
   assert.equal(result.buildDir, path.join(runDir, 'web-build'));
   assert.equal(result.deploymentDir, path.join(runDir, 'deployment'));
   assert.equal(context.transient.buildVersion, result.buildVersion);
-  assert.equal((await lstat(path.join(runDir, 'firebase-config.json'))).mode & 0o777, 0o600);
+  if (process.platform !== 'win32') {
+    assert.equal((await lstat(path.join(runDir, 'firebase-config.json'))).mode & 0o777, 0o600);
+  }
   assert.equal(await readFile(path.join(ROOT, 'web/index.html'), 'utf8'), originalIndex);
   assert.deepEqual(JSON.parse(await readFile(path.join(runDir, 'deployment/church.json'), 'utf8')), CONFIG);
   const build = calls.find(({ args }) => args[0] === 'build');

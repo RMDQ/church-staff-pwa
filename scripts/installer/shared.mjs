@@ -18,6 +18,7 @@ export const STEPS = [
   ['build', '建置教会网站', 'build'],
   ['rules', '部署资料存取规则', 'google'],
   ['admin', '建立指定管理员', 'google'],
+  ['account-admin', '设定同工帐号管理', 'accounts'],
   ['publish', '发布网站', 'cloudflare'],
   ['auth-domains', '设定登入网域', 'google'],
   ['activation', '寄送管理员设定密码信', 'google'],
@@ -35,6 +36,9 @@ export const stepIdsFor = (provider) => new Set(STEPS.filter((step) => step.prov
 // management key (set up here for sites installed before it existed) change.
 export const UPDATE_STEPS = [
   ['inspect', '核对网站与 Google 专案', 'google'],
+  // Before the build: a newly stored key only reaches the site with a new
+  // deployment, so it makes an otherwise unchanged build publish anyway.
+  ['account-admin', '设定同工帐号管理', 'accounts'],
   ['build', '建置新版网站', 'build'],
   ['rules', '更新资料存取规则', 'google'],
   ['publish', '发布新版网站', 'cloudflare'],
@@ -88,7 +92,7 @@ export const canonical = (value) => JSON.stringify(value, (_, entry) => entry &&
   ? Object.fromEntries(Object.keys(entry).sort().map((key) => [key, entry[key]])) : entry);
 export const fingerprint = (value) => sha256(canonical(value) ?? 'null');
 
-export const isPrivateDirectory = (stat) => stat.isDirectory() && !stat.isSymbolicLink() && (stat.mode & 0o077) === 0;
+export const isPrivateDirectory = (stat) => stat.isDirectory() && !stat.isSymbolicLink() && (process.platform === 'win32' || (stat.mode & 0o077) === 0);
 
 // A complete, finalized Pages upload. Build checks it after finalizing and
 // publish checks it again right before upload.
