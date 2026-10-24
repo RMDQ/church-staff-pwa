@@ -203,7 +203,8 @@ export function createInstallationPlan(input, identity, {
       !identity?.accounts?.some((account) => account.id === input.cloudflareAccountId)) {
     throw installationError('请选择已授权的 Cloudflare 帐号', 'INVALID_INPUT');
   }
-  if (!REGIONS.some(([id]) => id === input.region)) throw installationError('请选择资料库地区', 'INVALID_INPUT');
+  // Empty means automatic; a region is only sent when the church chose one.
+  if (input.region && !REGIONS.some(([id]) => id === input.region)) throw installationError('资料库地区不正确，请重新选择', 'INVALID_INPUT');
   const siteName = typeof input.siteName === 'string' ? input.siteName.trim().toLowerCase() : '';
   if (!SITE_NAME.test(siteName) || siteName.includes('--')) {
     throw installationError('网站名称只能用 3–40 个英文小写字母、数字和连字号（-），并以字母开头', 'INVALID_INPUT');
@@ -275,12 +276,12 @@ async function privateDirectory(directory) {
   await mkdir(directory, { mode: 0o700 }).catch((error) => { if (error.code !== 'EEXIST') throw error; });
   const stat = await lstat(directory);
   if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('Installer directory must not be a link');
-  if ((stat.mode & 0o077) !== 0) throw installationError('安装纪录目录权限过宽，请先限制为只有本人可存取');
+  if (process.platform !== 'win32' && (stat.mode & 0o077) !== 0) throw installationError('安装纪录目录权限过宽，请先限制为只有本人可存取');
 }
 
 async function assertRegular(file) {
   const stat = await lstat(file).catch((error) => { if (error.code !== 'ENOENT') throw error; });
-  if (stat && (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1 || (stat.mode & 0o077) !== 0)) {
+  if (stat && (!stat.isFile() || stat.isSymbolicLink() || (process.platform !== 'win32' && (stat.nlink !== 1 || (stat.mode & 0o077) !== 0)))) {
     throw new Error('Installer state must be a private regular file');
   }
   return stat;

@@ -60,7 +60,7 @@ async function snapshot(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const target = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      for (const [name, bytes] of await snapshot(target)) files.set(path.join(entry.name, name), bytes);
+      for (const [name, bytes] of await snapshot(target)) files.set(path.posix.join(entry.name, name), bytes);
     } else if (entry.isFile()) files.set(entry.name, await readFile(target));
   }
   return files;
@@ -94,7 +94,7 @@ test('finalizer stages configured branding and cache/FCM values without changing
   assert.match(output.get('index.html').toString(), /<base href="\/">/);
   assert.match(output.get('index.html').toString(), /<title>Example &lt;Community&gt;<\/title>/);
   assert.equal(JSON.parse(output.get('manifest.json')).name, config.appName);
-  for (const icon of Object.values(config.icons)) assert.deepEqual(output.get(icon), stagingBefore.get(path.join('web', icon)));
+  for (const icon of Object.values(config.icons)) assert.deepEqual(output.get(icon), stagingBefore.get(path.posix.join('web', icon)));
   const cacheSource = output.get('cache_sw.js').toString();
   assert.doesNotMatch(cacheSource, /__BUILD_VERSION__|__VENDOR_VERSION__/);
   const names = vm.runInNewContext(`${cacheSource}\n[CACHE_NAME, VENDOR_CACHE_NAME]`, { self: { addEventListener() {} } });
@@ -211,6 +211,7 @@ test('incomplete staging cannot silently publish default branding', async (t) =>
 });
 
 test('source staging links and destination directory/file links are rejected without writes', async (t) => {
+  if (process.platform === 'win32') return t.skip('Windows non-admin cannot create symlinks');
   const { options, dir } = await fixture(t);
   const outside = path.join(dir, 'outside');
   await mkdir(outside);

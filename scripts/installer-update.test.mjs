@@ -54,7 +54,9 @@ test('update finds the installed site, rebuilds it from its own config and publi
   assert.deepEqual(update.steps.map((step) => step.id), UPDATE_STEPS.map((step) => step.id).filter((id) => id !== 'domain'));
   assert.ok(update.steps.every((step) => step.status === 'complete'));
   // The build gets the live build version (to skip identical rebuilds) and the site's own config.
-  assert.deepEqual(calls, ['inspect', ['build', 'installer-demo-old', '恩典教会同工助手'], 'rules', 'publish']);
+  // A site from before account management gets its key first, in update mode.
+  assert.deepEqual(calls, ['inspect', ['store key', { update: true }], ['build', 'installer-demo-old', '恩典教会同工助手'], 'rules', 'publish',
+    ['retire keys', { update: true, keep: '0123456789abcdef' }]]);
   // An update is not an installation: nothing to resume, no install record.
   assert.deepEqual(await manager.listRuns(), []);
   assert.equal(manager.snapshot().plan, undefined);

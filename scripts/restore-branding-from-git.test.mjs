@@ -147,6 +147,7 @@ test('output must be a gitignored .local subdirectory', async (t) => {
 });
 
 test('symlinked output roots, nested parents and targets cannot escape', async (t) => {
+  if (process.platform === 'win32') return t.skip('Windows non-admin cannot create symlinks');
   const { root, config, options } = await fixture(t);
   const outside = path.join(root, 'outside');
   await mkdir(outside);

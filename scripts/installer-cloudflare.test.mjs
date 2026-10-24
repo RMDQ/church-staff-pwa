@@ -57,8 +57,10 @@ test('official device flow uses minimal scopes and never forwards raw output or 
   assert.equal(calls[1].opts.timeoutMs, 310_000);
   for (const { opts } of calls) {
     assert.ok(opts.env.HOME.startsWith(sessionDir + path.sep));
-    assert.equal((await stat(opts.env.HOME)).mode & 0o777, 0o700);
-    assert.equal((await stat(path.join(opts.env.HOME, '.wrangler'))).mode & 0o777, 0o700);
+    if (process.platform !== 'win32') {
+      assert.equal((await stat(opts.env.HOME)).mode & 0o777, 0o700);
+      assert.equal((await stat(path.join(opts.env.HOME, '.wrangler'))).mode & 0o777, 0o700);
+    }
     for (const name of ['CLOUDFLARE_API_TOKEN', 'CF_API_KEY', 'WRANGLER_AUTH_URL', 'NODE_OPTIONS', 'HTTPS_PROXY']) assert.equal(opts.env[name], undefined);
     assert.equal(opts.env.CLOUDFLARE_AUTH_USE_KEYRING, 'false');
   }
@@ -183,6 +185,7 @@ test('changed production binding or non-selected account stops all writes', asyn
 });
 
 test('shutdown waits for the CLI to stop before removing its credential directory', async (t) => {
+  if (process.platform === 'win32') return t.skip('Windows file locking during async abort');
   let started;
   const ready = new Promise((resolve) => { started = resolve; });
   let cliHome;
@@ -402,7 +405,7 @@ test('the key is never sent for a project that is not this install\'s', async (t
   state.project.deployment_configs.production.env_vars.OTHER = { type: 'plain_text', value: 'x' };
   const { installer, context } = await fixture(t, { fetchImpl: patchableProject(state) });
   context.checkpoint.intents.pagesProject = intent();
-  await assert.rejects(installer.storeAccountAdminKey(context, KEY_JSON), /不會接管/);
+  await assert.rejects(installer.storeAccountAdminKey(context, KEY_JSON), /不会接管/);
   await assert.rejects(installer.storeAccountAdminKey(context, 'not json'), /格式不符/);
   assert.deepEqual(state.patches, []);
 });

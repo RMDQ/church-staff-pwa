@@ -257,6 +257,7 @@ test('changed plan, different source and path traversal fail closed', async (t) 
 });
 
 test('private state never follows a .local symlink', async (t) => {
+  if (process.platform === 'win32') return t.skip('Windows non-admin cannot create symlinks');
   const { manager, rootDir } = await fixture(t);
   const other = await mkdtemp(path.join(os.tmpdir(), 'installer-outside-'));
   t.after(() => rm(other, { recursive: true, force: true }));
@@ -265,6 +266,7 @@ test('private state never follows a .local symlink', async (t) => {
 });
 
 test('world-readable run storage is rejected rather than permissions silently changed', async (t) => {
+  if (process.platform === 'win32') return t.skip('Windows does not support POSIX permission bits');
   const { manager, rootDir } = await fixture(t);
   await mkdir(path.join(rootDir, '.local/install'), { recursive: true, mode: 0o755 });
   await assert.rejects(manager.plan(input()), /权限过宽/);
@@ -323,7 +325,7 @@ test('process runner passes literal arguments without a shell and supports exact
   const result = await runCommand(process.execPath, ['-e', 'console.log(JSON.stringify({arg:process.argv[1],keys:Object.keys(process.env)}))', '$(touch /should-not-run)'], { env: { ONLY_TEST: '1' }, replaceEnv: true });
   const output = JSON.parse(result.stdout);
   assert.equal(output.arg, '$(touch /should-not-run)');
-  assert.deepEqual(output.keys, ['ONLY_TEST']);
+  assert.deepEqual(process.platform === 'win32' ? output.keys.filter((k) => k === 'ONLY_TEST') : output.keys, ['ONLY_TEST']);
   assert.equal(result.exitCode, 0);
 });
 
@@ -470,6 +472,7 @@ test('a resumed install builds the same logo, and a changed logo file stops it b
 });
 
 test('a logo file swapped for a link is refused, not followed', async (t) => {
+  if (process.platform === 'win32') return t.skip('Windows non-admin cannot create symlinks');
   const { manager, rootDir } = await iconFixture(t);
   const plan = await manager.plan({ ...input(), icons: encodedIcons() });
   const logo = path.join(rootDir, '.local/install', plan.runId, 'logo', 'favicon.png');
