@@ -98,7 +98,7 @@ jobs:
           CHURCH_CONFIG_JSON: ${{ secrets.CHURCH_CONFIG_JSON || vars.CHURCH_CONFIG_JSON }}
           CHURCH_ASSETS_DIR: ${{ vars.CHURCH_ASSETS_DIR || 'web' }}
           CHURCH_ASSETS_GIT_REF: ${{ vars.CHURCH_ASSETS_GIT_REF }}
-          CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+          CLOUDFLARE_PAGES_PROJECT: ${{ secrets.CLOUDFLARE_PAGES_PROJECT || vars.CLOUDFLARE_PAGES_PROJECT }}
         run: |
           set -euo pipefail
           node --input-type=module <<'JS'
@@ -159,15 +159,15 @@ jobs:
           # Secrets (sensitive)
           FCM_WEB_VAPID_KEY: ${{ secrets.FCM_WEB_VAPID_KEY }}
           GOOGLE_CALENDAR_API_KEY: ${{ secrets.GOOGLE_CALENDAR_API_KEY }}
-          # Variables (non-sensitive, visible in repo settings)
-          FIREBASE_API_KEY: ${{ vars.FIREBASE_API_KEY }}
-          FIREBASE_AUTH_DOMAIN: ${{ vars.FIREBASE_AUTH_DOMAIN }}
-          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
-          FIREBASE_STORAGE_BUCKET: ${{ vars.FIREBASE_STORAGE_BUCKET }}
-          FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
-          FIREBASE_APP_ID: ${{ vars.FIREBASE_APP_ID }}
-          FIREBASE_MEASUREMENT_ID: ${{ vars.FIREBASE_MEASUREMENT_ID }}
-          GOOGLE_CALENDAR_ID: ${{ vars.GOOGLE_CALENDAR_ID }}
+          # Variables (non-sensitive, visible in repo settings) or Secrets
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY || vars.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN || vars.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID || vars.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET || vars.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID || vars.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID || vars.FIREBASE_APP_ID }}
+          FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID || vars.FIREBASE_MEASUREMENT_ID }}
+          GOOGLE_CALENDAR_ID: ${{ secrets.GOOGLE_CALENDAR_ID || vars.GOOGLE_CALENDAR_ID }}
         run: |
           set -eo pipefail
           if [ -z "$FCM_WEB_VAPID_KEY" ]; then
@@ -269,5 +269,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: >-
             pages deploy build/web
-            --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+            --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT || vars.CLOUDFLARE_PAGES_PROJECT }}
             --branch=${{ github.ref_name }}
