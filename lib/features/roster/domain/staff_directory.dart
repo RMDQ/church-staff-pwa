@@ -42,8 +42,11 @@ class StaffDirectory {
       names.add(name);
       final uid = user.id.trim();
       if (uid.isNotEmpty) idByName.putIfAbsent(name, () => uid);
-      for (final zone in user.zones) {
-        if (zone.serviceType != type) continue;
+      final matchingZones = user.zones.where(
+        (zone) => zone.serviceType == type,
+      );
+      final zonesToRead = matchingZones.isNotEmpty ? matchingZones : user.zones;
+      for (final zone in zonesToRead) {
         for (final ministry in zone.ministries) {
           final role = ministry.trim();
           if (role.isEmpty) continue;

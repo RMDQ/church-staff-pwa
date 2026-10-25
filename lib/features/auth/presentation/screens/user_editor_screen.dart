@@ -135,6 +135,27 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
     });
   }
 
+  void _syncZoneToAllServices(UserZoneInfo sourceZone) {
+    setState(() {
+      for (final type in ServiceType.active) {
+        final existingIndex = _zones.indexWhere((z) => z.serviceType == type);
+        final syncedZone = UserZoneInfo(
+          serviceType: type,
+          smallGroups: List.from(sourceZone.smallGroups),
+          ministries: List.from(sourceZone.ministries),
+        );
+        if (existingIndex >= 0) {
+          _zones[existingIndex] = syncedZone;
+        } else {
+          _zones.add(syncedZone);
+        }
+      }
+    });
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('已将小组与服事设置同步至所有聚会')));
+  }
+
   /// 没填代称就用姓名，跟安装精灵建立首位管理员时一样。
   String get _username {
     final value = _usernameController.text.trim();
@@ -337,14 +358,25 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                   '牧区资料（必填）',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                if (ServiceType.active.any(
-                  (type) => !_zones.any((zone) => zone.serviceType == type),
-                ))
-                  TextButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('新增牧区'),
-                    onPressed: _addZone,
-                  ),
+                Wrap(
+                  spacing: 4,
+                  children: [
+                    if (_zones.isNotEmpty && ServiceType.active.length > 1)
+                      TextButton.icon(
+                        icon: const Icon(Icons.sync, size: 18),
+                        label: const Text('同步到所有聚会'),
+                        onPressed: () => _syncZoneToAllServices(_zones.first),
+                      ),
+                    if (ServiceType.active.any(
+                      (type) => !_zones.any((zone) => zone.serviceType == type),
+                    ))
+                      TextButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('新增牧区'),
+                        onPressed: _addZone,
+                      ),
+                  ],
+                ),
               ],
             ),
             if (_zones.isEmpty)
@@ -375,6 +407,7 @@ class _UserEditorScreenState extends State<UserEditorScreen> {
                 usedTypes: _zones.map((z) => z.serviceType).toSet(),
                 onRemove: () => _removeZone(index),
                 onUpdate: (newZone) => _updateZone(index, newZone),
+                onSync: _syncZoneToAllServices,
               );
             }),
           ],
@@ -389,6 +422,7 @@ class _ZoneEditorCard extends StatefulWidget {
   final Set<ServiceType> usedTypes;
   final VoidCallback onRemove;
   final ValueChanged<UserZoneInfo> onUpdate;
+  final ValueChanged<UserZoneInfo>? onSync;
 
   const _ZoneEditorCard({
     super.key,
@@ -396,6 +430,7 @@ class _ZoneEditorCard extends StatefulWidget {
     required this.usedTypes,
     required this.onRemove,
     required this.onUpdate,
+    this.onSync,
   });
 
   @override
@@ -507,6 +542,18 @@ class _ZoneEditorCardState extends State<_ZoneEditorCard> {
                     },
                   ),
                 ),
+                if (ServiceType.active.length > 1 && widget.onSync != null)
+                  IconButton(
+                    icon: const Icon(Icons.sync, color: Colors.blue),
+                    tooltip: '以此牧区设置同步到所有聚会',
+                    onPressed: () => widget.onSync!(
+                      widget.zone.copyWith(
+                        serviceType: _selectedType,
+                        smallGroups: _groups,
+                        ministries: _ministries,
+                      ),
+                    ),
+                  ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: _confirmRemoveZone,
