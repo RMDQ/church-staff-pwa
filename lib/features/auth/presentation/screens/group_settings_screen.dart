@@ -15,11 +15,26 @@ class GroupSettingsScreen extends StatefulWidget {
 class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
   late Map<ServiceType, List<String>> _editingTemplates;
   bool _initialized = false;
+  bool _sharedAcrossServices = false;
 
   @override
   void initState() {
     super.initState();
     _editingTemplates = {for (final type in ServiceType.values) type: []};
+  }
+
+  List<String> get _unifiedGroups {
+    final seen = <String>{};
+    final result = <String>[];
+    for (final type in ServiceType.active) {
+      final list = _editingTemplates[type];
+      if (list != null) {
+        for (final item in list) {
+          if (seen.add(item)) result.add(item);
+        }
+      }
+    }
+    return result;
   }
 
   @override
@@ -31,44 +46,71 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
         provider.templates.keys,
         provider.templates.values.map((list) => List<String>.from(list)),
       );
+      if (_sharedAcrossServices) {
+        final merged = _unifiedGroups;
+        for (final t in ServiceType.active) {
+          _editingTemplates[t] = List.from(merged);
+        }
+      }
       _initialized = true;
     }
   }
 
   Future<void> _promptAddGroup(ServiceType type) async {
-    // controller 由 TextControllerScope 在对话框子树卸载时 dispose。
     final controller = TextEditingController();
+    final existing = _sharedAcrossServices
+        ? _unifiedGroups
+        : (_editingTemplates[type] ?? const <String>[]);
     final name = await _showGroupNameDialog(
       title: '新增小组',
       controller: controller,
-      existing: _editingTemplates[type] ?? const <String>[],
+      existing: existing,
     );
     if (name == null) return;
     setState(() {
-      (_editingTemplates[type] ??= []).add(name);
+      if (_sharedAcrossServices) {
+        for (final t in ServiceType.active) {
+          final list = _editingTemplates[t] ??= [];
+          if (!list.contains(name)) list.add(name);
+        }
+      } else {
+        (_editingTemplates[type] ??= []).add(name);
+      }
     });
   }
 
-  void _removeGroup(ServiceType type, int index) {
+  void _removeGroup(int index, ServiceType type) {
     setState(() {
-      _editingTemplates[type]?.removeAt(index);
+      if (_sharedAcrossServices) {
+        final groupName = _unifiedGroups[index];
+        for (final t in ServiceType.active) {
+          _editingTemplates[t]?.remove(groupName);
+        }
+      } else {
+        _editingTemplates[type]?.removeAt(index);
+      }
     });
   }
 
-  Future<void> _promptEditGroup(ServiceType type, int index) async {
-    final current = _editingTemplates[type]?[index] ?? '';
+  Future<void> _promptEditGroup(int index, ServiceType type) async {
+    final current = _sharedAcrossServices
+        ? _unifiedGroups[index]
+        : (_editingTemplates[type]?[index] ?? '');
     final controller = TextEditingController(text: current);
+    final existing = _sharedAcrossServices
+        ? _unifiedGroups
+        : (_editingTemplates[type] ?? const <String>[]);
     final name = await _showGroupNameDialog(
       title: '编辑小组',
       controller: controller,
-      existing: _editingTemplates[type] ?? const <String>[],
+      existing: existing,
       currentName: current,
     );
     if (name == null) return;
-    _updateGroup(type, index, name);
+    _updateGroup(index, name, type);
   }
 
-  Future<void> _confirmRemoveGroup(ServiceType type, int index) async {
+  Future<void> _confirmRemoveGroup(int index, ServiceType type) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -88,7 +130,7 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
     );
 
     if (confirmed == true) {
-      _removeGroup(type, index);
+      _removeGroup(index, type);
     }
   }
 
@@ -154,10 +196,63 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
     );
   }
 
-  void _updateGroup(ServiceType type, int index, String value) {
+  void _updateGroup(int index, String value, ServiceType type) {
     setState(() {
-      _editingTemplates[type]?[index] = value;
+      if (_sharedAcrossServices) {
+        final oldName = _unifiedGroups[index];
+        for (final t in ServiceType.active) {
+          final list = _editingTemplates[t];
+          if (list != null) {
+            final oldIdx = list.indexOf(oldName);
+            if (oldIdx >= 0) {
+              list[oldIdx] = value;
+            } else if (!list.contains(value)) {
+              list.add(value);
+            }
+          }
+        }
+      } else {
+        _editingTemplates[type]?[index] = value;
+      }
     });
+  }
+
+  void _syncToAllServices(ServiceType current) {
+    final currentList = List<String>.from(_editingTemplates[current] ?? []);
+    setState(() {
+      for (final t in ServiceType.active) {
+        _editingTemplates[t] = List.from(currentList);
+      }
+      _sharedAcrossServices = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('已将「${current.label}」的小组同步至所有聚会，并开启全教会共用')),
+    );
+  }
+
+  Widget _buildGroupList(List<String> groups, ServiceType type) {
+    final displayGroups = _sharedAcrossServices ? _unifiedGroups : groups;
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: displayGroups.length + 1,
+      itemBuilder: (context, index) {
+        if (index == displayGroups.length) {
+          return ListTile(
+            leading: const Icon(Icons.add),
+            title: const Text('新增小组'),
+            onTap: () => _promptAddGroup(type),
+          );
+        }
+        return ListTile(
+          title: Text(displayGroups[index]),
+          onTap: () => _promptEditGroup(index, type),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => _confirmRemoveGroup(index, type),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -176,6 +271,44 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
       );
     }
 
+    final hasMultipleServices = ServiceType.active.length > 1;
+
+    final actions = [
+      if (hasMultipleServices)
+        TextButton.icon(
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.primary,
+          ),
+          icon: Icon(
+            _sharedAcrossServices ? Icons.link : Icons.link_off,
+            size: 18,
+          ),
+          label: Text(_sharedAcrossServices ? '全教会共用' : '各聚会独立'),
+          onPressed: () {
+            setState(() {
+              _sharedAcrossServices = !_sharedAcrossServices;
+              if (_sharedAcrossServices) {
+                final merged = _unifiedGroups;
+                for (final t in ServiceType.active) {
+                  _editingTemplates[t] = List.from(merged);
+                }
+              }
+            });
+          },
+        ),
+      IconButton(
+        icon: const Icon(Icons.check),
+        onPressed: () async {
+          final settingsProvider = context.read<GroupSettingsProvider>();
+          final userAdminProvider = context.read<UserAdminProvider>();
+          await settingsProvider.updateTemplates(_editingTemplates);
+          await userAdminProvider.cleanupUserSmallGroups(_editingTemplates);
+          if (!context.mounted) return;
+          Navigator.pop(context);
+        },
+      ),
+    ];
+
     return DefaultTabController(
       length: ServiceType.active.length,
       child: Scaffold(
@@ -187,45 +320,78 @@ class _GroupSettingsScreenState extends State<GroupSettingsScreen> {
                 .map((type) => Tab(text: type.label))
                 .toList(),
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: () async {
-                final settingsProvider = context.read<GroupSettingsProvider>();
-                final userAdminProvider = context.read<UserAdminProvider>();
-                await settingsProvider.updateTemplates(_editingTemplates);
-                await userAdminProvider.cleanupUserSmallGroups(
-                  _editingTemplates,
-                );
-                if (!context.mounted) return;
-                Navigator.pop(context);
-              },
-            ),
-          ],
+          actions: actions,
         ),
         body: TabBarView(
           children: ServiceType.active.map((type) {
             final groups = _editingTemplates[type] ?? [];
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: groups.length + 1,
-              itemBuilder: (context, index) {
-                if (index == groups.length) {
-                  return ListTile(
-                    leading: const Icon(Icons.add),
-                    title: const Text('新增小组'),
-                    onTap: () => _promptAddGroup(type),
-                  );
-                }
-                return ListTile(
-                  title: Text(groups[index]),
-                  onTap: () => _promptEditGroup(type, index),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => _confirmRemoveGroup(type, index),
+            return Column(
+              children: [
+                if (hasMultipleServices)
+                  Card(
+                    margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    color: _sharedAcrossServices
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer.withAlpha(80)
+                        : Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest.withAlpha(80),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _sharedAcrossServices ? Icons.link : Icons.link_off,
+                            size: 18,
+                            color: _sharedAcrossServices
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _sharedAcrossServices
+                                  ? '已开启全教会共用：${ServiceType.active.map((t) => t.label).join('、')} 同步共用小组'
+                                  : '当前为「${type.label}」独立小组名单',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _sharedAcrossServices
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.onPrimaryContainer
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          if (!_sharedAcrossServices)
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                              ),
+                              icon: const Icon(Icons.copy_all, size: 16),
+                              label: const Text(
+                                '同步到所有聚会',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              onPressed: () => _syncToAllServices(type),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
-                );
-              },
+                Expanded(child: _buildGroupList(groups, type)),
+              ],
             );
           }).toList(),
         ),

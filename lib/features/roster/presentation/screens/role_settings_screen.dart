@@ -22,6 +22,7 @@ class _RoleSettingsScreenState extends State<RoleSettingsScreen> {
   late Map<ServiceType, List<String>> _editingTemplates;
   late Map<ServiceType, Map<String, String>> _renamedRolesByType;
   late final Map<ServiceType, ScrollController> _scrollControllers;
+  bool _sharedAcrossServices = false;
 
   @override
   void initState() {
@@ -47,38 +48,90 @@ class _RoleSettingsScreenState extends State<RoleSettingsScreen> {
     super.dispose();
   }
 
+  List<String> get _unifiedRoles {
+    final seen = <String>{};
+    final result = <String>[];
+    for (final type in ServiceType.active) {
+      final list = _editingTemplates[type];
+      if (list != null) {
+        for (final item in list) {
+          if (seen.add(item)) result.add(item);
+        }
+      }
+    }
+    return result;
+  }
+
   Future<void> _promptAddRole(ServiceType type) async {
     // controller 由 TextControllerScope 在 bottom sheet 子树卸载时 dispose。
     final controller = TextEditingController();
+    final existing = _sharedAcrossServices
+        ? _unifiedRoles
+        : (_editingTemplates[type] ?? const <String>[]);
     final name = await _showRoleNameDialog(
       title: '新增项目',
       controller: controller,
-      existing: _editingTemplates[type] ?? const <String>[],
+      existing: existing,
     );
     if (name == null) return;
     setState(() {
-      (_editingTemplates[type] ??= []).add(name);
+      if (_sharedAcrossServices) {
+        for (final t in ServiceType.active) {
+          final list = _editingTemplates[t] ??= [];
+          if (!list.contains(name)) list.add(name);
+        }
+      } else {
+        (_editingTemplates[type] ??= []).add(name);
+      }
     });
   }
 
   void _removeRole(ServiceType type, int index) {
     setState(() {
-      _editingTemplates[type]?.removeAt(index);
+      if (_sharedAcrossServices) {
+        final roleName = _unifiedRoles[index];
+        for (final t in ServiceType.active) {
+          _editingTemplates[t]?.remove(roleName);
+        }
+      } else {
+        _editingTemplates[type]?.removeAt(index);
+      }
     });
   }
 
   Future<void> _promptEditRole(ServiceType type, int index) async {
-    final current = _editingTemplates[type]?[index] ?? '';
+    final current = _sharedAcrossServices
+        ? _unifiedRoles[index]
+        : (_editingTemplates[type]?[index] ?? '');
     final controller = TextEditingController(text: current);
+    final existing = _sharedAcrossServices
+        ? _unifiedRoles
+        : (_editingTemplates[type] ?? const <String>[]);
     final name = await _showRoleNameDialog(
       title: '编辑项目',
       controller: controller,
-      existing: _editingTemplates[type] ?? const <String>[],
+      existing: existing,
       currentName: current,
     );
     if (name == null) return;
-    _trackRoleRename(type, current, name);
-    _updateRole(type, index, name);
+    if (_sharedAcrossServices) {
+      for (final t in ServiceType.active) {
+        _trackRoleRename(t, current, name);
+        final list = _editingTemplates[t];
+        if (list != null) {
+          final idx = list.indexOf(current);
+          if (idx >= 0) {
+            list[idx] = name;
+          } else if (!list.contains(name)) {
+            list.add(name);
+          }
+        }
+      }
+      setState(() {});
+    } else {
+      _trackRoleRename(type, current, name);
+      _updateRole(type, index, name);
+    }
   }
 
   void _trackRoleRename(ServiceType type, String oldName, String newName) {
@@ -204,6 +257,19 @@ class _RoleSettingsScreenState extends State<RoleSettingsScreen> {
     });
   }
 
+  void _syncToAllServices(ServiceType current) {
+    final currentList = List<String>.from(_editingTemplates[current] ?? []);
+    setState(() {
+      for (final t in ServiceType.active) {
+        _editingTemplates[t] = List.from(currentList);
+      }
+      _sharedAcrossServices = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('已将「${current.label}」的服事项目同步至所有聚会，并开启全教会共用')),
+    );
+  }
+
   /// 有没有还没按 ✓ 的变更。
   bool get _hasUnsavedChanges {
     final saved = context.read<RosterProvider>().templates;
@@ -241,6 +307,8 @@ class _RoleSettingsScreenState extends State<RoleSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasMultipleServices = ServiceType.active.length > 1;
+
     // 新增完项目按左上角返回，以前会不声不响地丢掉。✓ 的 Navigator.pop
     // 不经过 PopScope，存好之后照常离开。
     return PopScope(
@@ -260,6 +328,28 @@ class _RoleSettingsScreenState extends State<RoleSettingsScreen> {
                   .toList(),
             ),
             actions: [
+              if (hasMultipleServices)
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                  ),
+                  icon: Icon(
+                    _sharedAcrossServices ? Icons.link : Icons.link_off,
+                    size: 18,
+                  ),
+                  label: Text(_sharedAcrossServices ? '全教会共用' : '各聚会独立'),
+                  onPressed: () {
+                    setState(() {
+                      _sharedAcrossServices = !_sharedAcrossServices;
+                      if (_sharedAcrossServices) {
+                        final merged = _unifiedRoles;
+                        for (final t in ServiceType.active) {
+                          _editingTemplates[t] = List.from(merged);
+                        }
+                      }
+                    });
+                  },
+                ),
               IconButton(
                 icon: const Icon(Icons.check),
                 onPressed: () async {
@@ -308,10 +398,77 @@ class _RoleSettingsScreenState extends State<RoleSettingsScreen> {
           ),
           body: TabBarView(
             children: ServiceType.active.map((type) {
-              final roles = _editingTemplates[type] ?? [];
+              final roles = _sharedAcrossServices
+                  ? _unifiedRoles
+                  : (_editingTemplates[type] ?? []);
               final scrollController = _scrollControllers[type]!;
               return Column(
                 children: [
+                  if (hasMultipleServices)
+                    Card(
+                      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                      color: _sharedAcrossServices
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer.withAlpha(80)
+                          : Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest.withAlpha(80),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _sharedAcrossServices
+                                  ? Icons.link
+                                  : Icons.link_off,
+                              size: 18,
+                              color: _sharedAcrossServices
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _sharedAcrossServices
+                                    ? '已开启全教会共用：${ServiceType.active.map((t) => t.label).join('、')} 同步共用服事项目'
+                                    : '当前为「${type.label}」独立服事项目',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _sharedAcrossServices
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                            if (!_sharedAcrossServices)
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  visualDensity: VisualDensity.compact,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                ),
+                                icon: const Icon(Icons.copy_all, size: 16),
+                                label: const Text(
+                                  '同步到所有聚会',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                onPressed: () => _syncToAllServices(type),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                   // 新教会第一次打开是一片空白，连「新增项目」在左下角都不容易看到。
                   if (roles.isEmpty)
                     Expanded(
@@ -348,11 +505,22 @@ class _RoleSettingsScreenState extends State<RoleSettingsScreen> {
                                 if (newIndex > oldIndex) {
                                   newIndex -= 1;
                                 }
-                                final item = roles.removeAt(oldIndex);
-                                roles.insert(newIndex, item);
-                                _editingTemplates[type] = List<String>.from(
-                                  roles,
-                                );
+                                if (_sharedAcrossServices) {
+                                  final list = _unifiedRoles;
+                                  final item = list.removeAt(oldIndex);
+                                  list.insert(newIndex, item);
+                                  for (final t in ServiceType.active) {
+                                    _editingTemplates[t] = List<String>.from(
+                                      list,
+                                    );
+                                  }
+                                } else {
+                                  final item = roles.removeAt(oldIndex);
+                                  roles.insert(newIndex, item);
+                                  _editingTemplates[type] = List<String>.from(
+                                    roles,
+                                  );
+                                }
                               });
                             },
                             itemBuilder: (context, index) {

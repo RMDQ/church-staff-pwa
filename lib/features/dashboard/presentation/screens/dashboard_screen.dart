@@ -19,9 +19,10 @@ import '../../domain/entities/recent_activity.dart';
 import '../../domain/season_window.dart';
 import '../widgets/recent_activity_row.dart';
 import '../widgets/add_to_home_card.dart';
-import '../../../checkin/presentation/checkin_card.dart';
-import '../../../attendance/presentation/attendance_screen.dart';
-import '../../../auth/domain/entities/user.dart' show UserRole;
+// Check-in and Attendance feature from commit 284510ed36202b1426084a6961a66f95717c0cd3
+// import '../../../checkin/presentation/checkin_card.dart';
+// import '../../../attendance/presentation/attendance_screen.dart';
+// import '../../../auth/domain/entities/user.dart' show UserRole;
 import '../../../roster/domain/entities/service_roster.dart';
 import '../../../roster/presentation/providers/roster_provider.dart';
 import '../../../calendar/presentation/screens/calendar_screen.dart'
@@ -116,35 +117,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 20),
             AddToHomeCard(service: widget.installHints),
-            const CheckinCard(),
-            const SizedBox(height: 16),
-            if (user != null &&
-                (user.role == UserRole.admin ||
-                    user.role == UserRole.leader)) ...[
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  leading: const Icon(Icons.fact_check_outlined),
-                  title: const Text(
-                    '出勤',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    user.role == UserRole.admin ? '全部成员的打卡记录' : '本小组的打卡记录',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const AttendanceScreen(),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
+            // Check-in and Attendance feature from commit 284510ed36202b1426084a6961a66f95717c0cd3
+            // const CheckinCard(),
+            // const SizedBox(height: 16),
+            // if (user != null &&
+            //     (user.role == UserRole.admin ||
+            //         user.role == UserRole.leader)) ...[
+            //   Card(
+            //     elevation: 2,
+            //     shape: RoundedRectangleBorder(
+            //       borderRadius: BorderRadius.circular(12),
+            //     ),
+            //     child: ListTile(
+            //       leading: const Icon(Icons.fact_check_outlined),
+            //       title: const Text(
+            //         '出勤',
+            //         style: TextStyle(fontWeight: FontWeight.bold),
+            //       ),
+            //       subtitle: Text(
+            //         user.role == UserRole.admin ? '全部成员的打卡记录' : '本小组的打卡记录',
+            //       ),
+            //       trailing: const Icon(Icons.chevron_right),
+            //       onTap: () => Navigator.of(context).push(
+            //         MaterialPageRoute<void>(
+            //           builder: (_) => const AttendanceScreen(),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            //   const SizedBox(height: 16),
+            // ],
             if (ChurchConfig.current.devotional.enabled) ...[
               _buildFeatureCard(
                 context,
